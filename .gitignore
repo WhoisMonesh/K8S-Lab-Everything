@@ -14,12 +14,13 @@
 # Go workspace file
 go.work
 
-# Built binary
-cka-lab-runner
+# Built binaries (root-anchored so cmd/cka-lab-runner source stays tracked)
+/cka-lab-runner
+/cka-lab-runner.exe
 bin/
 
 # Config files (user-specific)
-cka-lab-runner.yaml
+/cka-lab-runner.yaml
 
 # IDE
 .idea/
