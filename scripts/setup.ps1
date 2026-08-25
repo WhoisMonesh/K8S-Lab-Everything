@@ -244,7 +244,7 @@ function Build-Binary {
 
     Write-Step "Building cka-lab-runner"
     if (-not (Test-Path ".\bin")) { New-Item -ItemType Directory -Path ".\bin" | Out-Null }
-    go build -o .\bin\cka-lab-runner.exe -v .\cmd\cka-lab-runner
+    go build -o .\bin\cka-lab-runner.exe .\cmd\cka-lab-runner 2>$null
     Write-Ok "Binary built: bin\cka-lab-runner.exe"
 
     # Add bin directory to user PATH permanently
