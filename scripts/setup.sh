@@ -262,7 +262,13 @@ build_binary() {
         ok "Binary built: bin/cka-lab-runner"
     else
         warn "Go not available — cannot build binary"
+        return
     fi
+
+    step "Installing cka-lab-runner to /usr/local/bin"
+    sudo cp bin/cka-lab-runner /usr/local/bin/cka-lab-runner
+    sudo chmod +x /usr/local/bin/cka-lab-runner
+    ok "Installed to /usr/local/bin/cka-lab-runner (available system-wide)"
 }
 
 # ──────────────────────── Main ──────────────────────────────────
@@ -287,8 +293,8 @@ printf "${BOLD}${GREEN}  All prerequisites installed!${NC}\n"
 printf "${BOLD}${GREEN}══════════════════════════════════════════════════════════${NC}\n"
 echo
 echo "Next steps:"
-echo "  ./bin/cka-lab-runner init"
-echo "  ./bin/cka-lab-runner up"
-echo "  ./bin/cka-lab-runner lab list"
-echo "  ./bin/cka-lab-runner lab run pod_crashloop"
+echo "  cka-lab-runner init"
+echo "  cka-lab-runner up"
+echo "  cka-lab-runner lab list"
+echo "  cka-lab-runner lab run pod_crashloop"
 echo

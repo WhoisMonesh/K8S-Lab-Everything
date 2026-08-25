@@ -246,6 +246,18 @@ function Build-Binary {
     if (-not (Test-Path ".\bin")) { New-Item -ItemType Directory -Path ".\bin" | Out-Null }
     go build -o .\bin\cka-lab-runner.exe -v .\cmd\cka-lab-runner
     Write-Ok "Binary built: bin\cka-lab-runner.exe"
+
+    # Add bin directory to user PATH permanently
+    $projectBin = (Resolve-Path ".\bin").Path
+    $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
+    if ($currentPath -notlike "*$projectBin*") {
+        Write-Step "Adding $projectBin to user PATH"
+        [System.Environment]::SetEnvironmentVariable("Path", "$currentPath;$projectBin", "User")
+        $env:Path = "$env:Path;$projectBin"
+        Write-Ok "Added to PATH (available in new terminals)"
+    } else {
+        Write-Ok "Project bin directory already on PATH"
+    }
 }
 
 # ──────────────────────── Main ──────────────────────────────────
@@ -269,8 +281,8 @@ Write-Host "  All prerequisites installed!" -ForegroundColor Green
 Write-Host "══════════════════════════════════════════════════════════" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:"
-Write-Host "  .\bin\cka-lab-runner.exe init"
-Write-Host "  .\bin\cka-lab-runner.exe up"
-Write-Host "  .\bin\cka-lab-runner.exe lab list"
-Write-Host "  .\bin\cka-lab-runner.exe lab run pod_crashloop"
+Write-Host "  cka-lab-runner init"
+Write-Host "  cka-lab-runner up"
+Write-Host "  cka-lab-runner lab list"
+Write-Host "  cka-lab-runner lab run pod_crashloop"
 Write-Host ""
