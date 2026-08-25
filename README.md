@@ -167,6 +167,10 @@ cka-lab-runner up                      # Create cluster
 cka-lab-runner up --recreate           # Recreate existing cluster
 cka-lab-runner down                    # Delete cluster
 
+# Update
+cka-lab-runner version                 # Show current version
+cka-lab-runner update                  # Update to latest release from GitHub
+
 # Labs
 cka-lab-runner lab list                           # List all labs
 cka-lab-runner lab list --category networking     # Filter by category
@@ -176,6 +180,20 @@ cka-lab-runner lab random --category storage      # Random lab in category
 cka-lab-runner lab run <lab-id>                   # Run a lab
 cka-lab-runner lab verify <lab-id>                # Verify your fix
 cka-lab-runner lab solution <lab-id>              # Show solution
+```
+
+### Auto-Update
+
+The binary automatically checks for new versions on GitHub when you run any command.
+If an update is available, you'll see a notification. To install the update:
+
+```bash
+cka-lab-runner update
+```
+
+To skip the background update check:
+```bash
+CKA_LAB_SKIP_UPDATE_CHECK=1 cka-lab-runner lab list
 ```
 
 ## Adding Your Own Labs
