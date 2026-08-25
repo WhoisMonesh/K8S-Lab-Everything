@@ -263,7 +263,8 @@ build_binary() {
     step "Building cka-lab-runner"
     if have go; then
         mkdir -p bin
-        go build -o bin/cka-lab-runner -v ./cmd/cka-lab-runner
+        GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+        go build -ldflags="-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=1.0.0 -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=${GIT_COMMIT}" -o bin/cka-lab-runner -v ./cmd/cka-lab-runner
         ok "Binary built: bin/cka-lab-runner"
     else
         warn "Go not available — cannot build binary"

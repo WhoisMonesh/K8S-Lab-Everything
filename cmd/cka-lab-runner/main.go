@@ -12,6 +12,7 @@ import (
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/cluster"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/config"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/labs"
+	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/update"
 
 	// Import labs to register them
 	_ "github.com/WhoisMonesh/K8S-Lab-Everything/internal/labs"
@@ -33,6 +34,31 @@ var rootCmd = &cobra.Command{
 	Short: "A CKA practice lab runner",
 	Long: `cka-lab-runner is a tool for practicing Kubernetes administration skills
 by creating reproducible broken scenarios in a local cluster.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Skip update check for version/update commands
+		if cmd.Name() == "version" || cmd.Name() == "update" || cmd.Name() == "help" {
+			return
+		}
+		update.CheckForUpdate()
+	},
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version of cka-lab-runner",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Printf("cka-lab-runner %s (commit: %s)\n", update.GetVersion(), update.GitCommit)
+		return nil
+	},
+}
+
+var updateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update cka-lab-runner to the latest version",
+	Long:  `Downloads and installs the latest release from GitHub.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return update.SelfUpdate()
+	},
 }
 
 var initCmd = &cobra.Command{
@@ -405,6 +431,8 @@ func init() {
 	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(downCmd)
 	rootCmd.AddCommand(labCmd)
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(updateCmd)
 
 	// Add subcommands to lab
 	labCmd.AddCommand(labListCmd)

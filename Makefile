@@ -17,6 +17,11 @@ GOMOD=$(GOCMD) mod
 GOFMT=$(GOCMD) fmt
 GOVET=$(GOCMD) vet
 
+# Version info
+VERSION?=1.0.0
+GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+LDFLAGS=-ldflags "-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=$(VERSION) -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=$(GIT_COMMIT)"
+
 help: ## Show this help
 	@echo "CKA Lab Runner - Makefile commands:"
 	@echo ""
@@ -24,13 +29,13 @@ help: ## Show this help
 	@echo ""
 
 build: ## Build the binary
-	@echo "Building $(BINARY)..."
+	@echo "Building $(BINARY) $(VERSION)..."
 	@mkdir -p $(BUILD_DIR)
-	$(GOBUILD) -o $(BUILD_DIR)/$(BINARY) -v $(CMD_PKG)
+	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY) -v $(CMD_PKG)
 	@echo "Binary built at $(BUILD_DIR)/$(BINARY)"
 
 build-all: ## Cross-compile for windows/linux/macos (amd64 + arm64)
-	@echo "Cross-compiling $(BINARY) for all platforms..."
+	@echo "Cross-compiling $(BINARY) $(VERSION) for all platforms..."
 	@mkdir -p $(BUILD_DIR)
 	@for platform in $(PLATFORMS); do \
 		os=$${platform%/*}; arch=$${platform#*/}; \
@@ -38,7 +43,7 @@ build-all: ## Cross-compile for windows/linux/macos (amd64 + arm64)
 		if [ "$$os" = "windows" ]; then ext=".exe"; fi; \
 		echo "  -> $$os/$$arch"; \
 		GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 \
-			$(GOBUILD) -ldflags="-s -w" -trimpath \
+			$(GOBUILD) $(LDFLAGS) -trimpath \
 			-o $(BUILD_DIR)/$(BINARY)-$$os-$$arch$$ext $(CMD_PKG) || exit 1; \
 	done
 	@echo "All binaries written to $(BUILD_DIR)/"
