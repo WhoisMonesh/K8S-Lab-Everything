@@ -1,4 +1,4 @@
-# K8S-Lab-Everything fully automated setup (Windows PowerShell 5.1+)
+﻿# K8S-Lab-Everything fully automated setup (Windows PowerShell 5.1+)
 # Installs Go, Docker, kubectl, and a cluster provider (kind) automatically.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\setup.ps1 [-ClusterProvider kind|k3d|minikube]
 
@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# ──────────────────────── Helpers ───────────────────────────────
+# ------------------------ Helpers -------------------------------
 function Test-Cmd {
     param([string]$Name)
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
@@ -21,7 +21,7 @@ function Write-Warn  { param([string]$Msg) Write-Host "[WARN]    $Msg" -Foregrou
 function Write-Fail  { param([string]$Msg) Write-Host "[FAIL]    $Msg" -ForegroundColor Red }
 function Write-Step  { param([string]$Msg) Write-Host "`n==> $Msg" -ForegroundColor Cyan }
 
-# ──────────────────────── Ensure winget ─────────────────────────
+# ------------------------ Ensure winget -------------------------
 function Ensure-Winget {
     if (Test-Cmd "winget") { return }
     Write-Info "Installing winget..."
@@ -36,7 +36,7 @@ function Ensure-Winget {
     }
 }
 
-# ──────────────────────── Install Go ────────────────────────────
+# ------------------------ Install Go ----------------------------
 function Install-Go {
     if (Test-Cmd "go") {
         $v = (go version) -replace '.*go(\S+).*','$1'
@@ -69,7 +69,7 @@ function Install-Go {
     }
 }
 
-# ──────────────────────── Install Docker ────────────────────────
+# ------------------------ Install Docker ------------------------
 function Install-Docker {
     if (Test-Cmd "docker") {
         Write-Ok "Docker already installed"
@@ -96,7 +96,7 @@ function Install-Docker {
     Write-Ok "Docker Desktop"
 }
 
-# ──────────────────────── Install kubectl ───────────────────────
+# ------------------------ Install kubectl -----------------------
 function Install-Kubectl {
     if (Test-Cmd "kubectl") {
         Write-Ok "kubectl already installed"
@@ -128,7 +128,7 @@ function Install-Kubectl {
     }
 }
 
-# ──────────────────────── Install cluster provider ──────────────
+# ------------------------ Install cluster provider --------------
 function Install-Kind {
     if (Test-Cmd "kind") {
         Write-Ok "kind already installed"
@@ -230,15 +230,15 @@ function Install-ClusterProvider {
     }
 }
 
-# ──────────────────────── Build binary ──────────────────────────
+# ------------------------ Build binary --------------------------
 function Build-Binary {
     if (-not (Test-Path ".\go.mod")) {
-        Write-Warn "go.mod not found — skipping binary build"
+        Write-Warn "go.mod not found - skipping binary build"
         return
     }
 
     if (-not (Test-Cmd "go")) {
-        Write-Warn "Go not available — cannot build binary"
+        Write-Warn "Go not available - cannot build binary"
         return
     }
 
@@ -260,11 +260,11 @@ function Build-Binary {
     }
 }
 
-# ──────────────────────── Main ──────────────────────────────────
+# ------------------------ Main ----------------------------------
 Write-Host ""
-Write-Host "══════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  K8S-Lab-Everything — Automated Setup (Windows)" -ForegroundColor Cyan
-Write-Host "══════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "==========================================================" -ForegroundColor Cyan
+Write-Host "  K8S-Lab-Everything - Automated Setup (Windows)" -ForegroundColor Cyan
+Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Info "Cluster provider: $ClusterProvider"
 Write-Host ""
@@ -276,9 +276,9 @@ Install-ClusterProvider
 Build-Binary
 
 Write-Host ""
-Write-Host "══════════════════════════════════════════════════════════" -ForegroundColor Green
+Write-Host "==========================================================" -ForegroundColor Green
 Write-Host "  All prerequisites installed!" -ForegroundColor Green
-Write-Host "══════════════════════════════════════════════════════════" -ForegroundColor Green
+Write-Host "==========================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:"
 Write-Host "  cka-lab-runner init"
