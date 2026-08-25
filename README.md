@@ -96,7 +96,7 @@ cka-lab-runner down
 
 > Windows note: run everything from PowerShell or Windows Terminal. kind/k3d/minikube and Docker Desktop handle the Linux node inside a VM transparently — every lab works identically on all platforms.
 
-## Available Labs (23)
+## Available Labs (50)
 
 ### Control Plane
 - **etcd_wrong_ip** (Medium, 25min) - Fix API server → etcd communication
@@ -104,38 +104,65 @@ cka-lab-runner down
 - **cluster_upgrade** (Hard, 30min) - Cluster upgrade simulation
 - **etcd_backup_restore** (Hard, 30min) - etcd backup and restore
 - **kubelet_stopped** (Medium, 20min) - Fix stopped kubelet service
+- **node_not_ready** (Medium, 20min) - Fix kubelet on NotReady node
+- **node_pressure** (Hard, 25min) - Clear disk/memory pressure on node
 
 ### Networking
 - **network_policy_blocking** (Medium, 20min) - Fix NetworkPolicy blocking traffic
 - **ingress_broken** (Medium, 20min) - Fix Ingress configuration
-- **service_no_endpoints** (Medium, 20min) - Fix Service with no endpoints *(new)*
+- **service_no_endpoints** (Medium, 20min) - Fix Service with no endpoints
+- **service_wrong_selector** (Easy, 10min) - Fix Service selector not matching pods
+- **multi_container_pod** (Medium, 15min) - Fix multi-container pod communication
 
 ### Scheduling
-- **taint_no_toleration** (Medium, 20min) - Schedule pods onto tainted nodes *(new)*
-- **node_affinity_mismatch** (Hard, 25min) - Fix broken node affinity selectors *(new)*
+- **taint_no_toleration** (Medium, 20min) - Schedule pods onto tainted nodes
+- **node_affinity_mismatch** (Hard, 25min) - Fix broken node affinity selectors
+- **pod_scheduling_failed** (Easy, 10min) - Fix pod nodeSelector mismatch
 
 ### DNS
 - **coredns_broken_config** (Easy, 15min) - Fix CoreDNS configuration
 
 ### Storage
 - **pvc_pending** (Medium, 20min) - Debug PVC stuck in Pending
+- **pv_not_binding** (Medium, 20min) - Fix PersistentVolume not binding to PVC
+- **pod_host_path_wrong** (Medium, 15min) - Fix wrong hostPath mount
 
 ### RBAC
 - **rbac_permission_denied** (Medium, 20min) - Fix missing Role permissions
 
 ### Security
 - **cert_expiration** (Hard, 25min) - Check certificate expiration
-- **secret_env_broken** (Easy, 15min) - Fix app failing due to bad Secret data *(new)*
+- **secret_env_broken** (Easy, 15min) - Fix app failing due to bad Secret data
+- **secret_missing** (Easy, 10min) - Create missing Secret for pod
+- **pod_security_context** (Medium, 15min) - Fix pod securityContext misconfiguration
 
 ### Workloads
 - **pod_crashloop** (Easy, 15min) - Debug CrashLoopBackOff
 - **image_pull_backoff** (Easy, 10min) - Fix image name typo
 - **statefulset_broken** (Medium, 25min) - Fix StatefulSet configuration
 - **daemonset_not_scheduled** (Medium, 20min) - Fix DaemonSet scheduling
-- **oomkilled_limits** (Easy, 15min) - Fix pods OOMKilled by low memory limits *(new)*
-- **liveness_probe_flap** (Medium, 20min) - Fix misconfigured liveness probes restarting pods *(new)*
-- **init_container_fail** (Medium, 20min) - Debug failed init container blocking startup *(new)*
-- **resource_quota_block** (Medium, 20min) - Fix pods blocked by exceeded ResourceQuota *(new)*
+- **oomkilled_limits** (Easy, 15min) - Fix pods OOMKilled by low memory limits
+- **liveness_probe_flap** (Medium, 20min) - Fix misconfigured liveness probes restarting pods
+- **init_container_fail** (Medium, 20min) - Debug failed init container blocking startup
+- **resource_quota_block** (Medium, 20min) - Fix pods blocked by exceeded ResourceQuota
+- **container_image_tag_wrong** (Easy, 10min) - Fix non-existent image tag
+- **container_command_wrong** (Easy, 10min) - Fix container command causing CrashLoop
+- **configmap_wrong_key** (Easy, 10min) - Fix ConfigMap key reference mismatch
+- **env_var_missing** (Easy, 10min) - Add missing environment variable to pod
+- **hpa_not_working** (Medium, 20min) - Fix HPA target reference
+- **deployment_rolling_update_stuck** (Medium, 20min) - Fix stuck rolling update
+- **deployment_replicas_mismatch** (Medium, 20min) - Fix readiness probe for full replicas
+- **liveness_probe_wrong** (Medium, 15min) - Fix wrong liveness probe port
+- **readiness_probe_wrong** (Medium, 15min) - Fix wrong readiness probe path
+- **cronjob_failed** (Medium, 20min) - Fix broken CronJob image
+- **pod_oomkilled_memory** (Easy, 10min) - Increase memory limits for Redis
+- **pod_stuck_in_init** (Medium, 15min) - Fix failing init container
+- **resource_quota_exceeded** (Medium, 20min) - Clean up or increase ResourceQuota
+- **pod_missing_configmap** (Easy, 10min) - Create missing ConfigMap mount
+- **image_pull_backoff_name** (Easy, 10min) - Fix wrong registry image reference
+- **pod_wrong_env** (Easy, 10min) - Fix wrong environment variable value
+- **daemonset_wrong_node_selector** (Medium, 15min) - Fix DaemonSet nodeSelector
+- **deployment_wrong_strategy** (Medium, 15min) - Change Recreate to RollingUpdate
 
 ## Commands
 
@@ -146,6 +173,10 @@ cka-lab-runner up                      # Create cluster
 cka-lab-runner up --recreate           # Recreate existing cluster
 cka-lab-runner down                    # Delete cluster
 
+# Update
+cka-lab-runner version                 # Show current version
+cka-lab-runner update                  # Update to latest release from GitHub
+
 # Labs
 cka-lab-runner lab list                           # List all labs
 cka-lab-runner lab list --category networking     # Filter by category
@@ -155,6 +186,20 @@ cka-lab-runner lab random --category storage      # Random lab in category
 cka-lab-runner lab run <lab-id>                   # Run a lab
 cka-lab-runner lab verify <lab-id>                # Verify your fix
 cka-lab-runner lab solution <lab-id>              # Show solution
+```
+
+### Auto-Update
+
+The binary automatically checks for new versions on GitHub when you run any command.
+If an update is available, you'll see a notification. To install the update:
+
+```bash
+cka-lab-runner update
+```
+
+To skip the background update check:
+```bash
+CKA_LAB_SKIP_UPDATE_CHECK=1 cka-lab-runner lab list
 ```
 
 ## Adding Your Own Labs
