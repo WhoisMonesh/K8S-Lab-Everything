@@ -78,10 +78,14 @@ func isNewer(latest, current string) bool {
 	lParts := strings.Split(latest, ".")
 	cParts := strings.Split(current, ".")
 	for i := 0; i < len(lParts) && i < len(cParts); i++ {
-		if lParts[i] > cParts[i] {
+		lNum := 0
+		cNum := 0
+		fmt.Sscanf(lParts[i], "%d", &lNum)
+		fmt.Sscanf(cParts[i], "%d", &cNum)
+		if lNum > cNum {
 			return true
 		}
-		if lParts[i] < cParts[i] {
+		if lNum < cNum {
 			return false
 		}
 	}
@@ -246,7 +250,7 @@ func SelfUpdate() error {
 		return nil
 	}
 
-	// Try direct rename first (works if user owns the directory)
+	// macOS and Linux: try direct rename first, then fall back to elevated permissions.
 	if err := os.Rename(tmpFile, execPath); err == nil {
 		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
 		return nil
@@ -257,6 +261,19 @@ func SelfUpdate() error {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "darwin" {
 		// macOS: use osascript to get password via GUI dialog
+		// osascript can't overwrite a running binary, so rename it to .old first
+		oldFile := execPath + ".old"
+		os.Remove(oldFile)
+		if rErr := os.Rename(execPath, oldFile); rErr == nil {
+			if rErr := os.Rename(tmpFile, execPath); rErr == nil {
+				fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
+				fmt.Println("Restart this terminal to use the new version.")
+				return nil
+			}
+			// Restore on failure
+			os.Rename(oldFile, execPath)
+		}
+		// Fallback: try osascript for permission elevation
 		script := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, tmpFile, execPath)
 		cmd = exec.Command("osascript", "-e", script)
 	} else {
