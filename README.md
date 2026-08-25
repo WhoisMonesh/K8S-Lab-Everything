@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
-[![Labs](https://img.shields.io/badge/Labs-50-orange)](#-available-labs)
+[![Labs](https://img.shields.io/badge/Labs-75-orange)](#-available-labs)
 
 <br>
 
@@ -87,7 +87,7 @@ Know immediately if your fix is correct — no guessing.
 ### Cross-Platform
 Works on macOS (Intel & Apple Silicon), Linux (x86_64 & ARM64), and Windows.
 
-### 50 Realistic Labs
+### 75 Realistic Labs
 Covers all CKA exam domains with increasing difficulty levels.
 
 ### Extensible
@@ -221,99 +221,124 @@ Updated successfully!
 
 | Difficulty | Labs | Best For |
 |-----------|------|----------|
-| **Easy** (18) | Quick wins, 10-15 min | Beginners, building confidence |
-| **Medium** (28) | Real scenarios, 15-25 min | CKA exam prep |
-| **Hard** (4) | Complex problems, 25-30 min | Advanced troubleshooting |
+| **Easy** (20) | Quick wins, 10-15 min | Beginners, building confidence |
+| **Medium** (42) | Real scenarios, 15-25 min | CKA exam prep |
+| **Hard** (13) | Complex problems, 25-30 min | Advanced troubleshooting |
 
-### Control Plane
+### Control Plane (11 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
-| `etcd_wrong_ip` | Fix API server → etcd communication | Medium | 25min |
-| `scheduler_not_running` | Debug broken kube-scheduler | Medium | 20min |
 | `cluster_upgrade` | Cluster upgrade simulation | Hard | 30min |
 | `etcd_backup_restore` | etcd backup and restore | Hard | 30min |
+| `etcd_wrong_ip` | Fix API server → etcd communication | Medium | 25min |
 | `kubelet_stopped` | Fix stopped kubelet service | Medium | 20min |
+| `missing_crd_dependency` | Custom Resource fails — missing CRD | Hard | 20min |
+| `namespace_finalizer_stuck` | Namespace stuck in Terminating | Hard | 20min |
+| `node_cordoned` | Node cordoned — pods cannot schedule | Easy | 10min |
 | `node_not_ready` | Fix kubelet on NotReady node | Medium | 20min |
 | `node_pressure` | Clear disk/memory pressure on node | Hard | 25min |
+| `scheduler_not_running` | Debug broken kube-scheduler | Medium | 20min |
+| `stray_static_pod` | Stray static pod consuming resources | Medium | 15min |
 
-### Networking
+### Networking (8 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
-| `network_policy_blocking` | Fix NetworkPolicy blocking traffic | Medium | 20min |
 | `ingress_broken` | Fix Ingress configuration | Medium | 20min |
+| `multi_container_pod` | Fix multi-container pod communication | Medium | 15min |
+| `network_policy_blocking` | Fix NetworkPolicy blocking traffic | Medium | 20min |
+| `networkpolicy_egress_dns_blocked` | NetworkPolicy blocks DNS resolution | Hard | 20min |
+| `service_loadbalancer_pending` | LoadBalancer Service stuck Pending | Easy | 10min |
 | `service_no_endpoints` | Fix Service with no endpoints | Medium | 20min |
 | `service_wrong_selector` | Fix Service selector not matching pods | Easy | 10min |
-| `multi_container_pod` | Fix multi-container pod communication | Medium | 15min |
+| `service_wrong_targetport` | Service points to wrong targetPort | Easy | 10min |
 
-### Scheduling
+### Scheduling (8 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
-| `taint_no_toleration` | Schedule pods onto tainted nodes | Medium | 20min |
+| `cm_immutable_migration` | Immutable ConfigMap migration | Hard | 20min |
+| `limitrange_exceeded` | Pod rejected by LimitRange | Medium | 15min |
 | `node_affinity_mismatch` | Fix broken node affinity selectors | Hard | 25min |
+| `nodeselector_no_match` | Pod Pending — no node matches NodeSelector | Easy | 10min |
+| `pod_antiaffinity_conflict` | Deployment can't schedule due to anti-affinity | Hard | 20min |
 | `pod_scheduling_failed` | Fix pod nodeSelector mismatch | Easy | 10min |
+| `priorityclass_missing` | Pod uses nonexistent PriorityClass | Medium | 15min |
+| `taint_no_toleration` | Schedule pods onto tainted nodes | Medium | 20min |
 
-### DNS
+### DNS (3 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
 | `coredns_broken_config` | Fix CoreDNS configuration | Easy | 15min |
+| `dns_policy_wrong` | Pod cannot resolve cluster DNS | Medium | 15min |
+| `hostalias_wrong_ip` | Pod /etc/hosts points to wrong IP | Medium | 15min |
 
-### Storage
+### Storage (5 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
-| `pvc_pending` | Debug PVC stuck in Pending | Medium | 20min |
-| `pv_not_binding` | Fix PersistentVolume not binding to PVC | Medium | 20min |
 | `pod_host_path_wrong` | Fix wrong hostPath mount | Medium | 15min |
+| `pv_not_binding` | Fix PersistentVolume not binding to PVC | Medium | 20min |
+| `pvc_pending` | Debug PVC stuck in Pending | Medium | 20min |
+| `volume_readonly_write_fail` | Pod CrashLoop — writing to read-only volume | Easy | 10min |
+| `volume_subpath_missing` | Pod CrashLoop — wrong volume subPath | Medium | 15min |
 
-### Security
+### Security (6 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
 | `cert_expiration` | Check certificate expiration | Hard | 25min |
+| `pod_security_context` | Fix pod securityContext misconfiguration | Medium | 15min |
+| `runasnonroot_rejected` | Pod rejected — runAsNonRoot violation | Medium | 15min |
+| `seccomp_invalid_profile` | Pod rejected — invalid seccomp profile | Hard | 20min |
 | `secret_env_broken` | Fix app failing due to bad Secret data | Easy | 15min |
 | `secret_missing` | Create missing Secret for pod | Easy | 10min |
-| `pod_security_context` | Fix pod securityContext misconfiguration | Medium | 15min |
 
-### RBAC
+### RBAC (2 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
 | `rbac_permission_denied` | Fix missing Role permissions | Medium | 20min |
+| `rolebinding_wrong_role` | RoleBinding references missing Role | Medium | 15min |
 
-### Workloads
+### Workloads (32 labs)
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
-| `pod_crashloop` | Debug CrashLoopBackOff | Easy | 15min |
-| `image_pull_backoff` | Fix image name typo | Easy | 10min |
-| `statefulset_broken` | Fix StatefulSet configuration | Medium | 25min |
-| `daemonset_not_scheduled` | Fix DaemonSet scheduling | Medium | 20min |
-| `oomkilled_limits` | Fix pods OOMKilled by low memory limits | Easy | 15min |
-| `liveness_probe_flap` | Fix misconfigured liveness probes | Medium | 20min |
-| `init_container_fail` | Debug failed init container | Medium | 20min |
-| `resource_quota_block` | Fix pods blocked by ResourceQuota | Medium | 20min |
-| `container_image_tag_wrong` | Fix non-existent image tag | Easy | 10min |
-| `container_command_wrong` | Fix container command causing CrashLoop | Easy | 10min |
+| `bad_image_undo` | Roll back a bad image update | Medium | 15min |
 | `configmap_wrong_key` | Fix ConfigMap key reference mismatch | Easy | 10min |
+| `container_command_wrong` | Fix container command causing CrashLoop | Easy | 10min |
+| `container_image_tag_wrong` | Fix non-existent image tag | Easy | 10min |
+| `cronjob_failed` | Fix broken CronJob image | Medium | 20min |
+| `daemonset_not_scheduled` | Fix DaemonSet scheduling | Medium | 20min |
+| `daemonset_wrong_node_selector` | Fix DaemonSet nodeSelector | Medium | 15min |
+| `deployment_replicas_mismatch` | Fix readiness probe for full replicas | Medium | 20min |
+| `deployment_rolling_update_stuck` | Fix stuck rolling update | Medium | 20min |
+| `deployment_wrong_strategy` | Change Recreate to RollingUpdate | Medium | 15min |
 | `env_var_missing` | Add missing environment variable | Easy | 10min |
 | `hpa_not_working` | Fix HPA target reference | Medium | 20min |
-| `deployment_rolling_update_stuck` | Fix stuck rolling update | Medium | 20min |
-| `deployment_replicas_mismatch` | Fix readiness probe for full replicas | Medium | 20min |
+| `image_pull_backoff` | Fix image name typo | Easy | 10min |
+| `image_pull_backoff_name` | Fix wrong registry image reference | Easy | 10min |
+| `init_container_fail` | Debug failed init container | Medium | 20min |
+| `job_deadline_exceeded` | Job killed by activeDeadlineSeconds | Medium | 15min |
+| `liveness_probe_flap` | Fix misconfigured liveness probes | Medium | 20min |
 | `liveness_probe_wrong` | Fix wrong liveness probe port | Medium | 15min |
-| `readiness_probe_wrong` | Fix wrong readiness probe path | Medium | 15min |
-| `cronjob_failed` | Fix broken CronJob image | Medium | 20min |
+| `oomkilled_limits` | Fix pods OOMKilled by low memory limits | Easy | 15min |
+| `paused_rollout_resume` | Deployment paused mid-rollout | Easy | 10min |
+| `pod_crashloop` | Debug CrashLoopBackOff | Easy | 15min |
+| `pod_missing_configmap` | Create missing ConfigMap mount | Easy | 10min |
 | `pod_oomkilled_memory` | Increase memory limits for Redis | Easy | 10min |
 | `pod_stuck_in_init` | Fix failing init container | Medium | 15min |
-| `resource_quota_exceeded` | Clean up or increase ResourceQuota | Medium | 20min |
-| `pod_missing_configmap` | Create missing ConfigMap mount | Easy | 10min |
-| `image_pull_backoff_name` | Fix wrong registry image reference | Easy | 10min |
 | `pod_wrong_env` | Fix wrong environment variable value | Easy | 10min |
-| `daemonset_wrong_node_selector` | Fix DaemonSet nodeSelector | Medium | 15min |
-| `deployment_wrong_strategy` | Change Recreate to RollingUpdate | Medium | 15min |
+| `readiness_probe_wrong` | Fix wrong readiness probe path | Medium | 15min |
+| `resource_quota_block` | Fix pods blocked by ResourceQuota | Medium | 20min |
+| `resource_quota_exceeded` | Clean up or increase ResourceQuota | Medium | 20min |
+| `slow_pod_termination` | Pod stuck terminating | Medium | 15min |
+| `startup_probe_missing` | Liveness probe kills slow-starting app | Medium | 20min |
+| `statefulset_broken` | Fix StatefulSet configuration | Medium | 25min |
+| `statefulset_headless_missing` | StatefulSet without headless Service | Medium | 20min |
 
 ## Configuration
 
@@ -402,7 +427,7 @@ make clean         # Remove build artifacts
 │   ├── cli/                 Terminal output formatting
 │   ├── cluster/             Cluster providers (kind/k3d/minikube)
 │   ├── config/              Configuration management
-│   ├── labs/                All 50 lab implementations
+│   ├── labs/                All 75 lab implementations
 │   └── update/              OTA auto-update system
 ├── scripts/
 │   ├── setup.sh             macOS/Linux setup
@@ -434,7 +459,7 @@ Contributions welcome! Add new labs, fix bugs, or improve docs.
 
 ## Credits
 
-Based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner). This fork adds 35+ new labs, cross-platform support, and OTA auto-update.
+Based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner). This fork adds 60+ new labs, cross-platform support, and OTA auto-update.
 
 ## License
 

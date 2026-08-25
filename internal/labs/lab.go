@@ -92,7 +92,9 @@ type BaseLab struct{}
 
 func (b *BaseLab) EstimatedTime() int { return 20 }
 func (b *BaseLab) Tags() []string     { return []string{} }
-func (b *BaseLab) Verify(ctx context.Context, kubeconfigPath string) error {
+func (b *BaseLab) Prepare(_ context.Context, _ string) error { return nil }
+func (b *BaseLab) VerifyBroken(_ context.Context, _ string) error { return nil }
+func (b *BaseLab) Verify(_ context.Context, _ string) error {
 	return fmt.Errorf("verify not implemented for this lab")
 }
 
