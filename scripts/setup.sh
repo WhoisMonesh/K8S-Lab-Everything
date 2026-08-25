@@ -187,6 +187,53 @@ install_kubectl() {
     ok "kubectl installed"
 }
 
+# ──────────────────────── Install vim ──────────────────────────
+install_vim() {
+    if have vim; then
+        ok "vim already installed"
+        return
+    fi
+
+    step "Installing vim"
+    if [ "$OS" = "darwin" ]; then
+        ensure_homebrew
+        brew install vim
+    else
+        pkg_install vim
+    fi
+    ok "vim installed"
+}
+
+# ──────────────────────── Set KUBE_EDITOR ──────────────────────
+set_kube_editor() {
+    current_editor="${KUBE_EDITOR:-}"
+    if [ "$current_editor" = "vim" ] || [ "$current_editor" = "code --wait" ]; then
+        ok "KUBE_EDITOR already set to: $current_editor"
+        return
+    fi
+
+    if have vim; then
+        # Add to shell profiles
+        for profile in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile" "$HOME/.bash_profile"; do
+            if [ -f "$profile" ]; then
+                grep -q 'KUBE_EDITOR' "$profile" 2>/dev/null || echo 'export KUBE_EDITOR=vim' >> "$profile"
+            fi
+        done
+        export KUBE_EDITOR=vim
+        ok "KUBE_EDITOR set to vim"
+    elif have code; then
+        for profile in "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.profile" "$HOME/.bash_profile"; do
+            if [ -f "$profile" ]; then
+                grep -q 'KUBE_EDITOR' "$profile" 2>/dev/null || echo 'export KUBE_EDITOR="code --wait"' >> "$profile"
+            fi
+        done
+        export KUBE_EDITOR="code --wait"
+        ok "KUBE_EDITOR set to code --wait"
+    else
+        warn "No editor found. Set KUBE_EDITOR manually."
+    fi
+}
+
 # ──────────────────────── Install cluster provider ──────────────
 install_kind() {
     if have kind; then
@@ -290,6 +337,8 @@ echo
 install_go
 install_docker
 install_kubectl
+install_vim
+set_kube_editor
 install_cluster_provider
 build_binary
 

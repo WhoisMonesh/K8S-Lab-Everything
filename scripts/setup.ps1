@@ -91,6 +91,61 @@ function Install-Go {
     }
 }
 
+# ------------------------ Install vim ----------------------------
+function Install-Vim {
+    if (Test-Cmd "vim") {
+        Write-Ok "vim already installed"
+        return
+    }
+
+    Write-Step "Installing vim"
+    Ensure-Winget
+
+    try {
+        winget install --id vim.vim --accept-source-agreements --accept-package-agreements -e
+    } catch {
+        Write-Warn "winget failed, trying vim via choco or manual download..."
+        $url = "https://github.com/vim/vim-win32-installer/releases/download/v9.1.0052/gvim9.1.exe"
+        $installerPath = "$env:TEMP\gvim-installer.exe"
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $installerPath -UseBasicParsing
+            Start-Process $installerPath -Wait -ArgumentList "/S"
+            Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
+        } catch {
+            Write-Warn "Could not install vim automatically. Install from https://vim.org/download.php"
+        }
+    }
+
+    Refresh-Path
+
+    if (Test-Cmd "vim") {
+        Write-Ok "vim installed"
+    } else {
+        Write-Warn "vim installed but not on PATH. Restart your terminal."
+    }
+}
+
+# ------------------------ Set KUBE_EDITOR -----------------------
+function Set-KubeEditor {
+    $currentEditor = [System.Environment]::GetEnvironmentVariable("KUBE_EDITOR", "User")
+    if ($currentEditor -eq "vim" -or $currentEditor -eq "code --wait") {
+        Write-Ok "KUBE_EDITOR already set to: $currentEditor"
+        return
+    }
+
+    if (Test-Cmd "vim") {
+        [System.Environment]::SetEnvironmentVariable("KUBE_EDITOR", "vim", "User")
+        $env:KUBE_EDITOR = "vim"
+        Write-Ok "KUBE_EDITOR set to vim"
+    } elseif (Test-Cmd "code") {
+        [System.Environment]::SetEnvironmentVariable("KUBE_EDITOR", "code --wait", "User")
+        $env:KUBE_EDITOR = "code --wait"
+        Write-Ok "KUBE_EDITOR set to code --wait"
+    } else {
+        Write-Warn "No editor found. Set KUBE_EDITOR manually."
+    }
+}
+
 # ------------------------ Install Docker ------------------------
 function Install-Docker {
     if (Test-Cmd "docker") {
@@ -290,6 +345,8 @@ Write-Host ""
 Install-Go
 Install-Docker
 Install-Kubectl
+Install-Vim
+Set-KubeEditor
 Install-ClusterProvider
 Build-Binary
 
