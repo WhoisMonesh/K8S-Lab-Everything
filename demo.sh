@@ -28,6 +28,10 @@ demo_command() {
 
 # Step 1: Initialize configuration
 demo_step "Step 1: Initialize configuration"
+if [ -f "cka-lab-runner.yaml" ]; then
+    echo "Config file already exists, removing and recreating..."
+    rm -f cka-lab-runner.yaml
+fi
 demo_command "cka-lab-runner init"
 echo ""
 echo "Generated config file:"
