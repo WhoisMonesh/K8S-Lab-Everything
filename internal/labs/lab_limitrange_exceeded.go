@@ -10,11 +10,11 @@ func init() { Register(&LimitRangeExceededLab{}) }
 
 type LimitRangeExceededLab struct{ BaseLab }
 
-func (l *LimitRangeExceededLab) ID() string          { return "limitrange_exceeded" }
-func (l *LimitRangeExceededLab) Title() string        { return "Pod Rejected by LimitRange" }
-func (l *LimitRangeExceededLab) Category() Category   { return CategoryScheduling }
+func (l *LimitRangeExceededLab) ID() string             { return "limitrange_exceeded" }
+func (l *LimitRangeExceededLab) Title() string          { return "Pod Rejected by LimitRange" }
+func (l *LimitRangeExceededLab) Category() Category     { return CategoryScheduling }
 func (l *LimitRangeExceededLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *LimitRangeExceededLab) EstimatedTime() int   { return 15 }
+func (l *LimitRangeExceededLab) EstimatedTime() int     { return 15 }
 func (l *LimitRangeExceededLab) Tags() []string {
 	return []string{"limitrange", "resource", "quota", "scheduling"}
 }

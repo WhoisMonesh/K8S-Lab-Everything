@@ -11,11 +11,11 @@ func init() { Register(&BadImageUndoLab{}) }
 
 type BadImageUndoLab struct{ BaseLab }
 
-func (l *BadImageUndoLab) ID() string          { return "bad_image_undo" }
-func (l *BadImageUndoLab) Title() string        { return "Roll Back a Bad Image Update" }
-func (l *BadImageUndoLab) Category() Category   { return CategoryWorkloads }
+func (l *BadImageUndoLab) ID() string             { return "bad_image_undo" }
+func (l *BadImageUndoLab) Title() string          { return "Roll Back a Bad Image Update" }
+func (l *BadImageUndoLab) Category() Category     { return CategoryWorkloads }
 func (l *BadImageUndoLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *BadImageUndoLab) EstimatedTime() int   { return 15 }
+func (l *BadImageUndoLab) EstimatedTime() int     { return 15 }
 func (l *BadImageUndoLab) Tags() []string {
 	return []string{"deployment", "rollback", "rollout", "workloads"}
 }

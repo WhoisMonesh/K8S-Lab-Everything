@@ -10,11 +10,11 @@ func init() { Register(&ServiceWrongTargetPortLab{}) }
 
 type ServiceWrongTargetPortLab struct{ BaseLab }
 
-func (l *ServiceWrongTargetPortLab) ID() string          { return "service_wrong_targetport" }
-func (l *ServiceWrongTargetPortLab) Title() string        { return "Service Points to Wrong TargetPort" }
-func (l *ServiceWrongTargetPortLab) Category() Category   { return CategoryNetworking }
+func (l *ServiceWrongTargetPortLab) ID() string             { return "service_wrong_targetport" }
+func (l *ServiceWrongTargetPortLab) Title() string          { return "Service Points to Wrong TargetPort" }
+func (l *ServiceWrongTargetPortLab) Category() Category     { return CategoryNetworking }
 func (l *ServiceWrongTargetPortLab) Difficulty() Difficulty { return DifficultyEasy }
-func (l *ServiceWrongTargetPortLab) EstimatedTime() int   { return 10 }
+func (l *ServiceWrongTargetPortLab) EstimatedTime() int     { return 10 }
 func (l *ServiceWrongTargetPortLab) Tags() []string {
 	return []string{"service", "targetport", "endpoints", "networking"}
 }

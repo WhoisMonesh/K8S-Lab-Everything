@@ -11,11 +11,11 @@ func init() { Register(&StartupProbeMissingLab{}) }
 
 type StartupProbeMissingLab struct{ BaseLab }
 
-func (l *StartupProbeMissingLab) ID() string          { return "startup_probe_missing" }
-func (l *StartupProbeMissingLab) Title() string        { return "Liveness Probe Kills Slow-Starting App" }
-func (l *StartupProbeMissingLab) Category() Category   { return CategoryWorkloads }
+func (l *StartupProbeMissingLab) ID() string             { return "startup_probe_missing" }
+func (l *StartupProbeMissingLab) Title() string          { return "Liveness Probe Kills Slow-Starting App" }
+func (l *StartupProbeMissingLab) Category() Category     { return CategoryWorkloads }
 func (l *StartupProbeMissingLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *StartupProbeMissingLab) EstimatedTime() int   { return 20 }
+func (l *StartupProbeMissingLab) EstimatedTime() int     { return 20 }
 func (l *StartupProbeMissingLab) Tags() []string {
 	return []string{"probes", "startup", "liveness", "workloads"}
 }

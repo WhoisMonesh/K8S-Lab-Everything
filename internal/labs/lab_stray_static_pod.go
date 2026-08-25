@@ -11,11 +11,11 @@ func init() { Register(&StrayStaticPodLab{}) }
 
 type StrayStaticPodLab struct{ BaseLab }
 
-func (l *StrayStaticPodLab) ID() string          { return "stray_static_pod" }
-func (l *StrayStaticPodLab) Title() string        { return "Stray Static Pod Consuming Resources" }
-func (l *StrayStaticPodLab) Category() Category   { return CategoryControlPlane }
+func (l *StrayStaticPodLab) ID() string             { return "stray_static_pod" }
+func (l *StrayStaticPodLab) Title() string          { return "Stray Static Pod Consuming Resources" }
+func (l *StrayStaticPodLab) Category() Category     { return CategoryControlPlane }
 func (l *StrayStaticPodLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *StrayStaticPodLab) EstimatedTime() int   { return 15 }
+func (l *StrayStaticPodLab) EstimatedTime() int     { return 15 }
 func (l *StrayStaticPodLab) Tags() []string {
 	return []string{"static-pod", "control-plane", "kubelet"}
 }

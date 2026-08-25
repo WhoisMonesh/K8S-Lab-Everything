@@ -11,11 +11,11 @@ func init() { Register(&NamespaceFinalizerStuckLab{}) }
 
 type NamespaceFinalizerStuckLab struct{ BaseLab }
 
-func (l *NamespaceFinalizerStuckLab) ID() string          { return "namespace_finalizer_stuck" }
-func (l *NamespaceFinalizerStuckLab) Title() string        { return "Namespace Stuck in Terminating" }
-func (l *NamespaceFinalizerStuckLab) Category() Category   { return CategoryControlPlane }
+func (l *NamespaceFinalizerStuckLab) ID() string             { return "namespace_finalizer_stuck" }
+func (l *NamespaceFinalizerStuckLab) Title() string          { return "Namespace Stuck in Terminating" }
+func (l *NamespaceFinalizerStuckLab) Category() Category     { return CategoryControlPlane }
 func (l *NamespaceFinalizerStuckLab) Difficulty() Difficulty { return DifficultyHard }
-func (l *NamespaceFinalizerStuckLab) EstimatedTime() int   { return 20 }
+func (l *NamespaceFinalizerStuckLab) EstimatedTime() int     { return 20 }
 func (l *NamespaceFinalizerStuckLab) Tags() []string {
 	return []string{"namespace", "finalizer", "control-plane"}
 }

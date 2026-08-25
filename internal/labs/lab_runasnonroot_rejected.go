@@ -10,16 +10,16 @@ func init() { Register(&RunAsNonRootRejectedLab{}) }
 
 type RunAsNonRootRejectedLab struct{ BaseLab }
 
-func (l *RunAsNonRootRejectedLab) ID() string          { return "runasnonroot_rejected" }
-func (l *RunAsNonRootRejectedLab) Title() string        { return "Pod Rejected — runAsNonRoot Violation" }
-func (l *RunAsNonRootRejectedLab) Category() Category   { return CategorySecurity }
+func (l *RunAsNonRootRejectedLab) ID() string             { return "runasnonroot_rejected" }
+func (l *RunAsNonRootRejectedLab) Title() string          { return "Pod Rejected — runAsNonRoot Violation" }
+func (l *RunAsNonRootRejectedLab) Category() Category     { return CategorySecurity }
 func (l *RunAsNonRootRejectedLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *RunAsNonRootRejectedLab) EstimatedTime() int   { return 15 }
+func (l *RunAsNonRootRejectedLab) EstimatedTime() int     { return 15 }
 func (l *RunAsNonRootRejectedLab) Tags() []string {
 	return []string{"security", "securitycontext", "runasnonroot", "admission"}
 }
 func (l *RunAsNonRootRejectedLab) Description() string {
-return `A pod 'secure-worker' in namespace 'strict-ns' fails to create with
+	return `A pod 'secure-worker' in namespace 'strict-ns' fails to create with
 error: pods "secure-worker" is forbidden: violates PodSecurity
 "restricted:latest": runAsNonRoot (pod must not run as root).
 

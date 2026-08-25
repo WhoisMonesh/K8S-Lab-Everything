@@ -10,11 +10,11 @@ func init() { Register(&PausedRolloutResumeLab{}) }
 
 type PausedRolloutResumeLab struct{ BaseLab }
 
-func (l *PausedRolloutResumeLab) ID() string          { return "paused_rollout_resume" }
-func (l *PausedRolloutResumeLab) Title() string        { return "Deployment Paused Mid-Rollout" }
-func (l *PausedRolloutResumeLab) Category() Category   { return CategoryWorkloads }
+func (l *PausedRolloutResumeLab) ID() string             { return "paused_rollout_resume" }
+func (l *PausedRolloutResumeLab) Title() string          { return "Deployment Paused Mid-Rollout" }
+func (l *PausedRolloutResumeLab) Category() Category     { return CategoryWorkloads }
 func (l *PausedRolloutResumeLab) Difficulty() Difficulty { return DifficultyEasy }
-func (l *PausedRolloutResumeLab) EstimatedTime() int   { return 10 }
+func (l *PausedRolloutResumeLab) EstimatedTime() int     { return 10 }
 func (l *PausedRolloutResumeLab) Tags() []string {
 	return []string{"deployment", "rollout", "pause", "workloads"}
 }

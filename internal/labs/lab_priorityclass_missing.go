@@ -10,11 +10,11 @@ func init() { Register(&PriorityClassMissingLab{}) }
 
 type PriorityClassMissingLab struct{ BaseLab }
 
-func (l *PriorityClassMissingLab) ID() string          { return "priorityclass_missing" }
-func (l *PriorityClassMissingLab) Title() string        { return "Pod Uses Nonexistent PriorityClass" }
-func (l *PriorityClassMissingLab) Category() Category   { return CategoryScheduling }
+func (l *PriorityClassMissingLab) ID() string             { return "priorityclass_missing" }
+func (l *PriorityClassMissingLab) Title() string          { return "Pod Uses Nonexistent PriorityClass" }
+func (l *PriorityClassMissingLab) Category() Category     { return CategoryScheduling }
 func (l *PriorityClassMissingLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *PriorityClassMissingLab) EstimatedTime() int   { return 15 }
+func (l *PriorityClassMissingLab) EstimatedTime() int     { return 15 }
 func (l *PriorityClassMissingLab) Tags() []string {
 	return []string{"priorityclass", "scheduling", "pending"}
 }

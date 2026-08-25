@@ -10,11 +10,11 @@ func init() { Register(&VolumeSubpathMissingLab{}) }
 
 type VolumeSubpathMissingLab struct{ BaseLab }
 
-func (l *VolumeSubpathMissingLab) ID() string          { return "volume_subpath_missing" }
-func (l *VolumeSubpathMissingLab) Title() string        { return "Pod CrashLoop — Wrong Volume subPath" }
-func (l *VolumeSubpathMissingLab) Category() Category   { return CategoryStorage }
+func (l *VolumeSubpathMissingLab) ID() string             { return "volume_subpath_missing" }
+func (l *VolumeSubpathMissingLab) Title() string          { return "Pod CrashLoop — Wrong Volume subPath" }
+func (l *VolumeSubpathMissingLab) Category() Category     { return CategoryStorage }
 func (l *VolumeSubpathMissingLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *VolumeSubpathMissingLab) EstimatedTime() int   { return 15 }
+func (l *VolumeSubpathMissingLab) EstimatedTime() int     { return 15 }
 func (l *VolumeSubpathMissingLab) Tags() []string {
 	return []string{"volume", "subpath", "configmap", "storage"}
 }

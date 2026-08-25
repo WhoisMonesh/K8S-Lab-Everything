@@ -11,11 +11,11 @@ func init() { Register(&RoleBindingWrongRoleLab{}) }
 
 type RoleBindingWrongRoleLab struct{ BaseLab }
 
-func (l *RoleBindingWrongRoleLab) ID() string          { return "rolebinding_wrong_role" }
-func (l *RoleBindingWrongRoleLab) Title() string        { return "RoleBinding References Missing Role" }
-func (l *RoleBindingWrongRoleLab) Category() Category   { return CategoryRBAC }
+func (l *RoleBindingWrongRoleLab) ID() string             { return "rolebinding_wrong_role" }
+func (l *RoleBindingWrongRoleLab) Title() string          { return "RoleBinding References Missing Role" }
+func (l *RoleBindingWrongRoleLab) Category() Category     { return CategoryRBAC }
 func (l *RoleBindingWrongRoleLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *RoleBindingWrongRoleLab) EstimatedTime() int   { return 15 }
+func (l *RoleBindingWrongRoleLab) EstimatedTime() int     { return 15 }
 func (l *RoleBindingWrongRoleLab) Tags() []string {
 	return []string{"rbac", "rolebinding", "role", "permissions"}
 }

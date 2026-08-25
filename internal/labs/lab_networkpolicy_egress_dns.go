@@ -11,11 +11,11 @@ func init() { Register(&NetworkPolicyEgressDNSLab{}) }
 
 type NetworkPolicyEgressDNSLab struct{ BaseLab }
 
-func (l *NetworkPolicyEgressDNSLab) ID() string          { return "networkpolicy_egress_dns_blocked" }
-func (l *NetworkPolicyEgressDNSLab) Title() string        { return "NetworkPolicy Blocks DNS Resolution" }
-func (l *NetworkPolicyEgressDNSLab) Category() Category   { return CategoryNetworking }
+func (l *NetworkPolicyEgressDNSLab) ID() string             { return "networkpolicy_egress_dns_blocked" }
+func (l *NetworkPolicyEgressDNSLab) Title() string          { return "NetworkPolicy Blocks DNS Resolution" }
+func (l *NetworkPolicyEgressDNSLab) Category() Category     { return CategoryNetworking }
 func (l *NetworkPolicyEgressDNSLab) Difficulty() Difficulty { return DifficultyHard }
-func (l *NetworkPolicyEgressDNSLab) EstimatedTime() int   { return 20 }
+func (l *NetworkPolicyEgressDNSLab) EstimatedTime() int     { return 20 }
 func (l *NetworkPolicyEgressDNSLab) Tags() []string {
 	return []string{"networkpolicy", "dns", "egress", "networking"}
 }

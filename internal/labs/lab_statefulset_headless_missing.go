@@ -10,11 +10,11 @@ func init() { Register(&StatefulsetHeadlessMissingLab{}) }
 
 type StatefulsetHeadlessMissingLab struct{ BaseLab }
 
-func (l *StatefulsetHeadlessMissingLab) ID() string          { return "statefulset_headless_missing" }
-func (l *StatefulsetHeadlessMissingLab) Title() string        { return "StatefulSet Without Headless Service" }
-func (l *StatefulsetHeadlessMissingLab) Category() Category   { return CategoryWorkloads }
+func (l *StatefulsetHeadlessMissingLab) ID() string             { return "statefulset_headless_missing" }
+func (l *StatefulsetHeadlessMissingLab) Title() string          { return "StatefulSet Without Headless Service" }
+func (l *StatefulsetHeadlessMissingLab) Category() Category     { return CategoryWorkloads }
 func (l *StatefulsetHeadlessMissingLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *StatefulsetHeadlessMissingLab) EstimatedTime() int   { return 20 }
+func (l *StatefulsetHeadlessMissingLab) EstimatedTime() int     { return 20 }
 func (l *StatefulsetHeadlessMissingLab) Tags() []string {
 	return []string{"statefulset", "headless", "service", "workloads"}
 }

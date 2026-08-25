@@ -11,11 +11,11 @@ func init() { Register(&HostAliasWrongIPLab{}) }
 
 type HostAliasWrongIPLab struct{ BaseLab }
 
-func (l *HostAliasWrongIPLab) ID() string          { return "hostalias_wrong_ip" }
-func (l *HostAliasWrongIPLab) Title() string        { return "Pod /etc/hosts Points to Wrong IP" }
-func (l *HostAliasWrongIPLab) Category() Category   { return CategoryDNS }
+func (l *HostAliasWrongIPLab) ID() string             { return "hostalias_wrong_ip" }
+func (l *HostAliasWrongIPLab) Title() string          { return "Pod /etc/hosts Points to Wrong IP" }
+func (l *HostAliasWrongIPLab) Category() Category     { return CategoryDNS }
 func (l *HostAliasWrongIPLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *HostAliasWrongIPLab) EstimatedTime() int   { return 15 }
+func (l *HostAliasWrongIPLab) EstimatedTime() int     { return 15 }
 func (l *HostAliasWrongIPLab) Tags() []string {
 	return []string{"dns", "hostalias", "hosts", "networking"}
 }

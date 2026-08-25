@@ -11,11 +11,11 @@ func init() { Register(&CMImmutableMigrationLab{}) }
 
 type CMImmutableMigrationLab struct{ BaseLab }
 
-func (l *CMImmutableMigrationLab) ID() string          { return "cm_immutable_migration" }
-func (l *CMImmutableMigrationLab) Title() string        { return "Immutable ConfigMap Migration" }
-func (l *CMImmutableMigrationLab) Category() Category   { return CategoryScheduling }
+func (l *CMImmutableMigrationLab) ID() string             { return "cm_immutable_migration" }
+func (l *CMImmutableMigrationLab) Title() string          { return "Immutable ConfigMap Migration" }
+func (l *CMImmutableMigrationLab) Category() Category     { return CategoryScheduling }
 func (l *CMImmutableMigrationLab) Difficulty() Difficulty { return DifficultyHard }
-func (l *CMImmutableMigrationLab) EstimatedTime() int   { return 20 }
+func (l *CMImmutableMigrationLab) EstimatedTime() int     { return 20 }
 func (l *CMImmutableMigrationLab) Tags() []string {
 	return []string{"configmap", "immutable", "mount", "scheduling"}
 }

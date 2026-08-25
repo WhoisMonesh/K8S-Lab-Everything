@@ -10,11 +10,13 @@ func init() { Register(&VolumeReadOnlyWriteFailLab{}) }
 
 type VolumeReadOnlyWriteFailLab struct{ BaseLab }
 
-func (l *VolumeReadOnlyWriteFailLab) ID() string          { return "volume_readonly_write_fail" }
-func (l *VolumeReadOnlyWriteFailLab) Title() string        { return "Pod CrashLoop — Writing to ReadOnly Volume" }
-func (l *VolumeReadOnlyWriteFailLab) Category() Category   { return CategoryStorage }
+func (l *VolumeReadOnlyWriteFailLab) ID() string { return "volume_readonly_write_fail" }
+func (l *VolumeReadOnlyWriteFailLab) Title() string {
+	return "Pod CrashLoop — Writing to ReadOnly Volume"
+}
+func (l *VolumeReadOnlyWriteFailLab) Category() Category     { return CategoryStorage }
 func (l *VolumeReadOnlyWriteFailLab) Difficulty() Difficulty { return DifficultyEasy }
-func (l *VolumeReadOnlyWriteFailLab) EstimatedTime() int   { return 10 }
+func (l *VolumeReadOnlyWriteFailLab) EstimatedTime() int     { return 10 }
 func (l *VolumeReadOnlyWriteFailLab) Tags() []string {
 	return []string{"volume", "readonly", "security", "storage"}
 }

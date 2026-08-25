@@ -10,11 +10,11 @@ func init() { Register(&JobDeadlineExceededLab{}) }
 
 type JobDeadlineExceededLab struct{ BaseLab }
 
-func (l *JobDeadlineExceededLab) ID() string          { return "job_deadline_exceeded" }
-func (l *JobDeadlineExceededLab) Title() string        { return "Job Killed By activeDeadlineSeconds" }
-func (l *JobDeadlineExceededLab) Category() Category   { return CategoryWorkloads }
+func (l *JobDeadlineExceededLab) ID() string             { return "job_deadline_exceeded" }
+func (l *JobDeadlineExceededLab) Title() string          { return "Job Killed By activeDeadlineSeconds" }
+func (l *JobDeadlineExceededLab) Category() Category     { return CategoryWorkloads }
 func (l *JobDeadlineExceededLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *JobDeadlineExceededLab) EstimatedTime() int   { return 15 }
+func (l *JobDeadlineExceededLab) EstimatedTime() int     { return 15 }
 func (l *JobDeadlineExceededLab) Tags() []string {
 	return []string{"job", "deadline", "activeDeadline", "workloads"}
 }

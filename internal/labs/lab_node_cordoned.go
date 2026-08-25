@@ -11,11 +11,11 @@ func init() { Register(&NodeCordonedLab{}) }
 
 type NodeCordonedLab struct{ BaseLab }
 
-func (l *NodeCordonedLab) ID() string          { return "node_cordoned" }
-func (l *NodeCordonedLab) Title() string        { return "Node Cordoned — Pods Cannot Schedule" }
-func (l *NodeCordonedLab) Category() Category   { return CategoryControlPlane }
+func (l *NodeCordonedLab) ID() string             { return "node_cordoned" }
+func (l *NodeCordonedLab) Title() string          { return "Node Cordoned — Pods Cannot Schedule" }
+func (l *NodeCordonedLab) Category() Category     { return CategoryControlPlane }
 func (l *NodeCordonedLab) Difficulty() Difficulty { return DifficultyEasy }
-func (l *NodeCordonedLab) EstimatedTime() int   { return 10 }
+func (l *NodeCordonedLab) EstimatedTime() int     { return 10 }
 func (l *NodeCordonedLab) Tags() []string {
 	return []string{"node", "cordon", "scheduling", "control-plane"}
 }

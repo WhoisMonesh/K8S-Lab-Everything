@@ -11,11 +11,11 @@ func init() { Register(&MissingCRDDependencyLab{}) }
 
 type MissingCRDDependencyLab struct{ BaseLab }
 
-func (l *MissingCRDDependencyLab) ID() string          { return "missing_crd_dependency" }
-func (l *MissingCRDDependencyLab) Title() string        { return "Custom Resource Fails — Missing CRD" }
-func (l *MissingCRDDependencyLab) Category() Category   { return CategoryControlPlane }
+func (l *MissingCRDDependencyLab) ID() string             { return "missing_crd_dependency" }
+func (l *MissingCRDDependencyLab) Title() string          { return "Custom Resource Fails — Missing CRD" }
+func (l *MissingCRDDependencyLab) Category() Category     { return CategoryControlPlane }
 func (l *MissingCRDDependencyLab) Difficulty() Difficulty { return DifficultyHard }
-func (l *MissingCRDDependencyLab) EstimatedTime() int   { return 20 }
+func (l *MissingCRDDependencyLab) EstimatedTime() int     { return 20 }
 func (l *MissingCRDDependencyLab) Tags() []string {
 	return []string{"crd", "custom-resource", "api", "control-plane"}
 }

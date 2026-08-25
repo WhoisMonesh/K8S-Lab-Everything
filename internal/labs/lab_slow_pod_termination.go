@@ -10,11 +10,11 @@ func init() { Register(&SlowPodTerminationLab{}) }
 
 type SlowPodTerminationLab struct{ BaseLab }
 
-func (l *SlowPodTerminationLab) ID() string          { return "slow_pod_termination" }
-func (l *SlowPodTerminationLab) Title() string        { return "Pod Stuck Terminating" }
-func (l *SlowPodTerminationLab) Category() Category   { return CategoryWorkloads }
+func (l *SlowPodTerminationLab) ID() string             { return "slow_pod_termination" }
+func (l *SlowPodTerminationLab) Title() string          { return "Pod Stuck Terminating" }
+func (l *SlowPodTerminationLab) Category() Category     { return CategoryWorkloads }
 func (l *SlowPodTerminationLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *SlowPodTerminationLab) EstimatedTime() int   { return 15 }
+func (l *SlowPodTerminationLab) EstimatedTime() int     { return 15 }
 func (l *SlowPodTerminationLab) Tags() []string {
 	return []string{"termination", "grace-period", "deletion", "workloads"}
 }

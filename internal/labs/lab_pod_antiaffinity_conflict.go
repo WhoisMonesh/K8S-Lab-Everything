@@ -11,11 +11,13 @@ func init() { Register(&PodAntiAffinityConflictLab{}) }
 
 type PodAntiAffinityConflictLab struct{ BaseLab }
 
-func (l *PodAntiAffinityConflictLab) ID() string          { return "pod_antiaffinity_conflict" }
-func (l *PodAntiAffinityConflictLab) Title() string        { return "Deployment Can't Schedule Due to Anti-Affinity" }
-func (l *PodAntiAffinityConflictLab) Category() Category   { return CategoryScheduling }
+func (l *PodAntiAffinityConflictLab) ID() string { return "pod_antiaffinity_conflict" }
+func (l *PodAntiAffinityConflictLab) Title() string {
+	return "Deployment Can't Schedule Due to Anti-Affinity"
+}
+func (l *PodAntiAffinityConflictLab) Category() Category     { return CategoryScheduling }
 func (l *PodAntiAffinityConflictLab) Difficulty() Difficulty { return DifficultyHard }
-func (l *PodAntiAffinityConflictLab) EstimatedTime() int   { return 20 }
+func (l *PodAntiAffinityConflictLab) EstimatedTime() int     { return 20 }
 func (l *PodAntiAffinityConflictLab) Tags() []string {
 	return []string{"antiaffinity", "scheduling", "replicas"}
 }

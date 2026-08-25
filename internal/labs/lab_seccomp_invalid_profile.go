@@ -10,16 +10,16 @@ func init() { Register(&SeccompInvalidProfileLab{}) }
 
 type SeccompInvalidProfileLab struct{ BaseLab }
 
-func (l *SeccompInvalidProfileLab) ID() string          { return "seccomp_invalid_profile" }
-func (l *SeccompInvalidProfileLab) Title() string        { return "Pod Rejected — Invalid seccomp Profile" }
-func (l *SeccompInvalidProfileLab) Category() Category   { return CategorySecurity }
+func (l *SeccompInvalidProfileLab) ID() string             { return "seccomp_invalid_profile" }
+func (l *SeccompInvalidProfileLab) Title() string          { return "Pod Rejected — Invalid seccomp Profile" }
+func (l *SeccompInvalidProfileLab) Category() Category     { return CategorySecurity }
 func (l *SeccompInvalidProfileLab) Difficulty() Difficulty { return DifficultyHard }
-func (l *SeccompInvalidProfileLab) EstimatedTime() int   { return 20 }
+func (l *SeccompInvalidProfileLab) EstimatedTime() int     { return 20 }
 func (l *SeccompInvalidProfileLab) Tags() []string {
 	return []string{"security", "seccomp", "profile", "admission"}
 }
 func (l *SeccompInvalidProfileLab) Description() string {
-return `A pod 'seccomp-worker' in namespace 'strict-ns' (same namespace as
+	return `A pod 'seccomp-worker' in namespace 'strict-ns' (same namespace as
 the runAsNonRoot lab) fails with: violates PodSecurity
 "restricted:latest": seccompProfile (seccomp profile must be
 RuntimeDefault or Localhost).

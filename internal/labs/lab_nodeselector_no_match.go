@@ -10,11 +10,13 @@ func init() { Register(&NodeSelectorNoMatchLab{}) }
 
 type NodeSelectorNoMatchLab struct{ BaseLab }
 
-func (l *NodeSelectorNoMatchLab) ID() string          { return "nodeselector_no_match" }
-func (l *NodeSelectorNoMatchLab) Title() string        { return "Pod Pending — No Node Matches NodeSelector" }
-func (l *NodeSelectorNoMatchLab) Category() Category   { return CategoryScheduling }
+func (l *NodeSelectorNoMatchLab) ID() string { return "nodeselector_no_match" }
+func (l *NodeSelectorNoMatchLab) Title() string {
+	return "Pod Pending — No Node Matches NodeSelector"
+}
+func (l *NodeSelectorNoMatchLab) Category() Category     { return CategoryScheduling }
 func (l *NodeSelectorNoMatchLab) Difficulty() Difficulty { return DifficultyEasy }
-func (l *NodeSelectorNoMatchLab) EstimatedTime() int   { return 10 }
+func (l *NodeSelectorNoMatchLab) EstimatedTime() int     { return 10 }
 func (l *NodeSelectorNoMatchLab) Tags() []string {
 	return []string{"nodeselector", "scheduling", "pending"}
 }

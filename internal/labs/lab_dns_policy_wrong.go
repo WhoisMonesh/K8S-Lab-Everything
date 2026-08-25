@@ -11,11 +11,11 @@ func init() { Register(&DNSPolicyWrongLab{}) }
 
 type DNSPolicyWrongLab struct{ BaseLab }
 
-func (l *DNSPolicyWrongLab) ID() string          { return "dns_policy_wrong" }
-func (l *DNSPolicyWrongLab) Title() string        { return "Pod Cannot Resolve Cluster DNS" }
-func (l *DNSPolicyWrongLab) Category() Category   { return CategoryDNS }
+func (l *DNSPolicyWrongLab) ID() string             { return "dns_policy_wrong" }
+func (l *DNSPolicyWrongLab) Title() string          { return "Pod Cannot Resolve Cluster DNS" }
+func (l *DNSPolicyWrongLab) Category() Category     { return CategoryDNS }
 func (l *DNSPolicyWrongLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *DNSPolicyWrongLab) EstimatedTime() int   { return 15 }
+func (l *DNSPolicyWrongLab) EstimatedTime() int     { return 15 }
 func (l *DNSPolicyWrongLab) Tags() []string {
 	return []string{"dns", "dnsPolicy", "networking"}
 }

@@ -10,11 +10,11 @@ func init() { Register(&ServiceLoadBalancerPendingLab{}) }
 
 type ServiceLoadBalancerPendingLab struct{ BaseLab }
 
-func (l *ServiceLoadBalancerPendingLab) ID() string          { return "service_loadbalancer_pending" }
-func (l *ServiceLoadBalancerPendingLab) Title() string        { return "LoadBalancer Service Stuck Pending" }
-func (l *ServiceLoadBalancerPendingLab) Category() Category   { return CategoryNetworking }
+func (l *ServiceLoadBalancerPendingLab) ID() string             { return "service_loadbalancer_pending" }
+func (l *ServiceLoadBalancerPendingLab) Title() string          { return "LoadBalancer Service Stuck Pending" }
+func (l *ServiceLoadBalancerPendingLab) Category() Category     { return CategoryNetworking }
 func (l *ServiceLoadBalancerPendingLab) Difficulty() Difficulty { return DifficultyEasy }
-func (l *ServiceLoadBalancerPendingLab) EstimatedTime() int   { return 10 }
+func (l *ServiceLoadBalancerPendingLab) EstimatedTime() int     { return 10 }
 func (l *ServiceLoadBalancerPendingLab) Tags() []string {
 	return []string{"service", "loadbalancer", "metalb", "networking"}
 }
