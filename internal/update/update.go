@@ -222,13 +222,15 @@ func SelfUpdate() error {
 		// macOS: use osascript to get password via GUI dialog
 		script := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, tmpFile, execPath)
 		cmd = exec.Command("osascript", "-e", script)
+	} else if runtime.GOOS == "windows" {
+		// Windows: try PowerShell Start-Process -Verb RunAs for UAC prompt
+		psCmd := fmt.Sprintf("Move-Item -Path '%s' -Destination '%s' -Force", tmpFile, execPath)
+		cmd = exec.Command("powershell", "-Command", psCmd)
 	} else {
 		// Linux: use sudo -S to read password from stdin
 		cmd = exec.Command("sudo", "-S", "mv", tmpFile, execPath)
 		cmd.Stdin = os.Stdin
 	}
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	if output, err := cmd.CombinedOutput(); err != nil {
 		os.Remove(tmpFile)
 		return fmt.Errorf("failed to install update: %s: %w", string(output), err)

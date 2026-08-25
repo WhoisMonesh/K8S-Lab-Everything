@@ -88,7 +88,13 @@ func (k *KindProvider) Exists(ctx context.Context) (bool, error) {
 	cmd := exec.CommandContext(ctx, "kind", "get", "clusters")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, fmt.Errorf("listing kind clusters: %w", err)
+		// kind get clusters can fail if Docker is not running.
+		// Check if Docker is the problem and give a clear message.
+		dockerCmd := exec.CommandContext(ctx, "docker", "info")
+		if dErr := dockerCmd.Run(); dErr != nil {
+			return false, fmt.Errorf("Docker is not running. Please start Docker Desktop and try again")
+		}
+		return false, fmt.Errorf("listing kind clusters: %s", strings.TrimSpace(string(output)))
 	}
 
 	clusters := strings.Split(strings.TrimSpace(string(output)), "\n")
