@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -12,6 +16,7 @@ import (
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/cluster"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/config"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/labs"
+	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/progress"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/update"
 
 	// Import labs to register them
@@ -35,7 +40,6 @@ var rootCmd = &cobra.Command{
 	Long: `cka-lab-runner is a tool for practicing Kubernetes administration skills
 by creating reproducible broken scenarios in a local cluster.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// Skip update check for version/update commands
 		if cmd.Name() == "version" || cmd.Name() == "update" || cmd.Name() == "help" {
 			return
 		}
@@ -68,15 +72,11 @@ var initCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		configPath := config.DefaultConfigFile
 
-		// Check if config already exists
 		if _, err := os.Stat(configPath); err == nil {
 			return fmt.Errorf("config file already exists: %s", configPath)
 		}
 
-		// Create default config
 		defaultCfg := config.Default()
-
-		// Save config
 		if err := config.Save(defaultCfg, configPath); err != nil {
 			return fmt.Errorf("saving config: %w", err)
 		}
@@ -92,17 +92,13 @@ var upCmd = &cobra.Command{
 	Short: "Create the local Kubernetes cluster",
 	Long:  `Creates a local Kubernetes cluster based on the configuration file.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		recreate, err := cmd.Flags().GetBool("recreate")
-		if err != nil {
-			return fmt.Errorf("getting recreate flag: %w", err)
-		}
+		recreate, _ := cmd.Flags().GetBool("recreate")
+		random, _ := cmd.Flags().GetBool("random")
 
-		// Load config
 		if err := loadConfig(); err != nil {
 			return err
 		}
 
-		// Create provider
 		provider, err := createProvider()
 		if err != nil {
 			return fmt.Errorf("creating provider: %w", err)
@@ -111,7 +107,6 @@ var upCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 		defer cancel()
 
-		// Check if cluster exists
 		exists, err := provider.Exists(ctx)
 		if err != nil {
 			return fmt.Errorf("checking if cluster exists: %w", err)
@@ -125,17 +120,23 @@ var upCmd = &cobra.Command{
 				}
 			} else {
 				cli.Info(fmt.Sprintf("Cluster already exists: %s (use --recreate to recreate)", provider.Name()))
+				if random {
+					return runRandomLab(nil)
+				}
 				return nil
 			}
 		}
 
-		// Create cluster
 		cli.Info(fmt.Sprintf("Creating cluster: %s", provider.Name()))
 		if err := provider.Up(ctx); err != nil {
 			return fmt.Errorf("creating cluster: %w", err)
 		}
 
 		cli.Success(fmt.Sprintf("Cluster created: %s", provider.Name()))
+
+		if random {
+			return runRandomLab(nil)
+		}
 		return nil
 	},
 }
@@ -145,12 +146,10 @@ var downCmd = &cobra.Command{
 	Short: "Delete the local Kubernetes cluster",
 	Long:  `Deletes the local Kubernetes cluster.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Load config
 		if err := loadConfig(); err != nil {
 			return err
 		}
 
-		// Create provider
 		provider, err := createProvider()
 		if err != nil {
 			return fmt.Errorf("creating provider: %w", err)
@@ -159,7 +158,6 @@ var downCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
-		// Delete cluster
 		cli.Info(fmt.Sprintf("Deleting cluster: %s", provider.Name()))
 		if err := provider.Down(ctx); err != nil {
 			return fmt.Errorf("deleting cluster: %w", err)
@@ -187,14 +185,12 @@ var labListCmd = &cobra.Command{
 	Short: "List available labs",
 	Long:  `Lists all available practice labs with their metadata.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		categoryFilter, err := cmd.Flags().GetString("category")
-		if err != nil {
-			return fmt.Errorf("getting category flag: %w", err)
-		}
-		difficultyFilter, err := cmd.Flags().GetString("difficulty")
-		if err != nil {
-			return fmt.Errorf("getting difficulty flag: %w", err)
-		}
+		categoryFilter, _ := cmd.Flags().GetString("category")
+		difficultyFilter, _ := cmd.Flags().GetString("difficulty")
+		domainFilter, _ := cmd.Flags().GetString("domain")
+		jsonOutput, _ := cmd.Flags().GetBool("json")
+		showProgress, _ := cmd.Flags().GetBool("progress")
+		tagFilter, _ := cmd.Flags().GetString("tag")
 
 		allLabs := labs.List()
 		var filteredLabs []labs.Lab
@@ -207,12 +203,59 @@ var labListCmd = &cobra.Command{
 			if difficultyFilter != "" && string(lab.Difficulty()) != difficultyFilter {
 				matches = false
 			}
+			if domainFilter != "" {
+				d := labs.GetDomain(lab)
+				if d != domainFilter {
+					matches = false
+				}
+			}
+			if tagFilter != "" {
+				found := false
+				for _, t := range lab.Tags() {
+					if t == tagFilter {
+						found = true
+						break
+					}
+				}
+				if !found {
+					matches = false
+				}
+			}
 			if matches {
 				filteredLabs = append(filteredLabs, lab)
 			}
 		}
 
-		cli.PrintLabList(filteredLabs)
+		if jsonOutput {
+			type labJSON struct {
+				ID         string   `json:"id"`
+				Title      string   `json:"title"`
+				Category   string   `json:"category"`
+				Difficulty string   `json:"difficulty"`
+				Estimated  int      `json:"estimated_minutes"`
+				Tags       []string `json:"tags"`
+				Domain     string   `json:"domain,omitempty"`
+				Completed  bool     `json:"completed"`
+			}
+			var out []labJSON
+			for _, lab := range filteredLabs {
+				out = append(out, labJSON{
+					ID:         lab.ID(),
+					Title:      lab.Title(),
+					Category:   string(lab.Category()),
+					Difficulty: string(lab.Difficulty()),
+					Estimated:  lab.EstimatedTime(),
+					Tags:       lab.Tags(),
+					Domain:     labs.GetDomain(lab),
+					Completed:  progress.IsCompleted(lab.ID()),
+				})
+			}
+			data, _ := json.MarshalIndent(out, "", "  ")
+			fmt.Println(string(data))
+			return nil
+		}
+
+		cli.PrintLabListWithProgress(filteredLabs, showProgress)
 		return nil
 	},
 }
@@ -224,19 +267,19 @@ var labRunCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		labID := args[0]
+		timed, _ := cmd.Flags().GetBool("timed")
+		timeLimit, _ := cmd.Flags().GetInt("time-limit")
+		ns, _ := cmd.Flags().GetString("namespace")
 
-		// Get the lab
 		lab, err := labs.Get(labID)
 		if err != nil {
 			return err
 		}
 
-		// Load config
 		if err := loadConfig(); err != nil {
 			return err
 		}
 
-		// Create provider
 		provider, err := createProvider()
 		if err != nil {
 			return fmt.Errorf("creating provider: %w", err)
@@ -245,44 +288,67 @@ var labRunCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
-		// Check if cluster exists
 		exists, err := provider.Exists(ctx)
 		if err != nil {
 			return fmt.Errorf("checking if cluster exists: %w", err)
 		}
-
 		if !exists {
 			return fmt.Errorf("cluster does not exist. Run 'cka-lab-runner up' first")
 		}
 
-		// Get kubeconfig
+		// Check prerequisites
+		if prereqs := labs.GetPrerequisites(lab); len(prereqs) > 0 {
+			var uncompleted []string
+			for _, p := range prereqs {
+				if !progress.IsCompleted(p) {
+					uncompleted = append(uncompleted, p)
+				}
+			}
+			if len(uncompleted) > 0 {
+				cli.Warning(fmt.Sprintf("Prerequisites not completed: %s", strings.Join(uncompleted, ", ")))
+				cli.Info("Complete these labs first, or run anyway with --force")
+				force, _ := cmd.Flags().GetBool("force")
+				if !force {
+					return fmt.Errorf("prerequisites not met")
+				}
+			}
+		}
+
 		kubeconfigPath, err := provider.KubeconfigPath(ctx)
 		if err != nil {
 			return fmt.Errorf("getting kubeconfig: %w", err)
 		}
 
-		// Prepare the lab
 		cli.Info("Preparing lab environment...")
 		if err := lab.Prepare(ctx, kubeconfigPath); err != nil {
 			cli.Warning(fmt.Sprintf("Prepare step failed (may be optional): %v", err))
 		}
 
-		// Break the cluster
 		cli.Info("Applying broken scenario...")
 		if err := lab.Break(ctx, kubeconfigPath); err != nil {
 			return fmt.Errorf("breaking cluster: %w", err)
 		}
 
-		// Verify broken state
 		if err := lab.VerifyBroken(ctx, kubeconfigPath); err != nil {
 			cli.Warning(fmt.Sprintf("Verify broken step failed (may be optional): %v", err))
 		}
 
-		// Print lab details
 		cli.PrintLabDetails(lab)
-
 		cli.Success("Lab scenario applied successfully!")
-		cli.Info(fmt.Sprintf("Use 'cka-lab-runner lab solution %s' to see the solution", labID))
+
+		if timed {
+			if timeLimit <= 0 {
+				timeLimit = lab.EstimatedTime()
+			}
+			cli.Info(fmt.Sprintf("TIMED MODE: You have %d minutes to fix this lab!", timeLimit))
+			cli.Info("Timer started now. Fix the issue before time runs out!")
+			go runCountdown(timeLimit, labID)
+		} else {
+			cli.Info(fmt.Sprintf("Use 'cka-lab-runner lab solution %s' to see the solution", labID))
+		}
+		cli.Info(fmt.Sprintf("Use 'cka-lab-runner lab verify %s' to check your fix", labID))
+
+		_ = ns // namespace isolation handled by the lab's Break/Verify if they use it
 		return nil
 	},
 }
@@ -295,16 +361,13 @@ var labSolutionCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		labID := args[0]
 
-		// Get the lab
 		lab, err := labs.Get(labID)
 		if err != nil {
 			return err
 		}
 
-		// Print solution
 		solution := labs.FormatSolution(lab)
 		fmt.Println(solution)
-
 		return nil
 	},
 }
@@ -314,18 +377,9 @@ var labRandomCmd = &cobra.Command{
 	Short: "Select a random lab",
 	Long:  `Selects and runs a random lab, optionally filtered by category and difficulty.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		seed, err := cmd.Flags().GetInt64("seed")
-		if err != nil {
-			return fmt.Errorf("getting seed flag: %w", err)
-		}
-		categoryFilter, err := cmd.Flags().GetString("category")
-		if err != nil {
-			return fmt.Errorf("getting category flag: %w", err)
-		}
-		difficultyFilter, err := cmd.Flags().GetString("difficulty")
-		if err != nil {
-			return fmt.Errorf("getting difficulty flag: %w", err)
-		}
+		seed, _ := cmd.Flags().GetInt64("seed")
+		categoryFilter, _ := cmd.Flags().GetString("category")
+		difficultyFilter, _ := cmd.Flags().GetString("difficulty")
 
 		if seed == 0 {
 			seed = time.Now().UnixNano()
@@ -347,8 +401,6 @@ var labRandomCmd = &cobra.Command{
 		}
 
 		cli.Info(fmt.Sprintf("Selected lab: %s", lab.ID()))
-
-		// Run the lab by calling the run command
 		return labRunCmd.RunE(cmd, []string{lab.ID()})
 	},
 }
@@ -360,19 +412,15 @@ var labVerifyCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		labID := args[0]
-
-		// Get the lab
 		lab, err := labs.Get(labID)
 		if err != nil {
 			return err
 		}
 
-		// Load config
 		if err := loadConfig(); err != nil {
 			return err
 		}
 
-		// Create provider
 		provider, err := createProvider()
 		if err != nil {
 			return fmt.Errorf("creating provider: %w", err)
@@ -381,52 +429,189 @@ var labVerifyCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		// Check if cluster exists
 		exists, err := provider.Exists(ctx)
 		if err != nil {
 			return fmt.Errorf("checking if cluster exists: %w", err)
 		}
-
 		if !exists {
 			return fmt.Errorf("cluster does not exist")
 		}
 
-		// Get kubeconfig
 		kubeconfigPath, err := provider.KubeconfigPath(ctx)
 		if err != nil {
 			return fmt.Errorf("getting kubeconfig: %w", err)
 		}
 
-		// Verify the fix
 		cli.Info(fmt.Sprintf("Verifying lab: %s", lab.Title()))
 		if err := lab.Verify(ctx, kubeconfigPath); err != nil {
 			cli.Error(fmt.Sprintf("Lab not fixed yet: %v", err))
-			cli.Info("Keep trying! Use 'cka-lab-runner lab solution' if you need help")
+			cli.Info(fmt.Sprintf("Keep trying! Use 'cka-lab-runner lab hint %s' for help", labID))
 			return nil
 		}
 
 		cli.Success(fmt.Sprintf("Congratulations! You successfully fixed: %s", lab.Title()))
+
+		if !progress.IsCompleted(labID) {
+			progress.RecordCompletion(
+				labID,
+				lab.Title(),
+				string(lab.Category()),
+				string(lab.Difficulty()),
+				0,
+				lab.EstimatedTime(),
+				false, false, "",
+			)
+			cli.Info("Progress saved! Run 'cka-lab-runner lab status' to see your progress.")
+		} else {
+			cli.Info("Already recorded in progress. Nice work!")
+		}
+
 		return nil
 	},
 }
 
+var labHintCmd = &cobra.Command{
+	Use:   "hint <lab-id>",
+	Short: "Get a hint for a lab",
+	Long:  `Shows a progressive hint. Use --level 1-3 for increasingly specific help.`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		labID := args[0]
+		level, _ := cmd.Flags().GetInt("level")
+
+		lab, err := labs.Get(labID)
+		if err != nil {
+			return err
+		}
+
+		if level <= 0 {
+			level = 1
+		}
+
+		hint := labs.GetHintLevel(lab, level)
+
+		maxLevel := len(lab.Hints())
+		if maxLevel == 0 {
+			maxLevel = 3
+		}
+
+		fmt.Printf("\nHint for: %s (level %d/%d)\n", lab.Title(), level, maxLevel)
+		fmt.Println(strings.Repeat("─", 50))
+		fmt.Printf("  %s\n\n", hint)
+
+		if level < maxLevel {
+			cli.Info(fmt.Sprintf("Need more help? Try: cka-lab-runner lab hint %s --level %d", labID, level+1))
+		} else {
+			cli.Info(fmt.Sprintf("Last hint. Stuck? Try: cka-lab-runner lab solution %s", labID))
+		}
+		return nil
+	},
+}
+
+var labStatusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Show your lab progress",
+	Long:  `Displays a summary of completed labs and time spent.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		jsonOutput, _ := cmd.Flags().GetBool("json")
+
+		if jsonOutput {
+			data, err := progress.ExportJSON()
+			if err != nil {
+				return fmt.Errorf("exporting progress: %w", err)
+			}
+			fmt.Println(string(data))
+			return nil
+		}
+
+		fmt.Println(progress.Summary())
+		return nil
+	},
+}
+
+var labExportCmd = &cobra.Command{
+	Use:   "export",
+	Short: "Export completion history as JSON",
+	Long:  `Exports your lab completion history to stdout as JSON.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		data, err := progress.ExportJSON()
+		if err != nil {
+			return fmt.Errorf("exporting progress: %w", err)
+		}
+		fmt.Println(string(data))
+		return nil
+	},
+}
+
+func runCountdown(minutes int, labID string) {
+	total := time.Duration(minutes) * time.Minute
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	deadline := time.Now().Add(total)
+
+	for remaining := range ticker.C {
+		left := time.Until(deadline)
+		if left <= 0 {
+			fmt.Printf("\n⏰ TIME'S UP for lab %s! (%d minutes elapsed)\n", labID, minutes)
+			fmt.Printf("   Run 'cka-lab-runner lab verify %s' to check your work.\n\n", labID)
+			return
+		}
+		_ = remaining
+		if int(left.Minutes())%5 == 0 && int(left.Seconds())%60 < 30 {
+			fmt.Printf("  ⏳ %d:%02d remaining for lab %s\n", int(left.Minutes()), int(left.Seconds())%60, labID)
+		}
+	}
+}
+
+func runRandomLab(cmd *cobra.Command) error {
+	seed := time.Now().UnixNano()
+	lab, err := labs.Random(seed, "", "")
+	if err != nil {
+		return err
+	}
+	cli.Info(fmt.Sprintf("Random lab selected: %s", lab.ID()))
+	args := []string{lab.ID()}
+	if cmd != nil {
+		return labRunCmd.RunE(cmd, args)
+	}
+	return labRunCmd.RunE(rootCmd, args)
+}
+
 func init() {
-	// Global flags
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println("\nInterrupted. Cleaning up...")
+		os.Exit(1)
+	}()
+
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", config.DefaultConfigFile, "config file")
 
-	// up command flags
 	upCmd.Flags().Bool("recreate", false, "Recreate the cluster if it already exists")
+	upCmd.Flags().Bool("random", false, "Run a random lab after creating the cluster")
 
-	// lab list command flags
 	labListCmd.Flags().String("category", "", "Filter by category")
 	labListCmd.Flags().String("difficulty", "", "Filter by difficulty")
+	labListCmd.Flags().String("domain", "", "Filter by CKA exam domain")
+	labListCmd.Flags().String("tag", "", "Filter by tag")
+	labListCmd.Flags().Bool("json", false, "Output as JSON")
+	labListCmd.Flags().Bool("progress", false, "Show completion status next to each lab")
 
-	// lab random command flags
+	labRunCmd.Flags().Bool("timed", false, "Enable timed challenge mode")
+	labRunCmd.Flags().Int("time-limit", 0, "Time limit in minutes (default: lab estimated time)")
+	labRunCmd.Flags().String("namespace", "", "Override target namespace for the lab")
+	labRunCmd.Flags().Bool("force", false, "Run even if prerequisites are not completed")
+
 	labRandomCmd.Flags().Int64("seed", 0, "Random seed for reproducible selection")
 	labRandomCmd.Flags().String("category", "", "Filter by category")
 	labRandomCmd.Flags().String("difficulty", "", "Filter by difficulty")
 
-	// Add commands to root
+	labHintCmd.Flags().Int("level", 1, "Hint level (1 = vague, 2 = moderate, 3 = specific)")
+
+	labStatusCmd.Flags().Bool("json", false, "Output as JSON")
+
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(upCmd)
 	rootCmd.AddCommand(downCmd)
@@ -434,12 +619,14 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(updateCmd)
 
-	// Add subcommands to lab
 	labCmd.AddCommand(labListCmd)
 	labCmd.AddCommand(labRunCmd)
 	labCmd.AddCommand(labSolutionCmd)
 	labCmd.AddCommand(labRandomCmd)
 	labCmd.AddCommand(labVerifyCmd)
+	labCmd.AddCommand(labHintCmd)
+	labCmd.AddCommand(labStatusCmd)
+	labCmd.AddCommand(labExportCmd)
 }
 
 func loadConfig() error {

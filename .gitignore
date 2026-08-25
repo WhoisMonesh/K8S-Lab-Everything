@@ -22,6 +22,9 @@ bin/
 # Config files (user-specific)
 /cka-lab-runner.yaml
 
+# Progress tracking (user-specific)
+/lab-progress.json
+
 # IDE
 .idea/
 .vscode/
