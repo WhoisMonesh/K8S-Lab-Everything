@@ -1,6 +1,8 @@
 ﻿# K8S-Lab-Everything fully automated setup (Windows PowerShell 5.1+)
 # Installs Go, Docker, kubectl, and a cluster provider (kind) automatically.
-# Usage: powershell -ExecutionPolicy Bypass -File scripts\setup.ps1 [-ClusterProvider kind|k3d|minikube]
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+#   powershell -ExecutionPolicy Bypass -File scripts\setup.ps1 -ClusterProvider k3d
 
 param(
     [ValidateSet("kind","k3d","minikube")]
@@ -8,6 +10,24 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# ------------------------ Detect project root --------------------
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$ProjectRoot = $ScriptDir
+while ($ProjectRoot -and !(Test-Path "$ProjectRoot\go.mod")) {
+    $Parent = Split-Path -Parent $ProjectRoot
+    if ($Parent -eq $ProjectRoot) { break }
+    $ProjectRoot = $Parent
+}
+if (!(Test-Path "$ProjectRoot\go.mod")) {
+    Write-Host "[FAIL] Could not find go.mod - run this script from inside the repo." -ForegroundColor Red
+    exit 1
+}
+Set-Location $ProjectRoot
+
+# System-wide install directory (like /usr/local/bin on Mac)
+$InstallDir = "$env:LOCALAPPDATA\K8S-Lab-Everything"
+if (!(Test-Path $InstallDir)) { New-Item -ItemType Directory -Path $InstallDir | Out-Null }
 
 # ------------------------ Helpers -------------------------------
 function Test-Cmd {
@@ -21,11 +41,14 @@ function Write-Warn  { param([string]$Msg) Write-Host "[WARN]    $Msg" -Foregrou
 function Write-Fail  { param([string]$Msg) Write-Host "[FAIL]    $Msg" -ForegroundColor Red }
 function Write-Step  { param([string]$Msg) Write-Host "`n==> $Msg" -ForegroundColor Cyan }
 
+function Refresh-Path {
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+}
+
 # ------------------------ Ensure winget -------------------------
 function Ensure-Winget {
     if (Test-Cmd "winget") { return }
     Write-Info "Installing winget..."
-    # winget comes with Windows 11 / modern Windows 10; try app installer
     try {
         Add-AppxPackage -RegisterByFamilyName -FamilyName Microsoft.DesktopAppInstaller_8wekyb3d8bbwe -ErrorAction SilentlyContinue
     } catch {
@@ -59,8 +82,7 @@ function Install-Go {
         Remove-Item $msiPath -Force -ErrorAction SilentlyContinue
     }
 
-    # Refresh PATH
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Refresh-Path
 
     if (Test-Cmd "go") {
         Write-Ok "Go installed"
@@ -111,15 +133,10 @@ function Install-Kubectl {
     } catch {
         Write-Warn "winget failed, downloading kubectl manually..."
         $url = "https://dl.k8s.io/release/v1.30.0/bin/windows/amd64/kubectl.exe"
-        $kubectlPath = "$env:LOCALAPPDATA\Microsoft\WinGet\Links\kubectl.exe"
-        if (-not (Test-Path (Split-Path $kubectlPath))) {
-            New-Item -ItemType Directory -Force -Path (Split-Path $kubectlPath) | Out-Null
-        }
-        Invoke-WebRequest -Uri $url -OutFile $kubectlPath -UseBasicParsing
+        Invoke-WebRequest -Uri $url -OutFile "$InstallDir\kubectl.exe" -UseBasicParsing
     }
 
-    # Refresh PATH
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Refresh-Path
 
     if (Test-Cmd "kubectl") {
         Write-Ok "kubectl installed"
@@ -143,15 +160,10 @@ function Install-Kind {
     } catch {
         Write-Warn "winget failed, downloading kind manually..."
         $url = "https://kind.sigs.k8s.io/dl/v0.25.0/kind-windows-amd64"
-        $kindPath = "$env:LOCALAPPDATA\Microsoft\WinGet\Links\kind.exe"
-        if (-not (Test-Path (Split-Path $kindPath))) {
-            New-Item -ItemType Directory -Force -Path (Split-Path $kindPath) | Out-Null
-        }
-        Invoke-WebRequest -Uri $url -OutFile $kindPath -UseBasicParsing
+        Invoke-WebRequest -Uri $url -OutFile "$InstallDir\kind.exe" -UseBasicParsing
     }
 
-    # Refresh PATH
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Refresh-Path
 
     if (Test-Cmd "kind") {
         Write-Ok "kind installed"
@@ -174,15 +186,10 @@ function Install-K3d {
     } catch {
         Write-Warn "winget failed, downloading k3d manually..."
         $url = "https://github.com/k3d-io/k3d/releases/latest/download/k3d-windows-amd64.exe"
-        $k3dPath = "$env:LOCALAPPDATA\Microsoft\WinGet\Links\k3d.exe"
-        if (-not (Test-Path (Split-Path $k3dPath))) {
-            New-Item -ItemType Directory -Force -Path (Split-Path $k3dPath) | Out-Null
-        }
-        Invoke-WebRequest -Uri $url -OutFile $k3dPath -UseBasicParsing
+        Invoke-WebRequest -Uri $url -OutFile "$InstallDir\k3d.exe" -UseBasicParsing
     }
 
-    # Refresh PATH
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Refresh-Path
 
     if (Test-Cmd "k3d") {
         Write-Ok "k3d installed"
@@ -205,15 +212,10 @@ function Install-Minikube {
     } catch {
         Write-Warn "winget failed, downloading minikube manually..."
         $url = "https://storage.googleapis.com/minikube/releases/latest/minikube-windows-amd64.exe"
-        $miniPath = "$env:LOCALAPPDATA\Microsoft\WinGet\Links\minikube.exe"
-        if (-not (Test-Path (Split-Path $miniPath))) {
-            New-Item -ItemType Directory -Force -Path (Split-Path $miniPath) | Out-Null
-        }
-        Invoke-WebRequest -Uri $url -OutFile $miniPath -UseBasicParsing
+        Invoke-WebRequest -Uri $url -OutFile "$InstallDir\minikube.exe" -UseBasicParsing
     }
 
-    # Refresh PATH
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    Refresh-Path
 
     if (Test-Cmd "minikube") {
         Write-Ok "minikube installed"
@@ -232,11 +234,6 @@ function Install-ClusterProvider {
 
 # ------------------------ Build binary --------------------------
 function Build-Binary {
-    if (-not (Test-Path ".\go.mod")) {
-        Write-Warn "go.mod not found - skipping binary build"
-        return
-    }
-
     if (-not (Test-Cmd "go")) {
         Write-Warn "Go not available - cannot build binary"
         return
@@ -244,19 +241,39 @@ function Build-Binary {
 
     Write-Step "Building cka-lab-runner"
     if (-not (Test-Path ".\bin")) { New-Item -ItemType Directory -Path ".\bin" | Out-Null }
-    go build -o .\bin\cka-lab-runner.exe .\cmd\cka-lab-runner 2>$null
+
+    $GitCommit = try { git rev-parse --short HEAD 2>$null } catch { "unknown" }
+    $LdFlags = "-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=1.0.0 -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=$GitCommit"
+    go build -ldflags="$LdFlags" -o .\bin\cka-lab-runner.exe .\cmd\cka-lab-runner 2>$null
+    if (-not (Test-Path ".\bin\cka-lab-runner.exe")) {
+        Write-Fail "Build failed. Check that Go is installed correctly."
+        return
+    }
     Write-Ok "Binary built: bin\cka-lab-runner.exe"
 
-    # Add bin directory to user PATH permanently
-    $projectBin = (Resolve-Path ".\bin").Path
+    # Install to system-wide location
+    Copy-Item ".\bin\cka-lab-runner.exe" "$InstallDir\cka-lab-runner.exe" -Force
+    Write-Ok "Installed to $InstallDir\cka-lab-runner.exe"
+
+    # Add install dir to user PATH if not already there
     $currentPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
-    if ($currentPath -notlike "*$projectBin*") {
-        Write-Step "Adding $projectBin to user PATH"
-        [System.Environment]::SetEnvironmentVariable("Path", "$currentPath;$projectBin", "User")
-        $env:Path = "$env:Path;$projectBin"
-        Write-Ok "Added to PATH (available in new terminals)"
+    if ($currentPath -notlike "*$InstallDir*") {
+        [System.Environment]::SetEnvironmentVariable("Path", "$currentPath;$InstallDir", "User")
+        Write-Ok "Added $InstallDir to user PATH"
+    }
+
+    # Update current session PATH
+    Refresh-Path
+    if ($env:Path -notlike "*$InstallDir*") {
+        $env:Path = "$env:Path;$InstallDir"
+    }
+
+    # Verify binary works
+    if (Test-Cmd "cka-lab-runner") {
+        Write-Ok "cka-lab-runner is available on PATH"
     } else {
-        Write-Ok "Project bin directory already on PATH"
+        Write-Warn "Binary built but not found on PATH in this session."
+        Write-Info "Close this terminal and open a new one, then run: cka-lab-runner --help"
     }
 }
 
@@ -266,6 +283,7 @@ Write-Host "==========================================================" -Foregro
 Write-Host "  K8S-Lab-Everything - Automated Setup (Windows)" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host ""
+Write-Info "Project root: $ProjectRoot"
 Write-Info "Cluster provider: $ClusterProvider"
 Write-Host ""
 
@@ -280,9 +298,11 @@ Write-Host "==========================================================" -Foregro
 Write-Host "  All prerequisites installed!" -ForegroundColor Green
 Write-Host "==========================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Next steps:"
-Write-Host "  cka-lab-runner init"
-Write-Host "  cka-lab-runner up"
-Write-Host "  cka-lab-runner lab list"
-Write-Host "  cka-lab-runner lab run pod_crashloop"
+Write-Host "  Open a NEW terminal, then run:" -ForegroundColor White
+Write-Host ""
+Write-Host "    cd $ProjectRoot" -ForegroundColor Yellow
+Write-Host "    cka-lab-runner init" -ForegroundColor Yellow
+Write-Host "    cka-lab-runner up" -ForegroundColor Yellow
+Write-Host "    cka-lab-runner lab list" -ForegroundColor Yellow
+Write-Host "    cka-lab-runner lab run pod_crashloop" -ForegroundColor Yellow
 Write-Host ""
