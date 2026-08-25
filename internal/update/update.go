@@ -204,9 +204,46 @@ func SelfUpdate() error {
 		os.Remove(tmpFile)
 		return fmt.Errorf("failed to download: %w", err)
 	}
-	if err := os.Chmod(tmpFile, 0755); err != nil {
-		os.Remove(tmpFile)
-		return fmt.Errorf("failed to set permissions: %w", err)
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(tmpFile, 0755); err != nil {
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to set permissions: %w", err)
+		}
+	}
+
+	// Windows: can't overwrite a running .exe directly.
+	// Strategy: download as .new, rename running exe to .old, rename .new to correct name.
+	// The .old file is automatically deleted by Windows when all handles close.
+	if runtime.GOOS == "windows" {
+		newFile := execPath + ".new"
+		oldFile := execPath + ".old"
+
+		// Clean up any leftover .old from a previous update
+		os.Remove(oldFile)
+
+		// Move downloaded file to <exe>.new
+		if err := os.Rename(tmpFile, newFile); err != nil {
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to stage update: %w", err)
+		}
+
+		// Rename running exe to .old (allowed on Windows even while running)
+		if err := os.Rename(execPath, oldFile); err != nil {
+			os.Remove(newFile)
+			return fmt.Errorf("failed to move current binary: %w", err)
+		}
+
+		// Rename .new to the correct name
+		if err := os.Rename(newFile, execPath); err != nil {
+			// Try to restore
+			os.Rename(oldFile, execPath)
+			os.Remove(newFile)
+			return fmt.Errorf("failed to install update: %w", err)
+		}
+
+		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
+		fmt.Println("Restart this terminal to use the new version.")
+		return nil
 	}
 
 	// Try direct rename first (works if user owns the directory)
@@ -222,10 +259,6 @@ func SelfUpdate() error {
 		// macOS: use osascript to get password via GUI dialog
 		script := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, tmpFile, execPath)
 		cmd = exec.Command("osascript", "-e", script)
-	} else if runtime.GOOS == "windows" {
-		// Windows: try PowerShell Start-Process -Verb RunAs for UAC prompt
-		psCmd := fmt.Sprintf("Move-Item -Path '%s' -Destination '%s' -Force", tmpFile, execPath)
-		cmd = exec.Command("powershell", "-Command", psCmd)
 	} else {
 		// Linux: use sudo -S to read password from stdin
 		cmd = exec.Command("sudo", "-S", "mv", tmpFile, execPath)
