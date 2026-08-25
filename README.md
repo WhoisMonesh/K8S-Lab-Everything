@@ -96,7 +96,7 @@ cka-lab-runner down
 
 > Windows note: run everything from PowerShell or Windows Terminal. kind/k3d/minikube and Docker Desktop handle the Linux node inside a VM transparently — every lab works identically on all platforms.
 
-## Available Labs (38)
+## Available Labs (50)
 
 ### Control Plane
 - **etcd_wrong_ip** (Medium, 25min) - Fix API server → etcd communication
@@ -125,6 +125,7 @@ cka-lab-runner down
 ### Storage
 - **pvc_pending** (Medium, 20min) - Debug PVC stuck in Pending
 - **pv_not_binding** (Medium, 20min) - Fix PersistentVolume not binding to PVC
+- **pod_host_path_wrong** (Medium, 15min) - Fix wrong hostPath mount
 
 ### RBAC
 - **rbac_permission_denied** (Medium, 20min) - Fix missing Role permissions
@@ -157,6 +158,11 @@ cka-lab-runner down
 - **pod_oomkilled_memory** (Easy, 10min) - Increase memory limits for Redis
 - **pod_stuck_in_init** (Medium, 15min) - Fix failing init container
 - **resource_quota_exceeded** (Medium, 20min) - Clean up or increase ResourceQuota
+- **pod_missing_configmap** (Easy, 10min) - Create missing ConfigMap mount
+- **image_pull_backoff_name** (Easy, 10min) - Fix wrong registry image reference
+- **pod_wrong_env** (Easy, 10min) - Fix wrong environment variable value
+- **daemonset_wrong_node_selector** (Medium, 15min) - Fix DaemonSet nodeSelector
+- **deployment_wrong_strategy** (Medium, 15min) - Change Recreate to RollingUpdate
 
 ## Commands
 
