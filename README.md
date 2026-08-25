@@ -2,26 +2,45 @@
 
 # K8S-Lab-Everything
 
-### Practice Kubernetes Troubleshooting Like the CKA Exam
+### Master Kubernetes Troubleshooting Through Hands-On Practice
 
 [![CI](https://github.com/WhoisMonesh/K8S-Lab-Everything/actions/workflows/ci.yaml/badge.svg)](https://github.com/WhoisMonesh/K8S-Lab-Everything/actions/workflows/ci.yaml)
-[![Release](https://img.shields.io/github/v/release/WhoisMonesh/K8S-Lab-Everything)](https://github.com/WhoisMonesh/K8S-Lab-Everything/releases)
+[![Release](https://img.shields.io/github/v/release/WhoisMonesh/K8S-Lab-Everything?color=blue)](https://github.com/WhoisMonesh/K8S-Lab-Everything/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)]()
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
+[![Labs](https://img.shields.io/badge/Labs-50-orange)](#-available-labs)
+
+<br>
+
+**A CLI tool that breaks Kubernetes clusters on purpose — so you can learn to fix them.**
+
+Just like the CKA exam: real `kubectl`, real problems, real solutions.
+
+[Quick Start](#-quick-start) • [Available Labs](#-available-labs) • [Contributing](#-contributing)
 
 </div>
 
 ---
 
-## What is this?
-
-**cka-lab-runner** is a CLI tool that creates broken Kubernetes scenarios for you to fix — just like the CKA exam. It spins up a local cluster, breaks something specific, and lets you practice real troubleshooting with `kubectl`. When you're done, it verifies your fix is correct.
+## How It Works
 
 ```
+┌─────────────┐     ┌──────────────┐     ┌─────────────────┐     ┌──────────────┐
+│  cka-lab-   │────▶│  Break a     │────▶│  You debug &    │────▶│  Verify your │
+│  runner up  │     │  scenario    │     │  fix with kubectl│     │  fix         │
+└─────────────┘     └──────────────┘     └─────────────────┘     └──────────────┘
+    Creates              Applies a            Trouble-               Checks if
+    a local              realistic            shooting               you solved
+    cluster              failure              practice               it correctly
+```
+
+### What happens when you run a lab:
+
+```
+$ cka-lab-runner lab run pod_crashloop
+
 ╔═══════════════════════════════════════════════════════════════╗
-║  $ cka-lab-runner lab run pod_crashloop                       ║
-║                                                               ║
 ║  Lab: Pod in CrashLoopBackOff                                 ║
 ║  Category: workloads | Difficulty: easy | Time: 15min         ║
 ║                                                               ║
@@ -32,101 +51,134 @@
 ║    1. Check the pod status and events                         ║
 ║    2. Look at the pod logs to see why it's crashing           ║
 ║    3. Check the container image and command configuration     ║
-║    4. Environment variables might be incorrectly configured   ║
 ╚═══════════════════════════════════════════════════════════════╝
+
+$ kubectl get pods -l app=webapp
+NAME                       READY   STATUS             RESTARTS
+webapp-7f8b6c4d5-abc12     0/1     CrashLoopBackOff   5
+
+$ kubectl logs -l app=webapp
+Error from server: ...
+
+# Fix it, then verify:
+
+$ cka-lab-runner lab verify pod_crashloop
+✓ Congratulations! You successfully fixed: Pod in CrashLoopBackOff
 ```
 
-## Why?
+## Features
 
-| Problem | Solution |
-|---------|----------|
-| CKA exam is 100% hands-on, but most study material is theory | Break and fix real clusters |
-| Setting up practice environments is tedious | One command does everything |
-| Labs get stale and outdated | OTA auto-update fetches new labs |
-| Hard to find realistic troubleshooting scenarios | 50 labs across 8 CKA domains |
-| Cross-platform support is rare | Works on macOS, Linux, and Windows |
+<table>
+<tr>
+<td width="50%">
+
+### One-Command Setup
+Automatically installs Go, Docker, kubectl, and kind. No manual steps.
+
+### Auto-Update
+Checks for new labs on every run. Run `cka-lab-runner update` to install.
+
+### Instant Verification
+Know immediately if your fix is correct — no guessing.
+
+</td>
+<td width="50%">
+
+### Cross-Platform
+Works on macOS (Intel & Apple Silicon), Linux (x86_64 & ARM64), and Windows.
+
+### 50 Realistic Labs
+Covers all CKA exam domains with increasing difficulty levels.
+
+### Extensible
+Add your own labs in Go — just implement the `Lab` interface.
+
+</td>
+</tr>
+</table>
 
 ## Quick Start
 
-### One-Command Setup
+### Step 1: Clone & Setup
 
+**macOS / Linux:**
 ```bash
-# Clone and run the automated setup
 git clone https://github.com/WhoisMonesh/K8S-Lab-Everything.git
 cd K8S-Lab-Everything
 ./scripts/setup.sh
 ```
 
-The setup script automatically installs:
-- **Go** (if not present)
-- **Docker** (Docker Desktop on macOS/Windows, Docker Engine on Linux)
-- **kubectl**
-- **kind** (or k3d/minikube — pass `--install-cluster-provider k3d` to choose)
-- **cka-lab-runner** binary (installed to `/usr/local/bin`)
-
-**Windows:**
+**Windows (PowerShell):**
 ```powershell
 git clone https://github.com/WhoisMonesh/K8S-Lab-Everything.git
 cd K8S-Lab-Everything
 powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
 ```
 
-### Your First Lab
+<details>
+<summary>What gets installed?</summary>
+
+| Tool | Purpose |
+|------|---------|
+| **Go** | Build the CLI tool |
+| **Docker** | Run the local cluster |
+| **kubectl** | Interact with Kubernetes |
+| **kind** | Create local clusters |
+| **cka-lab-runner** | The practice tool itself |
+
+</details>
+
+### Step 2: Run Your First Lab
 
 ```bash
-# 1. Initialize config
+# Create config and cluster
 $ cka-lab-runner init
-✓ Created config file: cka-lab-runner.yaml
-
-# 2. Create a local cluster
 $ cka-lab-runner up
-ℹ Creating cluster: cka-lab
-✓ Cluster created: cka-lab
 
-# 3. List available labs
+# List available labs
 $ cka-lab-runner lab list
 
-# 4. Run a lab (breaks something on purpose)
+# Run a lab (breaks something on purpose)
 $ cka-lab-runner lab run pod_crashloop
 
-# 5. Debug and fix using kubectl
+# Debug and fix using kubectl
 $ kubectl get pods
 $ kubectl describe pod -l app=webapp
 $ kubectl logs -l app=webapp
 
-# 6. Verify your fix
+# Verify your fix
 $ cka-lab-runner lab verify pod_crashloop
 ✓ Congratulations! You successfully fixed: Pod in CrashLoopBackOff
 
-# 7. View solution if stuck
+# View solution if stuck
 $ cka-lab-runner lab solution pod_crashloop
 
-# 8. Clean up
+# Clean up
 $ cka-lab-runner down
 ```
 
-## Auto-Update
+### Step 3: Auto-Update
 
-The binary automatically checks for new versions when you run any command. If an update is available:
+```bash
+# The binary checks for updates automatically
+$ cka-lab-runner lab list
 
-```
 === UPDATE AVAILABLE ===
   Current version: 1.0.1
   Latest version:  1.1.0
 
   Run cka-lab-runner update to install the latest version.
-```
 
-```bash
-# Update to latest release
+# Install update
 $ cka-lab-runner update
 New version available: 1.1.0 (current: 1.0.1)
-Downloading...
-Need admin permissions to install...
-Updated successfully! (1.0.1 -> 1.1.0)
+Updated successfully!
 ```
 
 ## Commands
+
+<details>
+<summary><b>Cluster Management</b></summary>
 
 | Command | Description |
 |---------|-------------|
@@ -134,8 +186,14 @@ Updated successfully! (1.0.1 -> 1.1.0)
 | `cka-lab-runner up` | Create local cluster |
 | `cka-lab-runner up --recreate` | Recreate existing cluster |
 | `cka-lab-runner down` | Delete cluster |
-| `cka-lab-runner version` | Show current version |
-| `cka-lab-runner update` | Update to latest release |
+
+</details>
+
+<details>
+<summary><b>Lab Operations</b></summary>
+
+| Command | Description |
+|---------|-------------|
 | `cka-lab-runner lab list` | List all labs |
 | `cka-lab-runner lab list --category networking` | Filter by category |
 | `cka-lab-runner lab list --difficulty easy` | Filter by difficulty |
@@ -145,9 +203,29 @@ Updated successfully! (1.0.1 -> 1.1.0)
 | `cka-lab-runner lab verify <lab-id>` | Verify your fix |
 | `cka-lab-runner lab solution <lab-id>` | Show solution |
 
-## Available Labs (50)
+</details>
 
-### Control Plane (7 labs)
+<details>
+<summary><b>System</b></summary>
+
+| Command | Description |
+|---------|-------------|
+| `cka-lab-runner version` | Show current version |
+| `cka-lab-runner update` | Update to latest release |
+
+</details>
+
+## Available Labs
+
+### By Difficulty
+
+| Difficulty | Labs | Best For |
+|-----------|------|----------|
+| **Easy** (18) | Quick wins, 10-15 min | Beginners, building confidence |
+| **Medium** (28) | Real scenarios, 15-25 min | CKA exam prep |
+| **Hard** (4) | Complex problems, 25-30 min | Advanced troubleshooting |
+
+### Control Plane
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
@@ -159,7 +237,7 @@ Updated successfully! (1.0.1 -> 1.1.0)
 | `node_not_ready` | Fix kubelet on NotReady node | Medium | 20min |
 | `node_pressure` | Clear disk/memory pressure on node | Hard | 25min |
 
-### Networking (5 labs)
+### Networking
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
@@ -169,7 +247,7 @@ Updated successfully! (1.0.1 -> 1.1.0)
 | `service_wrong_selector` | Fix Service selector not matching pods | Easy | 10min |
 | `multi_container_pod` | Fix multi-container pod communication | Medium | 15min |
 
-### Scheduling (3 labs)
+### Scheduling
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
@@ -177,13 +255,13 @@ Updated successfully! (1.0.1 -> 1.1.0)
 | `node_affinity_mismatch` | Fix broken node affinity selectors | Hard | 25min |
 | `pod_scheduling_failed` | Fix pod nodeSelector mismatch | Easy | 10min |
 
-### DNS (1 lab)
+### DNS
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
 | `coredns_broken_config` | Fix CoreDNS configuration | Easy | 15min |
 
-### Storage (3 labs)
+### Storage
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
@@ -191,7 +269,7 @@ Updated successfully! (1.0.1 -> 1.1.0)
 | `pv_not_binding` | Fix PersistentVolume not binding to PVC | Medium | 20min |
 | `pod_host_path_wrong` | Fix wrong hostPath mount | Medium | 15min |
 
-### Security (4 labs)
+### Security
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
@@ -200,13 +278,13 @@ Updated successfully! (1.0.1 -> 1.1.0)
 | `secret_missing` | Create missing Secret for pod | Easy | 10min |
 | `pod_security_context` | Fix pod securityContext misconfiguration | Medium | 15min |
 
-### RBAC (1 lab)
+### RBAC
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
 | `rbac_permission_denied` | Fix missing Role permissions | Medium | 20min |
 
-### Workloads (26 labs)
+### Workloads
 
 | ID | Lab | Difficulty | Time |
 |----|-----|-----------|------|
@@ -239,11 +317,10 @@ Updated successfully! (1.0.1 -> 1.1.0)
 
 ## Configuration
 
-Default config (`cka-lab-runner.yaml`):
-
 ```yaml
+# cka-lab-runner.yaml
 cluster:
-  provider: kind      # or k3d, minikube (auto-detected if not specified)
+  provider: kind      # kind | k3d | minikube (auto-detected)
   name: cka-lab
   k8sVersion: v1.30.0
 
@@ -253,7 +330,7 @@ labs:
 
 ## Adding Your Own Labs
 
-Labs are Go types that implement the `Lab` interface. Create a file in `internal/labs/`:
+Create a new file in `internal/labs/`:
 
 ```go
 package labs
@@ -263,42 +340,28 @@ import (
     "fmt"
 )
 
-func init() {
-    Register(&MyLab{})
-}
+func init() { Register(&MyLab{}) }
 
-type MyLab struct {
-    BaseLab
-}
+type MyLab struct{ BaseLab }
 
-func (l *MyLab) ID() string          { return "my_lab" }
-func (l *MyLab) Title() string       { return "My Lab Title" }
-func (l *MyLab) Category() Category  { return CategoryWorkloads }
+func (l *MyLab) ID() string            { return "my_lab" }
+func (l *MyLab) Title() string         { return "My Lab Title" }
+func (l *MyLab) Category() Category    { return CategoryWorkloads }
 func (l *MyLab) Difficulty() Difficulty { return DifficultyMedium }
-func (l *MyLab) EstimatedTime() int  { return 20 }
-func (l *MyLab) Tags() []string      { return []string{"pods", "troubleshooting"} }
-
-func (l *MyLab) Description() string {
-    return "Problem description shown to the user"
-}
-
-func (l *MyLab) Hints() []string {
-    return []string{
-        "Check the pod status",
-        "Look at the pod logs",
-    }
-}
+func (l *MyLab) EstimatedTime() int    { return 20 }
+func (l *MyLab) Tags() []string        { return []string{"pods"} }
+func (l *MyLab) Description() string   { return "Problem description" }
+func (l *MyLab) Hints() []string       { return []string{"Check pod status"} }
 
 func (l *MyLab) Break(ctx context.Context, kubeconfigPath string) error {
-    manifest := `apiVersion: v1
+    return kubectlApply(ctx, kubeconfigPath, `apiVersion: v1
 kind: Pod
 metadata:
   name: broken-pod
 spec:
   containers:
   - name: nginx
-    image: nginx:broken`
-    return kubectlApply(ctx, kubeconfigPath, manifest)
+    image: nginx:broken`)
 }
 
 func (l *MyLab) Verify(ctx context.Context, kubeconfigPath string) error {
@@ -312,58 +375,47 @@ func (l *MyLab) Verify(ctx context.Context, kubeconfigPath string) error {
 
 func (l *MyLab) SolutionSteps() []SolutionStep {
     return []SolutionStep{
-        {
-            Description: "Check pod status",
-            Command:     "kubectl get pods",
-            Notes:       "Pod should be in ImagePullBackOff",
-        },
-        {
-            Description: "Fix the image",
-            Command:     "kubectl edit pod broken-pod",
-            Notes:       "Change image to nginx:alpine",
-        },
+        {Description: "Check pod status", Command: "kubectl get pods"},
+        {Description: "Fix the image", Command: "kubectl edit pod broken-pod"},
     }
 }
 ```
 
-Rebuild with `make build` and your lab is ready.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed examples.
+Run `make build` and your lab is ready. See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 ## Development
 
 ```bash
-make build         # Build binary for current OS
+make build         # Build for current OS
 make test          # Run tests
-make lint          # Run formatters and linters
-make build-all     # Cross-compile for windows/linux/darwin (amd64 + arm64)
-make clean         # Clean build artifacts
-make ci            # Run CI checks (lint, test, build)
+make lint          # Format and vet code
+make build-all     # Cross-compile (darwin/linux/windows, amd64/arm64)
+make ci            # Run all CI checks
+make clean         # Remove build artifacts
 ```
 
 ### Project Structure
 
 ```
-K8S-Lab-Everything/
-├── cmd/cka-lab-runner/     # CLI entry point
+├── cmd/cka-lab-runner/      CLI entry point
 ├── internal/
-│   ├── cli/                # Terminal output formatting
-│   ├── cluster/            # Cluster providers (kind/k3d/minikube)
-│   ├── config/             # Configuration management
-│   ├── labs/               # All 50 lab implementations
-│   └── update/             # OTA auto-update system
+│   ├── cli/                 Terminal output formatting
+│   ├── cluster/             Cluster providers (kind/k3d/minikube)
+│   ├── config/              Configuration management
+│   ├── labs/                All 50 lab implementations
+│   └── update/              OTA auto-update system
 ├── scripts/
-│   ├── setup.sh            # macOS/Linux automated setup
-│   └── setup.ps1           # Windows automated setup
-├── .github/workflows/      # CI/CD pipeline
-├── Makefile                # Build automation
-└── go.mod                  # Go module definition
+│   ├── setup.sh             macOS/Linux setup
+│   └── setup.ps1            Windows setup
+├── .github/workflows/       CI/CD pipeline
+├── Makefile                 Build automation
+└── go.mod                   Go module definition
 ```
 
 ## Platform Support
 
-| Platform | Setup Script | Binary |
-|----------|-------------|--------|
+| Platform | Setup | Binary |
+|----------|-------|--------|
 | macOS (Apple Silicon) | `./scripts/setup.sh` | `cka-lab-runner-darwin-arm64` |
 | macOS (Intel) | `./scripts/setup.sh` | `cka-lab-runner-darwin-amd64` |
 | Linux (x86_64) | `./scripts/setup.sh` | `cka-lab-runner-linux-amd64` |
@@ -380,14 +432,10 @@ Contributions welcome! Add new labs, fix bugs, or improve docs.
 4. Run tests (`make test`)
 5. Submit a PR
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed examples.
-
 ## Credits
 
-This project is based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner), originally created by **[CuriousLearner](https://github.com/CuriousLearner)**. All credit for the original concept, architecture, and the initial 15 labs belongs to the original author.
-
-This fork extends the original work with additional labs, cross-platform support, and OTA auto-update.
+Based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner). This fork adds 35+ new labs, cross-platform support, and OTA auto-update.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE). Original work Copyright (c) CuriousLearner; modifications Copyright (c) WhoisMonesh.
+MIT License — see [LICENSE](LICENSE)
