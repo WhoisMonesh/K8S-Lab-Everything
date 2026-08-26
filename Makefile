@@ -18,7 +18,7 @@ GOFMT=$(GOCMD) fmt
 GOVET=$(GOCMD) vet
 
 # Version info
-VERSION?=1.1.1
+VERSION?=1.1.2
 GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 LDFLAGS=-ldflags "-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=$(VERSION) -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=$(GIT_COMMIT)"
 
