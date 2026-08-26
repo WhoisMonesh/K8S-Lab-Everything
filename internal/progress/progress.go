@@ -14,14 +14,26 @@ import (
 const ProgressFile = ".lab-progress.json"
 
 const (
-	colorReset  = "\033[0m"
-	colorRed    = "\033[31m"
-	colorGreen  = "\033[32m"
-	colorYellow = "\033[33m"
-	colorCyan   = "\033[36m"
-	colorWhite  = "\033[37m"
-	colorBold   = "\033[1m"
-	colorDim    = "\033[2m"
+	reset      = "\033[0m"
+	bold       = "\033[1m"
+	dim        = "\033[2m"
+	italic     = "\033[3m"
+	red        = "\033[31m"
+	green      = "\033[32m"
+	yellow     = "\033[33m"
+	blue       = "\033[34m"
+	magenta    = "\033[35m"
+	cyan       = "\033[36m"
+	white      = "\033[37m"
+	brightCyan = "\033[96m"
+	dimWhite   = "\033[37;2m"
+	dimCyan    = "\033[36;2m"
+	dimGreen   = "\033[32;2m"
+	dimYellow  = "\033[33;2m"
+	dimRed     = "\033[31;2m"
+	bgGreen    = "\033[42m"
+	bgYellow   = "\033[43m"
+	bgRed      = "\033[41m"
 )
 
 type LabResult struct {
@@ -151,6 +163,27 @@ func CompletedCount() int {
 	return len(p.Labs)
 }
 
+func progressBar(completed, total, width int) string {
+	pct := 0
+	if total > 0 {
+		pct = completed * 100 / total
+	}
+	filled := pct * width / 100
+	empty := width - filled
+	bar := strings.Repeat("█", filled) + strings.Repeat("░", empty)
+	return fmt.Sprintf("%s%s%s %d/%d (%d%%)",
+		green, bar, reset, completed, total, pct)
+}
+
+func miniBar(count, max, width int) string {
+	filled := 0
+	if max > 0 {
+		filled = count * width / max
+	}
+	empty := width - filled
+	return fmt.Sprintf("%s%s%s", green, strings.Repeat("█", filled), dim+strings.Repeat("░", empty)+reset)
+}
+
 func Summary() string {
 	p := Load()
 	p.mu.RLock()
@@ -158,8 +191,9 @@ func Summary() string {
 
 	total := len(p.Labs)
 	if total == 0 {
-		return fmt.Sprintf("\n  %s%s%s\n\n  Run %scka-lab-runner lab run <id>%s to start your first lab!\n",
-			colorDim, "No labs completed yet.", colorReset, colorCyan, colorReset)
+		return fmt.Sprintf("\n  %s%s%s\n\n  %s▸%s Run %scka-lab-runner lab run <id>%s to start your first lab!\n\n",
+			dim+italic, "No labs completed yet.", reset,
+			cyan, reset, brightCyan, reset)
 	}
 
 	var totalDuration time.Duration
@@ -172,43 +206,74 @@ func Summary() string {
 		byDifficulty[r.Difficulty]++
 	}
 
-	result := fmt.Sprintf("\n  %s╔══════════════════════════════════════════════════╗%s\n", colorCyan, colorReset)
-	result += fmt.Sprintf("  %s║%s  %s%-48s%s  %s║%s\n", colorCyan, colorReset, colorBold, "Lab Progress", colorReset, colorCyan, colorReset)
-	result += fmt.Sprintf("  %s╚══════════════════════════════════════════════════╝%s\n", colorCyan, colorReset)
-	result += "\n"
+	w := 52
+	bar := func() string {
+		return fmt.Sprintf("  %s┌%s%s┐%s\n", cyan, strings.Repeat("─", w), cyan, reset)
+	}
+	barEnd := func() string {
+		return fmt.Sprintf("  %s└%s%s┘%s\n", cyan, strings.Repeat("─", w), cyan, reset)
+	}
 
-	result += fmt.Sprintf("  %s%sCompleted:%s  %s%d lab(s)%s\n", colorBold, colorReset, colorReset, colorGreen, total, colorReset)
-	result += "\n"
+	var b strings.Builder
 
-	result += fmt.Sprintf("  %sBy Difficulty:%s\n", colorBold, colorReset)
-	for _, d := range []string{"easy", "medium", "hard"} {
-		if c, ok := byDifficulty[d]; ok {
-			color := colorGreen
-			if d == "medium" {
-				color = colorYellow
-			} else if d == "hard" {
-				color = colorRed
-			}
-			bar := strings.Repeat("█", c)
-			result += fmt.Sprintf("    %s%-8s%s %s%s%s  %d\n", colorDim, d, colorReset, color, bar, colorReset, c)
+	b.WriteString("\n")
+	b.WriteString(bar())
+	b.WriteString(fmt.Sprintf("  %s│%s  %s%-*s%s  %s│%s\n", cyan, reset, bold, w-4, "Lab Progress Dashboard", reset, cyan, reset))
+	b.WriteString(barEnd())
+	b.WriteString("\n")
+
+	// Stats row
+	b.WriteString(fmt.Sprintf("  %s%sCompleted%s  %s%s%s\n", bold, reset, reset, green, bold, reset))
+	b.WriteString(fmt.Sprintf("  %s  %d lab(s)%s\n\n", green, total, reset))
+
+	// Difficulty breakdown
+	b.WriteString(fmt.Sprintf("  %sBy Difficulty%s\n", bold, reset))
+	maxDiff := 0
+	for _, c := range byDifficulty {
+		if c > maxDiff {
+			maxDiff = c
 		}
 	}
-	result += "\n"
+	for _, d := range []string{"easy", "medium", "hard"} {
+		if c, ok := byDifficulty[d]; ok {
+			color := green
+			labelColor := dimGreen
+			if d == "medium" {
+				color = yellow
+				labelColor = dimYellow
+			} else if d == "hard" {
+				color = red
+				labelColor = dimRed
+			}
+			b.WriteString(fmt.Sprintf("    %s%-8s%s  %s %s%d%s\n",
+				labelColor, d, reset, miniBar(c, maxDiff, 20), color, c, reset))
+		}
+	}
+	b.WriteString("\n")
 
-	result += fmt.Sprintf("  %sBy Category:%s\n", colorBold, colorReset)
+	// Category breakdown
+	b.WriteString(fmt.Sprintf("  %sBy Category%s\n", bold, reset))
+	maxCat := 0
+	for _, c := range byCategory {
+		if c > maxCat {
+			maxCat = c
+		}
+	}
 	cats := make([]string, 0, len(byCategory))
 	for c := range byCategory {
 		cats = append(cats, c)
 	}
 	sort.Strings(cats)
 	for _, c := range cats {
-		bar := strings.Repeat("█", byCategory[c])
-		result += fmt.Sprintf("    %-16s %s%s%s  %d\n", c, colorCyan, bar, colorReset, byCategory[c])
+		b.WriteString(fmt.Sprintf("    %-16s  %s %s%d%s\n",
+			c, miniBar(byCategory[c], maxCat, 20), cyan, byCategory[c], reset))
 	}
+	b.WriteString("\n")
 
-	result += fmt.Sprintf("\n  %sTotal time:%s  %s%s%s\n", colorBold, colorReset, colorWhite, totalDuration.Round(time.Second), colorReset)
-	result += "\n"
-	return result
+	b.WriteString(fmt.Sprintf("  %sTotal time:%s  %s%s%s\n", bold, reset, dimWhite, totalDuration.Round(time.Second), reset))
+	b.WriteString("\n")
+
+	return b.String()
 }
 
 func ExportJSON() ([]byte, error) {

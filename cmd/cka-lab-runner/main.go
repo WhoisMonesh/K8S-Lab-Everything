@@ -37,13 +37,29 @@ func main() {
 var rootCmd = &cobra.Command{
 	Use:   "cka-lab-runner",
 	Short: "A CKA practice lab runner",
-	Long: `cka-lab-runner is a tool for practicing Kubernetes administration skills
-by creating reproducible broken scenarios in a local cluster.`,
+	Long:  ``,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if cmd.Name() == "version" || cmd.Name() == "update" || cmd.Name() == "help" {
 			return
 		}
 		update.CheckForUpdate()
+	},
+	Run: func(cmd *cobra.Command, args []string) {
+		cli.PrintBanner()
+		fmt.Println("  Quick Start:")
+		fmt.Println()
+		fmt.Println("    cka-lab-runner init                  Create config file")
+		fmt.Println("    cka-lab-runner up                    Create local cluster")
+		fmt.Println("    cka-lab-runner lab list              List all labs")
+		fmt.Println("    cka-lab-runner lab run <id>          Start a lab")
+		fmt.Println("    cka-lab-runner lab verify <id>       Check your fix")
+		fmt.Println("    cka-lab-runner lab solution <id>     Show solution")
+		fmt.Println("    cka-lab-runner lab status            View progress")
+		fmt.Println("    cka-lab-runner down                  Delete cluster")
+		fmt.Println("    cka-lab-runner update                Update tool")
+		fmt.Println()
+		fmt.Println("  Run 'cka-lab-runner --help' for full command list")
+		fmt.Println()
 	},
 }
 
