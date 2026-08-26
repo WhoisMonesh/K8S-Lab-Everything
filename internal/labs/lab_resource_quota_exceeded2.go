@@ -13,12 +13,14 @@ type ResourceQuotaExceeded struct {
 	BaseLab
 }
 
-func (l *ResourceQuotaExceeded) ID() string            { return "resource_quota_exceeded2" }
-func (l *ResourceQuotaExceeded) Title() string         { return "Pods Rejected by ResourceQuota" }
-func (l *ResourceQuotaExceeded) Category() Category    { return CategoryWorkloads }
+func (l *ResourceQuotaExceeded) ID() string             { return "resource_quota_exceeded2" }
+func (l *ResourceQuotaExceeded) Title() string          { return "Pods Rejected by ResourceQuota" }
+func (l *ResourceQuotaExceeded) Category() Category     { return CategoryWorkloads }
 func (l *ResourceQuotaExceeded) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ResourceQuotaExceeded) EstimatedTime() int    { return 20 }
-func (l *ResourceQuotaExceeded) Tags() []string        { return []string{"resourcequota", "limits", "scheduling"} }
+func (l *ResourceQuotaExceeded) EstimatedTime() int     { return 20 }
+func (l *ResourceQuotaExceeded) Tags() []string {
+	return []string{"resourcequota", "limits", "scheduling"}
+}
 
 func (l *ResourceQuotaExceeded) Description() string {
 	return `Pods are being rejected because the namespace ResourceQuota has been exceeded.

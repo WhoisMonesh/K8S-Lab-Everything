@@ -13,12 +13,14 @@ type PodNetworkConnectivity struct {
 	BaseLab
 }
 
-func (l *PodNetworkConnectivity) ID() string            { return "pod_network_connectivity" }
-func (l *PodNetworkConnectivity) Title() string         { return "Pod-to-Pod Network Connectivity" }
-func (l *PodNetworkConnectivity) Category() Category    { return CategoryNetworking }
+func (l *PodNetworkConnectivity) ID() string             { return "pod_network_connectivity" }
+func (l *PodNetworkConnectivity) Title() string          { return "Pod-to-Pod Network Connectivity" }
+func (l *PodNetworkConnectivity) Category() Category     { return CategoryNetworking }
 func (l *PodNetworkConnectivity) Difficulty() Difficulty { return DifficultyHard }
-func (l *PodNetworkConnectivity) EstimatedTime() int    { return 25 }
-func (l *PodNetworkConnectivity) Tags() []string        { return []string{"networking", "pods", "connectivity"} }
+func (l *PodNetworkConnectivity) EstimatedTime() int     { return 25 }
+func (l *PodNetworkConnectivity) Tags() []string {
+	return []string{"networking", "pods", "connectivity"}
+}
 
 func (l *PodNetworkConnectivity) Description() string {
 	return `Pods in different namespaces cannot communicate with each other.

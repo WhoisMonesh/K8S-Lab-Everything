@@ -13,12 +13,12 @@ type EphemeralContainer struct {
 	BaseLab
 }
 
-func (l *EphemeralContainer) ID() string            { return "ephemeral_container" }
-func (l *EphemeralContainer) Title() string         { return "Debug Pod with Ephemeral Container" }
-func (l *EphemeralContainer) Category() Category    { return CategoryWorkloads }
+func (l *EphemeralContainer) ID() string             { return "ephemeral_container" }
+func (l *EphemeralContainer) Title() string          { return "Debug Pod with Ephemeral Container" }
+func (l *EphemeralContainer) Category() Category     { return CategoryWorkloads }
 func (l *EphemeralContainer) Difficulty() Difficulty { return DifficultyMedium }
-func (l *EphemeralContainer) EstimatedTime() int    { return 20 }
-func (l *EphemeralContainer) Tags() []string        { return []string{"ephemeral", "debugging", "workloads"} }
+func (l *EphemeralContainer) EstimatedTime() int     { return 20 }
+func (l *EphemeralContainer) Tags() []string         { return []string{"ephemeral", "debugging", "workloads"} }
 
 func (l *EphemeralContainer) Description() string {
 	return `A pod is running but the application inside is misbehaving.

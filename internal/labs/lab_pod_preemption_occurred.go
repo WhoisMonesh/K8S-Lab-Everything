@@ -13,12 +13,14 @@ type PodPreemptionOccurred struct {
 	BaseLab
 }
 
-func (l *PodPreemptionOccurred) ID() string            { return "pod_preemption_occurred" }
-func (l *PodPreemptionOccurred) Title() string         { return "Low Priority Pod Preempted" }
-func (l *PodPreemptionOccurred) Category() Category    { return CategoryScheduling }
+func (l *PodPreemptionOccurred) ID() string             { return "pod_preemption_occurred" }
+func (l *PodPreemptionOccurred) Title() string          { return "Low Priority Pod Preempted" }
+func (l *PodPreemptionOccurred) Category() Category     { return CategoryScheduling }
 func (l *PodPreemptionOccurred) Difficulty() Difficulty { return DifficultyMedium }
-func (l *PodPreemptionOccurred) EstimatedTime() int    { return 15 }
-func (l *PodPreemptionOccurred) Tags() []string        { return []string{"scheduling", "priority", "preemption"} }
+func (l *PodPreemptionOccurred) EstimatedTime() int     { return 15 }
+func (l *PodPreemptionOccurred) Tags() []string {
+	return []string{"scheduling", "priority", "preemption"}
+}
 
 func (l *PodPreemptionOccurred) Description() string {
 	return `A low priority pod was preempted by a higher priority pod.

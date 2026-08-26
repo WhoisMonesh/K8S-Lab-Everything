@@ -13,12 +13,12 @@ type NodeRegistrationError struct {
 	BaseLab
 }
 
-func (l *NodeRegistrationError) ID() string            { return "node_registration_error" }
-func (l *NodeRegistrationError) Title() string         { return "Node Registration Error" }
-func (l *NodeRegistrationError) Category() Category    { return CategoryControlPlane }
+func (l *NodeRegistrationError) ID() string             { return "node_registration_error" }
+func (l *NodeRegistrationError) Title() string          { return "Node Registration Error" }
+func (l *NodeRegistrationError) Category() Category     { return CategoryControlPlane }
 func (l *NodeRegistrationError) Difficulty() Difficulty { return DifficultyMedium }
-func (l *NodeRegistrationError) EstimatedTime() int    { return 20 }
-func (l *NodeRegistrationError) Tags() []string        { return []string{"nodes", "registration", "kubelet"} }
+func (l *NodeRegistrationError) EstimatedTime() int     { return 20 }
+func (l *NodeRegistrationError) Tags() []string         { return []string{"nodes", "registration", "kubelet"} }
 
 func (l *NodeRegistrationError) Description() string {
 	return `A node is in NotReady state due to registration errors.

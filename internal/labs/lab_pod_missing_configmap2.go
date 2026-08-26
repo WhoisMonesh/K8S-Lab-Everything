@@ -13,12 +13,12 @@ type PodMissingConfigMap2 struct {
 	BaseLab
 }
 
-func (l *PodMissingConfigMap2) ID() string            { return "pod_missing_configmap2" }
-func (l *PodMissingConfigMap2) Title() string         { return "Pod Failing Due to Missing ConfigMap Mount" }
-func (l *PodMissingConfigMap2) Category() Category    { return CategoryWorkloads }
+func (l *PodMissingConfigMap2) ID() string             { return "pod_missing_configmap2" }
+func (l *PodMissingConfigMap2) Title() string          { return "Pod Failing Due to Missing ConfigMap Mount" }
+func (l *PodMissingConfigMap2) Category() Category     { return CategoryWorkloads }
 func (l *PodMissingConfigMap2) Difficulty() Difficulty { return DifficultyEasy }
-func (l *PodMissingConfigMap2) EstimatedTime() int    { return 10 }
-func (l *PodMissingConfigMap2) Tags() []string        { return []string{"configmap", "volumes", "mounts"} }
+func (l *PodMissingConfigMap2) EstimatedTime() int     { return 10 }
+func (l *PodMissingConfigMap2) Tags() []string         { return []string{"configmap", "volumes", "mounts"} }
 
 func (l *PodMissingConfigMap2) Description() string {
 	return `A pod is failing because it references a ConfigMap that doesn't exist.

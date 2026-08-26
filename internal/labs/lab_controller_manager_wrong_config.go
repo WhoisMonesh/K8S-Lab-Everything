@@ -13,12 +13,14 @@ type ControllerManagerWrongConfig struct {
 	BaseLab
 }
 
-func (l *ControllerManagerWrongConfig) ID() string            { return "controller_manager_wrong_config" }
-func (l *ControllerManagerWrongConfig) Title() string         { return "Controller Manager Misconfiguration" }
-func (l *ControllerManagerWrongConfig) Category() Category    { return CategoryControlPlane }
+func (l *ControllerManagerWrongConfig) ID() string             { return "controller_manager_wrong_config" }
+func (l *ControllerManagerWrongConfig) Title() string          { return "Controller Manager Misconfiguration" }
+func (l *ControllerManagerWrongConfig) Category() Category     { return CategoryControlPlane }
 func (l *ControllerManagerWrongConfig) Difficulty() Difficulty { return DifficultyHard }
-func (l *ControllerManagerWrongConfig) EstimatedTime() int    { return 25 }
-func (l *ControllerManagerWrongConfig) Tags() []string        { return []string{"controller-manager", "cluster"} }
+func (l *ControllerManagerWrongConfig) EstimatedTime() int     { return 25 }
+func (l *ControllerManagerWrongConfig) Tags() []string {
+	return []string{"controller-manager", "cluster"}
+}
 
 func (l *ControllerManagerWrongConfig) Description() string {
 	return `The kube-controller-manager has incorrect cluster CIDR configuration causing pods to fail networking.

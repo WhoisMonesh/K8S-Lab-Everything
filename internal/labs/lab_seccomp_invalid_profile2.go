@@ -13,12 +13,12 @@ type SeccompInvalidProfile struct {
 	BaseLab
 }
 
-func (l *SeccompInvalidProfile) ID() string            { return "seccomp_invalid_profile2" }
-func (l *SeccompInvalidProfile) Title() string         { return "Pod Rejected - Invalid seccomp Profile" }
-func (l *SeccompInvalidProfile) Category() Category    { return CategorySecurity }
+func (l *SeccompInvalidProfile) ID() string             { return "seccomp_invalid_profile2" }
+func (l *SeccompInvalidProfile) Title() string          { return "Pod Rejected - Invalid seccomp Profile" }
+func (l *SeccompInvalidProfile) Category() Category     { return CategorySecurity }
 func (l *SeccompInvalidProfile) Difficulty() Difficulty { return DifficultyHard }
-func (l *SeccompInvalidProfile) EstimatedTime() int    { return 20 }
-func (l *SeccompInvalidProfile) Tags() []string        { return []string{"security", "seccomp", "profiles"} }
+func (l *SeccompInvalidProfile) EstimatedTime() int     { return 20 }
+func (l *SeccompInvalidProfile) Tags() []string         { return []string{"security", "seccomp", "profiles"} }
 
 func (l *SeccompInvalidProfile) Description() string {
 	return `A pod is being rejected because it references a seccomp profile that doesn't exist.

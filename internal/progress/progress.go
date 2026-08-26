@@ -6,11 +6,23 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
 
 const ProgressFile = ".lab-progress.json"
+
+const (
+	colorReset  = "\033[0m"
+	colorRed    = "\033[31m"
+	colorGreen  = "\033[32m"
+	colorYellow = "\033[33m"
+	colorCyan   = "\033[36m"
+	colorWhite  = "\033[37m"
+	colorBold   = "\033[1m"
+	colorDim    = "\033[2m"
+)
 
 type LabResult struct {
 	LabID       string        `json:"lab_id"`
@@ -146,7 +158,8 @@ func Summary() string {
 
 	total := len(p.Labs)
 	if total == 0 {
-		return "No labs completed yet. Run 'cka-lab-runner lab run <id>' to start!"
+		return fmt.Sprintf("\n  %s%s%s\n\n  Run %scka-lab-runner lab run <id>%s to start your first lab!\n",
+			colorDim, "No labs completed yet.", colorReset, colorCyan, colorReset)
 	}
 
 	var totalDuration time.Duration
@@ -159,24 +172,42 @@ func Summary() string {
 		byDifficulty[r.Difficulty]++
 	}
 
-	result := fmt.Sprintf("Progress: %d labs completed\n\n", total)
-	result += "By Difficulty:\n"
+	result := fmt.Sprintf("\n  %s╔══════════════════════════════════════════════════╗%s\n", colorCyan, colorReset)
+	result += fmt.Sprintf("  %s║%s  %s%-48s%s  %s║%s\n", colorCyan, colorReset, colorBold, "Lab Progress", colorReset, colorCyan, colorReset)
+	result += fmt.Sprintf("  %s╚══════════════════════════════════════════════════╝%s\n", colorCyan, colorReset)
+	result += "\n"
+
+	result += fmt.Sprintf("  %s%sCompleted:%s  %s%d lab(s)%s\n", colorBold, colorReset, colorReset, colorGreen, total, colorReset)
+	result += "\n"
+
+	result += fmt.Sprintf("  %sBy Difficulty:%s\n", colorBold, colorReset)
 	for _, d := range []string{"easy", "medium", "hard"} {
 		if c, ok := byDifficulty[d]; ok {
-			result += fmt.Sprintf("  %-8s %d\n", d, c)
+			color := colorGreen
+			if d == "medium" {
+				color = colorYellow
+			} else if d == "hard" {
+				color = colorRed
+			}
+			bar := strings.Repeat("█", c)
+			result += fmt.Sprintf("    %s%-8s%s %s%s%s  %d\n", colorDim, d, colorReset, color, bar, colorReset, c)
 		}
 	}
-	result += "\nBy Category:\n"
+	result += "\n"
+
+	result += fmt.Sprintf("  %sBy Category:%s\n", colorBold, colorReset)
 	cats := make([]string, 0, len(byCategory))
 	for c := range byCategory {
 		cats = append(cats, c)
 	}
 	sort.Strings(cats)
 	for _, c := range cats {
-		result += fmt.Sprintf("  %-18s %d\n", c, byCategory[c])
+		bar := strings.Repeat("█", byCategory[c])
+		result += fmt.Sprintf("    %-16s %s%s%s  %d\n", c, colorCyan, bar, colorReset, byCategory[c])
 	}
 
-	result += fmt.Sprintf("\nTotal time: %s\n", totalDuration.Round(time.Second))
+	result += fmt.Sprintf("\n  %sTotal time:%s  %s%s%s\n", colorBold, colorReset, colorWhite, totalDuration.Round(time.Second), colorReset)
+	result += "\n"
 	return result
 }
 

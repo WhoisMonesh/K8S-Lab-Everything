@@ -13,12 +13,14 @@ type NetworkPolicyEgressBlocked struct {
 	BaseLab
 }
 
-func (l *NetworkPolicyEgressBlocked) ID() string            { return "network_policy_egress_blocked" }
-func (l *NetworkPolicyEgressBlocked) Title() string         { return "NetworkPolicy Blocks Egress" }
-func (l *NetworkPolicyEgressBlocked) Category() Category    { return CategoryNetworking }
+func (l *NetworkPolicyEgressBlocked) ID() string             { return "network_policy_egress_blocked" }
+func (l *NetworkPolicyEgressBlocked) Title() string          { return "NetworkPolicy Blocks Egress" }
+func (l *NetworkPolicyEgressBlocked) Category() Category     { return CategoryNetworking }
 func (l *NetworkPolicyEgressBlocked) Difficulty() Difficulty { return DifficultyMedium }
-func (l *NetworkPolicyEgressBlocked) EstimatedTime() int    { return 20 }
-func (l *NetworkPolicyEgressBlocked) Tags() []string        { return []string{"networking", "egress", "policy"} }
+func (l *NetworkPolicyEgressBlocked) EstimatedTime() int     { return 20 }
+func (l *NetworkPolicyEgressBlocked) Tags() []string {
+	return []string{"networking", "egress", "policy"}
+}
 
 func (l *NetworkPolicyEgressBlocked) Description() string {
 	return `A pod cannot reach external services because a NetworkPolicy is blocking egress traffic.

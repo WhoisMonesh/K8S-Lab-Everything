@@ -13,12 +13,12 @@ type BadImageUndo struct {
 	BaseLab
 }
 
-func (l *BadImageUndo) ID() string            { return "bad_image_undo2" }
-func (l *BadImageUndo) Title() string         { return "Roll Back a Bad Image Update" }
-func (l *BadImageUndo) Category() Category    { return CategoryWorkloads }
+func (l *BadImageUndo) ID() string             { return "bad_image_undo2" }
+func (l *BadImageUndo) Title() string          { return "Roll Back a Bad Image Update" }
+func (l *BadImageUndo) Category() Category     { return CategoryWorkloads }
 func (l *BadImageUndo) Difficulty() Difficulty { return DifficultyMedium }
-func (l *BadImageUndo) EstimatedTime() int    { return 15 }
-func (l *BadImageUndo) Tags() []string        { return []string{"deployment", "rollback", "image"} }
+func (l *BadImageUndo) EstimatedTime() int     { return 15 }
+func (l *BadImageUndo) Tags() []string         { return []string{"deployment", "rollback", "image"} }
 
 func (l *BadImageUndo) Description() string {
 	return `A deployment was updated with a broken image tag.

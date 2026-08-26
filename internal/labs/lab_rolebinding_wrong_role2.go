@@ -13,12 +13,12 @@ type RoleBindingWrongRole struct {
 	BaseLab
 }
 
-func (l *RoleBindingWrongRole) ID() string            { return "rolebinding_wrong_role2" }
-func (l *RoleBindingWrongRole) Title() string         { return "RoleBinding References Wrong Role" }
-func (l *RoleBindingWrongRole) Category() Category    { return CategoryRBAC }
+func (l *RoleBindingWrongRole) ID() string             { return "rolebinding_wrong_role2" }
+func (l *RoleBindingWrongRole) Title() string          { return "RoleBinding References Wrong Role" }
+func (l *RoleBindingWrongRole) Category() Category     { return CategoryRBAC }
 func (l *RoleBindingWrongRole) Difficulty() Difficulty { return DifficultyMedium }
-func (l *RoleBindingWrongRole) EstimatedTime() int    { return 15 }
-func (l *RoleBindingWrongRole) Tags() []string        { return []string{"rbac", "rolebinding", "permissions"} }
+func (l *RoleBindingWrongRole) EstimatedTime() int     { return 15 }
+func (l *RoleBindingWrongRole) Tags() []string         { return []string{"rbac", "rolebinding", "permissions"} }
 
 func (l *RoleBindingWrongRole) Description() string {
 	return `A RoleBinding references a Role that doesn't exist.

@@ -13,12 +13,12 @@ type PriorityClassMissing struct {
 	BaseLab
 }
 
-func (l *PriorityClassMissing) ID() string            { return "priorityclass_missing2" }
-func (l *PriorityClassMissing) Title() string         { return "Pod Uses Nonexistent PriorityClass" }
-func (l *PriorityClassMissing) Category() Category    { return CategoryScheduling }
+func (l *PriorityClassMissing) ID() string             { return "priorityclass_missing2" }
+func (l *PriorityClassMissing) Title() string          { return "Pod Uses Nonexistent PriorityClass" }
+func (l *PriorityClassMissing) Category() Category     { return CategoryScheduling }
 func (l *PriorityClassMissing) Difficulty() Difficulty { return DifficultyMedium }
-func (l *PriorityClassMissing) EstimatedTime() int    { return 15 }
-func (l *PriorityClassMissing) Tags() []string        { return []string{"scheduling", "priority", "class"} }
+func (l *PriorityClassMissing) EstimatedTime() int     { return 15 }
+func (l *PriorityClassMissing) Tags() []string         { return []string{"scheduling", "priority", "class"} }
 
 func (l *PriorityClassMissing) Description() string {
 	return `A pod references a PriorityClass that doesn't exist.

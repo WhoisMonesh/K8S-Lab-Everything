@@ -13,12 +13,14 @@ type DeploymentProgressDeadline struct {
 	BaseLab
 }
 
-func (l *DeploymentProgressDeadline) ID() string            { return "deployment_progress_deadline" }
-func (l *DeploymentProgressDeadline) Title() string         { return "Deployment Progress Deadline Exceeded" }
-func (l *DeploymentProgressDeadline) Category() Category    { return CategoryWorkloads }
+func (l *DeploymentProgressDeadline) ID() string             { return "deployment_progress_deadline" }
+func (l *DeploymentProgressDeadline) Title() string          { return "Deployment Progress Deadline Exceeded" }
+func (l *DeploymentProgressDeadline) Category() Category     { return CategoryWorkloads }
 func (l *DeploymentProgressDeadline) Difficulty() Difficulty { return DifficultyMedium }
-func (l *DeploymentProgressDeadline) EstimatedTime() int    { return 20 }
-func (l *DeploymentProgressDeadline) Tags() []string        { return []string{"deployment", "rollout", "workloads"} }
+func (l *DeploymentProgressDeadline) EstimatedTime() int     { return 20 }
+func (l *DeploymentProgressDeadline) Tags() []string {
+	return []string{"deployment", "rollout", "workloads"}
+}
 
 func (l *DeploymentProgressDeadline) Description() string {
 	return `A deployment is stuck progressing because the new pods cannot start.

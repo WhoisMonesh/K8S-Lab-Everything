@@ -13,12 +13,14 @@ type LoadBalancerWrongProtocol struct {
 	BaseLab
 }
 
-func (l *LoadBalancerWrongProtocol) ID() string            { return "loadbalancer_wrong_protocol" }
-func (l *LoadBalancerWrongProtocol) Title() string         { return "LoadBalancer Wrong Protocol" }
-func (l *LoadBalancerWrongProtocol) Category() Category    { return CategoryNetworking }
+func (l *LoadBalancerWrongProtocol) ID() string             { return "loadbalancer_wrong_protocol" }
+func (l *LoadBalancerWrongProtocol) Title() string          { return "LoadBalancer Wrong Protocol" }
+func (l *LoadBalancerWrongProtocol) Category() Category     { return CategoryNetworking }
 func (l *LoadBalancerWrongProtocol) Difficulty() Difficulty { return DifficultyMedium }
-func (l *LoadBalancerWrongProtocol) EstimatedTime() int    { return 15 }
-func (l *LoadBalancerWrongProtocol) Tags() []string        { return []string{"networking", "loadbalancer", "protocol"} }
+func (l *LoadBalancerWrongProtocol) EstimatedTime() int     { return 15 }
+func (l *LoadBalancerWrongProtocol) Tags() []string {
+	return []string{"networking", "loadbalancer", "protocol"}
+}
 
 func (l *LoadBalancerWrongProtocol) Description() string {
 	return `A LoadBalancer service is using the wrong protocol for health checks.

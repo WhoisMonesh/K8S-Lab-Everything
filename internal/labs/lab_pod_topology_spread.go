@@ -13,12 +13,16 @@ type PodTopologySpreadViolation struct {
 	BaseLab
 }
 
-func (l *PodTopologySpreadViolation) ID() string            { return "pod_topology_spread_violation" }
-func (l *PodTopologySpreadViolation) Title() string         { return "Pod Topology Spread Constraint Violation" }
-func (l *PodTopologySpreadViolation) Category() Category    { return CategoryScheduling }
+func (l *PodTopologySpreadViolation) ID() string { return "pod_topology_spread_violation" }
+func (l *PodTopologySpreadViolation) Title() string {
+	return "Pod Topology Spread Constraint Violation"
+}
+func (l *PodTopologySpreadViolation) Category() Category     { return CategoryScheduling }
 func (l *PodTopologySpreadViolation) Difficulty() Difficulty { return DifficultyHard }
-func (l *PodTopologySpreadViolation) EstimatedTime() int    { return 20 }
-func (l *PodTopologySpreadViolation) Tags() []string        { return []string{"scheduling", "topology", "spread"} }
+func (l *PodTopologySpreadViolation) EstimatedTime() int     { return 20 }
+func (l *PodTopologySpreadViolation) Tags() []string {
+	return []string{"scheduling", "topology", "spread"}
+}
 
 func (l *PodTopologySpreadViolation) Description() string {
 	return `A deployment cannot schedule pods because topology spread constraints cannot be satisfied.

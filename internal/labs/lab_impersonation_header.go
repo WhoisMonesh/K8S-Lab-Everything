@@ -13,12 +13,12 @@ type ImpersonationHeader struct {
 	BaseLab
 }
 
-func (l *ImpersonationHeader) ID() string            { return "impersonation_header" }
-func (l *ImpersonationHeader) Title() string         { return "Impersonation Header Denied" }
-func (l *ImpersonationHeader) Category() Category    { return CategoryRBAC }
+func (l *ImpersonationHeader) ID() string             { return "impersonation_header" }
+func (l *ImpersonationHeader) Title() string          { return "Impersonation Header Denied" }
+func (l *ImpersonationHeader) Category() Category     { return CategoryRBAC }
 func (l *ImpersonationHeader) Difficulty() Difficulty { return DifficultyHard }
-func (l *ImpersonationHeader) EstimatedTime() int    { return 20 }
-func (l *ImpersonationHeader) Tags() []string        { return []string{"rbac", "impersonation", "security"} }
+func (l *ImpersonationHeader) EstimatedTime() int     { return 20 }
+func (l *ImpersonationHeader) Tags() []string         { return []string{"rbac", "impersonation", "security"} }
 
 func (l *ImpersonationHeader) Description() string {
 	return `A user is trying to impersonate another user but lacks the necessary permissions.

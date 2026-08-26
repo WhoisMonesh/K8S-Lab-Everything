@@ -13,12 +13,12 @@ type LivenessProbeWrong struct {
 	BaseLab
 }
 
-func (l *LivenessProbeWrong) ID() string            { return "liveness_probe_wrong2" }
-func (l *LivenessProbeWrong) Title() string         { return "Pod Failing Liveness Probe" }
-func (l *LivenessProbeWrong) Category() Category    { return CategoryWorkloads }
+func (l *LivenessProbeWrong) ID() string             { return "liveness_probe_wrong2" }
+func (l *LivenessProbeWrong) Title() string          { return "Pod Failing Liveness Probe" }
+func (l *LivenessProbeWrong) Category() Category     { return CategoryWorkloads }
 func (l *LivenessProbeWrong) Difficulty() Difficulty { return DifficultyMedium }
-func (l *LivenessProbeWrong) EstimatedTime() int    { return 15 }
-func (l *LivenessProbeWrong) Tags() []string        { return []string{"probes", "liveness", "restarts"} }
+func (l *LivenessProbeWrong) EstimatedTime() int     { return 15 }
+func (l *LivenessProbeWrong) Tags() []string         { return []string{"probes", "liveness", "restarts"} }
 
 func (l *LivenessProbeWrong) Description() string {
 	return `A pod is being restarted because the liveness probe is failing.

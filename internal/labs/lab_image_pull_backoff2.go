@@ -13,12 +13,12 @@ type ImagePullBackoff2 struct {
 	BaseLab
 }
 
-func (l *ImagePullBackoff2) ID() string            { return "image_pull_backoff2" }
-func (l *ImagePullBackoff2) Title() string         { return "ImagePullBackOff Due to Wrong Registry" }
-func (l *ImagePullBackoff2) Category() Category    { return CategoryWorkloads }
+func (l *ImagePullBackoff2) ID() string             { return "image_pull_backoff2" }
+func (l *ImagePullBackoff2) Title() string          { return "ImagePullBackOff Due to Wrong Registry" }
+func (l *ImagePullBackoff2) Category() Category     { return CategoryWorkloads }
 func (l *ImagePullBackoff2) Difficulty() Difficulty { return DifficultyEasy }
-func (l *ImagePullBackoff2) EstimatedTime() int    { return 10 }
-func (l *ImagePullBackoff2) Tags() []string        { return []string{"images", "registry", "pull"} }
+func (l *ImagePullBackoff2) EstimatedTime() int     { return 10 }
+func (l *ImagePullBackoff2) Tags() []string         { return []string{"images", "registry", "pull"} }
 
 func (l *ImagePullBackoff2) Description() string {
 	return `A pod is stuck in ImagePullBackOff because the image is being pulled from the wrong registry.

@@ -13,12 +13,12 @@ type StartupProbeMissing struct {
 	BaseLab
 }
 
-func (l *StartupProbeMissing) ID() string            { return "startup_probe_missing2" }
-func (l *StartupProbeMissing) Title() string         { return "Liveness Probe Kills Slow-Starting App" }
-func (l *StartupProbeMissing) Category() Category    { return CategoryWorkloads }
+func (l *StartupProbeMissing) ID() string             { return "startup_probe_missing2" }
+func (l *StartupProbeMissing) Title() string          { return "Liveness Probe Kills Slow-Starting App" }
+func (l *StartupProbeMissing) Category() Category     { return CategoryWorkloads }
 func (l *StartupProbeMissing) Difficulty() Difficulty { return DifficultyMedium }
-func (l *StartupProbeMissing) EstimatedTime() int    { return 20 }
-func (l *StartupProbeMissing) Tags() []string        { return []string{"probes", "startup", "liveness"} }
+func (l *StartupProbeMissing) EstimatedTime() int     { return 20 }
+func (l *StartupProbeMissing) Tags() []string         { return []string{"probes", "startup", "liveness"} }
 
 func (l *StartupProbeMissing) Description() string {
 	return `A slow-starting application is being killed by the liveness probe before it can start.

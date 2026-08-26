@@ -13,12 +13,14 @@ type APIServerAuditLogDisabled struct {
 	BaseLab
 }
 
-func (l *APIServerAuditLogDisabled) ID() string            { return "api_server_audit_log_disabled" }
-func (l *APIServerAuditLogDisabled) Title() string         { return "API Server Audit Logging Disabled" }
-func (l *APIServerAuditLogDisabled) Category() Category    { return CategoryControlPlane }
+func (l *APIServerAuditLogDisabled) ID() string             { return "api_server_audit_log_disabled" }
+func (l *APIServerAuditLogDisabled) Title() string          { return "API Server Audit Logging Disabled" }
+func (l *APIServerAuditLogDisabled) Category() Category     { return CategoryControlPlane }
 func (l *APIServerAuditLogDisabled) Difficulty() Difficulty { return DifficultyHard }
-func (l *APIServerAuditLogDisabled) EstimatedTime() int    { return 25 }
-func (l *APIServerAuditLogDisabled) Tags() []string        { return []string{"audit", "api-server", "security"} }
+func (l *APIServerAuditLogDisabled) EstimatedTime() int     { return 25 }
+func (l *APIServerAuditLogDisabled) Tags() []string {
+	return []string{"audit", "api-server", "security"}
+}
 
 func (l *APIServerAuditLogDisabled) Description() string {
 	return `Audit logging is disabled on the API server. Enable audit logging with a policy that logs all requests at the Metadata level.

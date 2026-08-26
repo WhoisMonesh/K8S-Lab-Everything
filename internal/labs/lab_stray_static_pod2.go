@@ -13,12 +13,12 @@ type StrayStaticPod struct {
 	BaseLab
 }
 
-func (l *StrayStaticPod) ID() string            { return "stray_static_pod2" }
-func (l *StrayStaticPod) Title() string         { return "Stray Static Pod Consuming Resources" }
-func (l *StrayStaticPod) Category() Category    { return CategoryControlPlane }
+func (l *StrayStaticPod) ID() string             { return "stray_static_pod2" }
+func (l *StrayStaticPod) Title() string          { return "Stray Static Pod Consuming Resources" }
+func (l *StrayStaticPod) Category() Category     { return CategoryControlPlane }
 func (l *StrayStaticPod) Difficulty() Difficulty { return DifficultyMedium }
-func (l *StrayStaticPod) EstimatedTime() int    { return 15 }
-func (l *StrayStaticPod) Tags() []string        { return []string{"static-pods", "kubelet", "resources"} }
+func (l *StrayStaticPod) EstimatedTime() int     { return 15 }
+func (l *StrayStaticPod) Tags() []string         { return []string{"static-pods", "kubelet", "resources"} }
 
 func (l *StrayStaticPod) Description() string {
 	return `A stray static pod is consuming resources on a node.

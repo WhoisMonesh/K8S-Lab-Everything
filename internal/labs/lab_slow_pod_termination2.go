@@ -13,12 +13,12 @@ type SlowPodTermination struct {
 	BaseLab
 }
 
-func (l *SlowPodTermination) ID() string            { return "slow_pod_termination2" }
-func (l *SlowPodTermination) Title() string         { return "Pod Stuck Terminating" }
-func (l *SlowPodTermination) Category() Category    { return CategoryWorkloads }
+func (l *SlowPodTermination) ID() string             { return "slow_pod_termination2" }
+func (l *SlowPodTermination) Title() string          { return "Pod Stuck Terminating" }
+func (l *SlowPodTermination) Category() Category     { return CategoryWorkloads }
 func (l *SlowPodTermination) Difficulty() Difficulty { return DifficultyMedium }
-func (l *SlowPodTermination) EstimatedTime() int    { return 15 }
-func (l *SlowPodTermination) Tags() []string        { return []string{"pods", "termination", "graceperiod"} }
+func (l *SlowPodTermination) EstimatedTime() int     { return 15 }
+func (l *SlowPodTermination) Tags() []string         { return []string{"pods", "termination", "graceperiod"} }
 
 func (l *SlowPodTermination) Description() string {
 	return `A pod is taking too long to terminate because the terminationGracePeriodSeconds is too high.

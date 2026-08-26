@@ -13,12 +13,14 @@ type RunAsNonRootRejected struct {
 	BaseLab
 }
 
-func (l *RunAsNonRootRejected) ID() string            { return "runasnonroot_rejected2" }
-func (l *RunAsNonRootRejected) Title() string         { return "Pod Rejected - runAsNonRoot Violation" }
-func (l *RunAsNonRootRejected) Category() Category    { return CategorySecurity }
+func (l *RunAsNonRootRejected) ID() string             { return "runasnonroot_rejected2" }
+func (l *RunAsNonRootRejected) Title() string          { return "Pod Rejected - runAsNonRoot Violation" }
+func (l *RunAsNonRootRejected) Category() Category     { return CategorySecurity }
 func (l *RunAsNonRootRejected) Difficulty() Difficulty { return DifficultyMedium }
-func (l *RunAsNonRootRejected) EstimatedTime() int    { return 15 }
-func (l *RunAsNonRootRejected) Tags() []string        { return []string{"security", "runasnonroot", "admission"} }
+func (l *RunAsNonRootRejected) EstimatedTime() int     { return 15 }
+func (l *RunAsNonRootRejected) Tags() []string {
+	return []string{"security", "runasnonroot", "admission"}
+}
 
 func (l *RunAsNonRootRejected) Description() string {
 	return `A pod is being rejected because it tries to run as root when runAsNonRoot is enforced.

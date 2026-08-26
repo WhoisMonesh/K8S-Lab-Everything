@@ -13,12 +13,14 @@ type AdmissionControllerBlocked struct {
 	BaseLab
 }
 
-func (l *AdmissionControllerBlocked) ID() string            { return "admission_controller_blocked" }
-func (l *AdmissionControllerBlocked) Title() string         { return "Admission Controller Blocking Pods" }
-func (l *AdmissionControllerBlocked) Category() Category    { return CategorySecurity }
+func (l *AdmissionControllerBlocked) ID() string             { return "admission_controller_blocked" }
+func (l *AdmissionControllerBlocked) Title() string          { return "Admission Controller Blocking Pods" }
+func (l *AdmissionControllerBlocked) Category() Category     { return CategorySecurity }
 func (l *AdmissionControllerBlocked) Difficulty() Difficulty { return DifficultyHard }
-func (l *AdmissionControllerBlocked) EstimatedTime() int    { return 20 }
-func (l *AdmissionControllerBlocked) Tags() []string        { return []string{"security", "admission", "webhook"} }
+func (l *AdmissionControllerBlocked) EstimatedTime() int     { return 20 }
+func (l *AdmissionControllerBlocked) Tags() []string {
+	return []string{"security", "admission", "webhook"}
+}
 
 func (l *AdmissionControllerBlocked) Description() string {
 	return `A MutatingAdmissionWebhook is rejecting all pod creation requests.

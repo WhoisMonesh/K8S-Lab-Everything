@@ -13,12 +13,12 @@ type NetworkPolicyAuditMode struct {
 	BaseLab
 }
 
-func (l *NetworkPolicyAuditMode) ID() string            { return "network_policy_audit_mode" }
-func (l *NetworkPolicyAuditMode) Title() string         { return "NetworkPolicy in Audit Mode" }
-func (l *NetworkPolicyAuditMode) Category() Category    { return CategoryNetworking }
+func (l *NetworkPolicyAuditMode) ID() string             { return "network_policy_audit_mode" }
+func (l *NetworkPolicyAuditMode) Title() string          { return "NetworkPolicy in Audit Mode" }
+func (l *NetworkPolicyAuditMode) Category() Category     { return CategoryNetworking }
 func (l *NetworkPolicyAuditMode) Difficulty() Difficulty { return DifficultyMedium }
-func (l *NetworkPolicyAuditMode) EstimatedTime() int    { return 20 }
-func (l *NetworkPolicyAuditMode) Tags() []string        { return []string{"networking", "policy", "audit"} }
+func (l *NetworkPolicyAuditMode) EstimatedTime() int     { return 20 }
+func (l *NetworkPolicyAuditMode) Tags() []string         { return []string{"networking", "policy", "audit"} }
 
 func (l *NetworkPolicyAuditMode) Description() string {
 	return `A NetworkPolicy is configured in audit mode but traffic is still being blocked.

@@ -13,12 +13,12 @@ type DownwardAPIMissing struct {
 	BaseLab
 }
 
-func (l *DownwardAPIMissing) ID() string            { return "downward_api_missing" }
-func (l *DownwardAPIMissing) Title() string         { return "DownwardAPI Volume Missing" }
-func (l *DownwardAPIMissing) Category() Category    { return CategoryWorkloads }
+func (l *DownwardAPIMissing) ID() string             { return "downward_api_missing" }
+func (l *DownwardAPIMissing) Title() string          { return "DownwardAPI Volume Missing" }
+func (l *DownwardAPIMissing) Category() Category     { return CategoryWorkloads }
 func (l *DownwardAPIMissing) Difficulty() Difficulty { return DifficultyMedium }
-func (l *DownwardAPIMissing) EstimatedTime() int    { return 15 }
-func (l *DownwardAPIMissing) Tags() []string        { return []string{"downwardapi", "volumes", "workloads"} }
+func (l *DownwardAPIMissing) EstimatedTime() int     { return 15 }
+func (l *DownwardAPIMissing) Tags() []string         { return []string{"downwardapi", "volumes", "workloads"} }
 
 func (l *DownwardAPIMissing) Description() string {
 	return `A pod is crashing because it expects metadata from a DownwardAPI volume that is misconfigured.

@@ -13,12 +13,12 @@ type ReadinessProbeWrong struct {
 	BaseLab
 }
 
-func (l *ReadinessProbeWrong) ID() string            { return "readiness_probe_wrong2" }
-func (l *ReadinessProbeWrong) Title() string         { return "Pod Not Ready Due to Readiness Probe" }
-func (l *ReadinessProbeWrong) Category() Category    { return CategoryWorkloads }
+func (l *ReadinessProbeWrong) ID() string             { return "readiness_probe_wrong2" }
+func (l *ReadinessProbeWrong) Title() string          { return "Pod Not Ready Due to Readiness Probe" }
+func (l *ReadinessProbeWrong) Category() Category     { return CategoryWorkloads }
 func (l *ReadinessProbeWrong) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ReadinessProbeWrong) EstimatedTime() int    { return 15 }
-func (l *ReadinessProbeWrong) Tags() []string        { return []string{"probes", "readiness", "health"} }
+func (l *ReadinessProbeWrong) EstimatedTime() int     { return 15 }
+func (l *ReadinessProbeWrong) Tags() []string         { return []string{"probes", "readiness", "health"} }
 
 func (l *ReadinessProbeWrong) Description() string {
 	return `A pod is not ready because the readiness probe is misconfigured.

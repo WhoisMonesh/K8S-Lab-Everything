@@ -13,12 +13,14 @@ type VolumeReadOnlyWriteFail2 struct {
 	BaseLab
 }
 
-func (l *VolumeReadOnlyWriteFail2) ID() string            { return "volume_readonly_write_fail2" }
-func (l *VolumeReadOnlyWriteFail2) Title() string         { return "Pod CrashLoop - Writing to ReadOnly Volume" }
-func (l *VolumeReadOnlyWriteFail2) Category() Category    { return CategoryStorage }
+func (l *VolumeReadOnlyWriteFail2) ID() string { return "volume_readonly_write_fail2" }
+func (l *VolumeReadOnlyWriteFail2) Title() string {
+	return "Pod CrashLoop - Writing to ReadOnly Volume"
+}
+func (l *VolumeReadOnlyWriteFail2) Category() Category     { return CategoryStorage }
 func (l *VolumeReadOnlyWriteFail2) Difficulty() Difficulty { return DifficultyEasy }
-func (l *VolumeReadOnlyWriteFail2) EstimatedTime() int    { return 10 }
-func (l *VolumeReadOnlyWriteFail2) Tags() []string        { return []string{"storage", "readonly", "volumes"} }
+func (l *VolumeReadOnlyWriteFail2) EstimatedTime() int     { return 10 }
+func (l *VolumeReadOnlyWriteFail2) Tags() []string         { return []string{"storage", "readonly", "volumes"} }
 
 func (l *VolumeReadOnlyWriteFail2) Description() string {
 	return `A pod is crashing because it's trying to write to a read-only volume mount.

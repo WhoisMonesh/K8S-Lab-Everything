@@ -13,12 +13,12 @@ type PrestopHookWrong struct {
 	BaseLab
 }
 
-func (l *PrestopHookWrong) ID() string            { return "prestop_hook_wrong" }
-func (l *PrestopHookWrong) Title() string         { return "PreStop Hook Causing Pod Termination Issues" }
-func (l *PrestopHookWrong) Category() Category    { return CategoryWorkloads }
+func (l *PrestopHookWrong) ID() string             { return "prestop_hook_wrong" }
+func (l *PrestopHookWrong) Title() string          { return "PreStop Hook Causing Pod Termination Issues" }
+func (l *PrestopHookWrong) Category() Category     { return CategoryWorkloads }
 func (l *PrestopHookWrong) Difficulty() Difficulty { return DifficultyMedium }
-func (l *PrestopHookWrong) EstimatedTime() int    { return 15 }
-func (l *PrestopHookWrong) Tags() []string        { return []string{"prestop", "lifecycle", "workloads"} }
+func (l *PrestopHookWrong) EstimatedTime() int     { return 15 }
+func (l *PrestopHookWrong) Tags() []string         { return []string{"prestop", "lifecycle", "workloads"} }
 
 func (l *PrestopHookWrong) Description() string {
 	return `A pod is taking too long to terminate because the preStop hook has an incorrect command.

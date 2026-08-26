@@ -13,12 +13,14 @@ type CMImmutableMigration struct {
 	BaseLab
 }
 
-func (l *CMImmutableMigration) ID() string            { return "cm_immutable_migration2" }
-func (l *CMImmutableMigration) Title() string         { return "Immutable ConfigMap Migration" }
-func (l *CMImmutableMigration) Category() Category    { return CategoryScheduling }
+func (l *CMImmutableMigration) ID() string             { return "cm_immutable_migration2" }
+func (l *CMImmutableMigration) Title() string          { return "Immutable ConfigMap Migration" }
+func (l *CMImmutableMigration) Category() Category     { return CategoryScheduling }
 func (l *CMImmutableMigration) Difficulty() Difficulty { return DifficultyHard }
-func (l *CMImmutableMigration) EstimatedTime() int    { return 20 }
-func (l *CMImmutableMigration) Tags() []string        { return []string{"configmap", "immutable", "migration"} }
+func (l *CMImmutableMigration) EstimatedTime() int     { return 20 }
+func (l *CMImmutableMigration) Tags() []string {
+	return []string{"configmap", "immutable", "migration"}
+}
 
 func (l *CMImmutableMigration) Description() string {
 	return `A ConfigMap is set to immutable but needs to be updated.

@@ -13,12 +13,12 @@ type PodSecurityPolicyViolation struct {
 	BaseLab
 }
 
-func (l *PodSecurityPolicyViolation) ID() string            { return "pod_security_policy_violation" }
-func (l *PodSecurityPolicyViolation) Title() string         { return "Pod Security Policy Violation" }
-func (l *PodSecurityPolicyViolation) Category() Category    { return CategorySecurity }
+func (l *PodSecurityPolicyViolation) ID() string             { return "pod_security_policy_violation" }
+func (l *PodSecurityPolicyViolation) Title() string          { return "Pod Security Policy Violation" }
+func (l *PodSecurityPolicyViolation) Category() Category     { return CategorySecurity }
 func (l *PodSecurityPolicyViolation) Difficulty() Difficulty { return DifficultyMedium }
-func (l *PodSecurityPolicyViolation) EstimatedTime() int    { return 15 }
-func (l *PodSecurityPolicyViolation) Tags() []string        { return []string{"security", "psp", "admission"} }
+func (l *PodSecurityPolicyViolation) EstimatedTime() int     { return 15 }
+func (l *PodSecurityPolicyViolation) Tags() []string         { return []string{"security", "psp", "admission"} }
 
 func (l *PodSecurityPolicyViolation) Description() string {
 	return `A pod is being rejected by the PodSecurityPolicy admission controller.

@@ -13,12 +13,14 @@ type NamespaceFinalizerStuck struct {
 	BaseLab
 }
 
-func (l *NamespaceFinalizerStuck) ID() string            { return "namespace_finalizer_stuck2" }
-func (l *NamespaceFinalizerStuck) Title() string         { return "Namespace Stuck in Terminating" }
-func (l *NamespaceFinalizerStuck) Category() Category    { return CategoryControlPlane }
+func (l *NamespaceFinalizerStuck) ID() string             { return "namespace_finalizer_stuck2" }
+func (l *NamespaceFinalizerStuck) Title() string          { return "Namespace Stuck in Terminating" }
+func (l *NamespaceFinalizerStuck) Category() Category     { return CategoryControlPlane }
 func (l *NamespaceFinalizerStuck) Difficulty() Difficulty { return DifficultyHard }
-func (l *NamespaceFinalizerStuck) EstimatedTime() int    { return 20 }
-func (l *NamespaceFinalizerStuck) Tags() []string        { return []string{"namespaces", "finalizers", "deletion"} }
+func (l *NamespaceFinalizerStuck) EstimatedTime() int     { return 20 }
+func (l *NamespaceFinalizerStuck) Tags() []string {
+	return []string{"namespaces", "finalizers", "deletion"}
+}
 
 func (l *NamespaceFinalizerStuck) Description() string {
 	return `A namespace is stuck in Terminating state because of a stuck finalizer.

@@ -13,12 +13,12 @@ type VolumeMountConflict struct {
 	BaseLab
 }
 
-func (l *VolumeMountConflict) ID() string            { return "volume_mount_conflict" }
-func (l *VolumeMountConflict) Title() string         { return "Volume Mount Path Conflict" }
-func (l *VolumeMountConflict) Category() Category    { return CategoryStorage }
+func (l *VolumeMountConflict) ID() string             { return "volume_mount_conflict" }
+func (l *VolumeMountConflict) Title() string          { return "Volume Mount Path Conflict" }
+func (l *VolumeMountConflict) Category() Category     { return CategoryStorage }
 func (l *VolumeMountConflict) Difficulty() Difficulty { return DifficultyMedium }
-func (l *VolumeMountConflict) EstimatedTime() int    { return 15 }
-func (l *VolumeMountConflict) Tags() []string        { return []string{"storage", "volumes", "mounts"} }
+func (l *VolumeMountConflict) EstimatedTime() int     { return 15 }
+func (l *VolumeMountConflict) Tags() []string         { return []string{"storage", "volumes", "mounts"} }
 
 func (l *VolumeMountConflict) Description() string {
 	return `A pod is failing because two containers are trying to mount the same path.

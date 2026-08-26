@@ -13,12 +13,14 @@ type ServiceAccountTokenExpired struct {
 	BaseLab
 }
 
-func (l *ServiceAccountTokenExpired) ID() string            { return "service_account_token_expired" }
-func (l *ServiceAccountTokenExpired) Title() string         { return "Service Account Token Expired" }
-func (l *ServiceAccountTokenExpired) Category() Category    { return CategorySecurity }
+func (l *ServiceAccountTokenExpired) ID() string             { return "service_account_token_expired" }
+func (l *ServiceAccountTokenExpired) Title() string          { return "Service Account Token Expired" }
+func (l *ServiceAccountTokenExpired) Category() Category     { return CategorySecurity }
 func (l *ServiceAccountTokenExpired) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ServiceAccountTokenExpired) EstimatedTime() int    { return 15 }
-func (l *ServiceAccountTokenExpired) Tags() []string        { return []string{"security", "serviceaccount", "tokens"} }
+func (l *ServiceAccountTokenExpired) EstimatedTime() int     { return 15 }
+func (l *ServiceAccountTokenExpired) Tags() []string {
+	return []string{"security", "serviceaccount", "tokens"}
+}
 
 func (l *ServiceAccountTokenExpired) Description() string {
 	return `A pod is failing because it's using an expired service account token.

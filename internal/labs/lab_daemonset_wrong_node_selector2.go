@@ -13,12 +13,14 @@ type DaemonsetWrongNodeSelector2 struct {
 	BaseLab
 }
 
-func (l *DaemonsetWrongNodeSelector2) ID() string            { return "daemonset_wrong_node_selector2" }
-func (l *DaemonsetWrongNodeSelector2) Title() string         { return "DaemonSet NodeSelector Mismatch" }
-func (l *DaemonsetWrongNodeSelector2) Category() Category    { return CategoryWorkloads }
+func (l *DaemonsetWrongNodeSelector2) ID() string             { return "daemonset_wrong_node_selector2" }
+func (l *DaemonsetWrongNodeSelector2) Title() string          { return "DaemonSet NodeSelector Mismatch" }
+func (l *DaemonsetWrongNodeSelector2) Category() Category     { return CategoryWorkloads }
 func (l *DaemonsetWrongNodeSelector2) Difficulty() Difficulty { return DifficultyMedium }
-func (l *DaemonsetWrongNodeSelector2) EstimatedTime() int    { return 15 }
-func (l *DaemonsetWrongNodeSelector2) Tags() []string        { return []string{"daemonset", "nodeselector", "scheduling"} }
+func (l *DaemonsetWrongNodeSelector2) EstimatedTime() int     { return 15 }
+func (l *DaemonsetWrongNodeSelector2) Tags() []string {
+	return []string{"daemonset", "nodeselector", "scheduling"}
+}
 
 func (l *DaemonsetWrongNodeSelector2) Description() string {
 	return `A DaemonSet is not scheduling because the nodeSelector doesn't match any nodes.

@@ -13,12 +13,14 @@ type ServiceWrongTargetPort struct {
 	BaseLab
 }
 
-func (l *ServiceWrongTargetPort) ID() string            { return "service_wrong_targetport2" }
-func (l *ServiceWrongTargetPort) Title() string         { return "Service Points to Wrong targetPort" }
-func (l *ServiceWrongTargetPort) Category() Category    { return CategoryNetworking }
+func (l *ServiceWrongTargetPort) ID() string             { return "service_wrong_targetport2" }
+func (l *ServiceWrongTargetPort) Title() string          { return "Service Points to Wrong targetPort" }
+func (l *ServiceWrongTargetPort) Category() Category     { return CategoryNetworking }
 func (l *ServiceWrongTargetPort) Difficulty() Difficulty { return DifficultyEasy }
-func (l *ServiceWrongTargetPort) EstimatedTime() int    { return 10 }
-func (l *ServiceWrongTargetPort) Tags() []string        { return []string{"networking", "service", "targetport"} }
+func (l *ServiceWrongTargetPort) EstimatedTime() int     { return 10 }
+func (l *ServiceWrongTargetPort) Tags() []string {
+	return []string{"networking", "service", "targetport"}
+}
 
 func (l *ServiceWrongTargetPort) Description() string {
 	return `A service is pointing to the wrong targetPort.

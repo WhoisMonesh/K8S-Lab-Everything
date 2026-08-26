@@ -13,12 +13,12 @@ type JobDeadlineExceeded struct {
 	BaseLab
 }
 
-func (l *JobDeadlineExceeded) ID() string            { return "job_deadline_exceeded2" }
-func (l *JobDeadlineExceeded) Title() string         { return "Job Killed By activeDeadlineSeconds" }
-func (l *JobDeadlineExceeded) Category() Category    { return CategoryWorkloads }
+func (l *JobDeadlineExceeded) ID() string             { return "job_deadline_exceeded2" }
+func (l *JobDeadlineExceeded) Title() string          { return "Job Killed By activeDeadlineSeconds" }
+func (l *JobDeadlineExceeded) Category() Category     { return CategoryWorkloads }
 func (l *JobDeadlineExceeded) Difficulty() Difficulty { return DifficultyMedium }
-func (l *JobDeadlineExceeded) EstimatedTime() int    { return 15 }
-func (l *JobDeadlineExceeded) Tags() []string        { return []string{"jobs", "deadline", "workloads"} }
+func (l *JobDeadlineExceeded) EstimatedTime() int     { return 15 }
+func (l *JobDeadlineExceeded) Tags() []string         { return []string{"jobs", "deadline", "workloads"} }
 
 func (l *JobDeadlineExceeded) Description() string {
 	return `A job is failing because activeDeadlineSeconds is too short.

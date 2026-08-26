@@ -13,12 +13,14 @@ type NodeSelectorLabelMissing struct {
 	BaseLab
 }
 
-func (l *NodeSelectorLabelMissing) ID() string            { return "nodeselector_label_missing" }
-func (l *NodeSelectorLabelMissing) Title() string         { return "Pod Pending - Missing Node Label" }
-func (l *NodeSelectorLabelMissing) Category() Category    { return CategoryScheduling }
+func (l *NodeSelectorLabelMissing) ID() string             { return "nodeselector_label_missing" }
+func (l *NodeSelectorLabelMissing) Title() string          { return "Pod Pending - Missing Node Label" }
+func (l *NodeSelectorLabelMissing) Category() Category     { return CategoryScheduling }
 func (l *NodeSelectorLabelMissing) Difficulty() Difficulty { return DifficultyEasy }
-func (l *NodeSelectorLabelMissing) EstimatedTime() int    { return 10 }
-func (l *NodeSelectorLabelMissing) Tags() []string        { return []string{"scheduling", "nodeselector", "labels"} }
+func (l *NodeSelectorLabelMissing) EstimatedTime() int     { return 10 }
+func (l *NodeSelectorLabelMissing) Tags() []string {
+	return []string{"scheduling", "nodeselector", "labels"}
+}
 
 func (l *NodeSelectorLabelMissing) Description() string {
 	return `A pod is stuck in Pending state because the required node label doesn't exist.

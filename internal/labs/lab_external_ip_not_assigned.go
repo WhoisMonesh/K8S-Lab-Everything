@@ -13,12 +13,14 @@ type ExternalIPNotAssigned struct {
 	BaseLab
 }
 
-func (l *ExternalIPNotAssigned) ID() string            { return "external_ip_not_assigned" }
-func (l *ExternalIPNotAssigned) Title() string         { return "External IP Not Assigned" }
-func (l *ExternalIPNotAssigned) Category() Category    { return CategoryNetworking }
+func (l *ExternalIPNotAssigned) ID() string             { return "external_ip_not_assigned" }
+func (l *ExternalIPNotAssigned) Title() string          { return "External IP Not Assigned" }
+func (l *ExternalIPNotAssigned) Category() Category     { return CategoryNetworking }
 func (l *ExternalIPNotAssigned) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ExternalIPNotAssigned) EstimatedTime() int    { return 15 }
-func (l *ExternalIPNotAssigned) Tags() []string        { return []string{"networking", "external", "loadbalancer"} }
+func (l *ExternalIPNotAssigned) EstimatedTime() int     { return 15 }
+func (l *ExternalIPNotAssigned) Tags() []string {
+	return []string{"networking", "external", "loadbalancer"}
+}
 
 func (l *ExternalIPNotAssigned) Description() string {
 	return `A LoadBalancer service has no external IP assigned.

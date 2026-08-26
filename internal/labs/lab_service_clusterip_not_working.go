@@ -13,12 +13,14 @@ type ServiceClusterIPNotWorking struct {
 	BaseLab
 }
 
-func (l *ServiceClusterIPNotWorking) ID() string            { return "service_clusterip_not_working" }
-func (l *ServiceClusterIPNotWorking) Title() string         { return "ClusterIP Service Not Responding" }
-func (l *ServiceClusterIPNotWorking) Category() Category    { return CategoryNetworking }
+func (l *ServiceClusterIPNotWorking) ID() string             { return "service_clusterip_not_working" }
+func (l *ServiceClusterIPNotWorking) Title() string          { return "ClusterIP Service Not Responding" }
+func (l *ServiceClusterIPNotWorking) Category() Category     { return CategoryNetworking }
 func (l *ServiceClusterIPNotWorking) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ServiceClusterIPNotWorking) EstimatedTime() int    { return 15 }
-func (l *ServiceClusterIPNotWorking) Tags() []string        { return []string{"service", "clusterip", "networking"} }
+func (l *ServiceClusterIPNotWorking) EstimatedTime() int     { return 15 }
+func (l *ServiceClusterIPNotWorking) Tags() []string {
+	return []string{"service", "clusterip", "networking"}
+}
 
 func (l *ServiceClusterIPNotWorking) Description() string {
 	return `A ClusterIP service is not responding to requests. The service exists but has no endpoints.

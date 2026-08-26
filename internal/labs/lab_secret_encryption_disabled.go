@@ -13,12 +13,14 @@ type SecretEncryptionDisabled struct {
 	BaseLab
 }
 
-func (l *SecretEncryptionDisabled) ID() string            { return "secret_encryption_disabled" }
-func (l *SecretEncryptionDisabled) Title() string         { return "Secret Encryption at Rest Disabled" }
-func (l *SecretEncryptionDisabled) Category() Category    { return CategorySecurity }
+func (l *SecretEncryptionDisabled) ID() string             { return "secret_encryption_disabled" }
+func (l *SecretEncryptionDisabled) Title() string          { return "Secret Encryption at Rest Disabled" }
+func (l *SecretEncryptionDisabled) Category() Category     { return CategorySecurity }
 func (l *SecretEncryptionDisabled) Difficulty() Difficulty { return DifficultyHard }
-func (l *SecretEncryptionDisabled) EstimatedTime() int    { return 25 }
-func (l *SecretEncryptionDisabled) Tags() []string        { return []string{"security", "encryption", "secrets"} }
+func (l *SecretEncryptionDisabled) EstimatedTime() int     { return 25 }
+func (l *SecretEncryptionDisabled) Tags() []string {
+	return []string{"security", "encryption", "secrets"}
+}
 
 func (l *SecretEncryptionDisabled) Description() string {
 	return `Secrets are stored in etcd without encryption. Configure encryption at rest for Secrets.`

@@ -13,12 +13,14 @@ type PersistentVolumeReclaimPolicy struct {
 	BaseLab
 }
 
-func (l *PersistentVolumeReclaimPolicy) ID() string            { return "persistent_volume_reclaim_policy" }
-func (l *PersistentVolumeReclaimPolicy) Title() string         { return "PV Reclaim Policy Prevents PVC Delete" }
-func (l *PersistentVolumeReclaimPolicy) Category() Category    { return CategoryStorage }
+func (l *PersistentVolumeReclaimPolicy) ID() string { return "persistent_volume_reclaim_policy" }
+func (l *PersistentVolumeReclaimPolicy) Title() string {
+	return "PV Reclaim Policy Prevents PVC Delete"
+}
+func (l *PersistentVolumeReclaimPolicy) Category() Category     { return CategoryStorage }
 func (l *PersistentVolumeReclaimPolicy) Difficulty() Difficulty { return DifficultyMedium }
-func (l *PersistentVolumeReclaimPolicy) EstimatedTime() int    { return 15 }
-func (l *PersistentVolumeReclaimPolicy) Tags() []string        { return []string{"storage", "pv", "reclaim"} }
+func (l *PersistentVolumeReclaimPolicy) EstimatedTime() int     { return 15 }
+func (l *PersistentVolumeReclaimPolicy) Tags() []string         { return []string{"storage", "pv", "reclaim"} }
 
 func (l *PersistentVolumeReclaimPolicy) Description() string {
 	return `A PVC cannot be deleted because the backing PV has a reclaim policy that prevents deletion.

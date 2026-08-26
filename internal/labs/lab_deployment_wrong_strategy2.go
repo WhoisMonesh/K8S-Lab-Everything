@@ -13,12 +13,14 @@ type DeploymentWrongStrategy2 struct {
 	BaseLab
 }
 
-func (l *DeploymentWrongStrategy2) ID() string            { return "deployment_wrong_strategy2" }
-func (l *DeploymentWrongStrategy2) Title() string         { return "Deployment Using Wrong Update Strategy" }
-func (l *DeploymentWrongStrategy2) Category() Category    { return CategoryWorkloads }
+func (l *DeploymentWrongStrategy2) ID() string             { return "deployment_wrong_strategy2" }
+func (l *DeploymentWrongStrategy2) Title() string          { return "Deployment Using Wrong Update Strategy" }
+func (l *DeploymentWrongStrategy2) Category() Category     { return CategoryWorkloads }
 func (l *DeploymentWrongStrategy2) Difficulty() Difficulty { return DifficultyMedium }
-func (l *DeploymentWrongStrategy2) EstimatedTime() int    { return 15 }
-func (l *DeploymentWrongStrategy2) Tags() []string        { return []string{"deployment", "strategy", "rolling"} }
+func (l *DeploymentWrongStrategy2) EstimatedTime() int     { return 15 }
+func (l *DeploymentWrongStrategy2) Tags() []string {
+	return []string{"deployment", "strategy", "rolling"}
+}
 
 func (l *DeploymentWrongStrategy2) Description() string {
 	return `A deployment is using Recreate strategy but should use RollingUpdate.

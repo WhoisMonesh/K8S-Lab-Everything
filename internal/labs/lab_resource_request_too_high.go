@@ -13,12 +13,14 @@ type ResourceRequestTooHigh struct {
 	BaseLab
 }
 
-func (l *ResourceRequestTooHigh) ID() string            { return "resource_request_too_high" }
-func (l *ResourceRequestTooHigh) Title() string         { return "Pod Pending - Resource Request Too High" }
-func (l *ResourceRequestTooHigh) Category() Category    { return CategoryScheduling }
+func (l *ResourceRequestTooHigh) ID() string             { return "resource_request_too_high" }
+func (l *ResourceRequestTooHigh) Title() string          { return "Pod Pending - Resource Request Too High" }
+func (l *ResourceRequestTooHigh) Category() Category     { return CategoryScheduling }
 func (l *ResourceRequestTooHigh) Difficulty() Difficulty { return DifficultyEasy }
-func (l *ResourceRequestTooHigh) EstimatedTime() int    { return 10 }
-func (l *ResourceRequestTooHigh) Tags() []string        { return []string{"scheduling", "resources", "requests"} }
+func (l *ResourceRequestTooHigh) EstimatedTime() int     { return 10 }
+func (l *ResourceRequestTooHigh) Tags() []string {
+	return []string{"scheduling", "resources", "requests"}
+}
 
 func (l *ResourceRequestTooHigh) Description() string {
 	return `A pod is stuck in Pending because the resource requests exceed available node resources.

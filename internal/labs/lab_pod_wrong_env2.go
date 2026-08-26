@@ -13,12 +13,12 @@ type PodWrongEnv2 struct {
 	BaseLab
 }
 
-func (l *PodWrongEnv2) ID() string            { return "pod_wrong_env2" }
-func (l *PodWrongEnv2) Title() string         { return "Pod Failing Due to Wrong Environment Variable" }
-func (l *PodWrongEnv2) Category() Category    { return CategoryWorkloads }
+func (l *PodWrongEnv2) ID() string             { return "pod_wrong_env2" }
+func (l *PodWrongEnv2) Title() string          { return "Pod Failing Due to Wrong Environment Variable" }
+func (l *PodWrongEnv2) Category() Category     { return CategoryWorkloads }
 func (l *PodWrongEnv2) Difficulty() Difficulty { return DifficultyEasy }
-func (l *PodWrongEnv2) EstimatedTime() int    { return 10 }
-func (l *PodWrongEnv2) Tags() []string        { return []string{"environment", "config", "workloads"} }
+func (l *PodWrongEnv2) EstimatedTime() int     { return 10 }
+func (l *PodWrongEnv2) Tags() []string         { return []string{"environment", "config", "workloads"} }
 
 func (l *PodWrongEnv2) Description() string {
 	return `A pod is failing because an environment variable has the wrong value.

@@ -13,12 +13,12 @@ type PausedRolloutResume struct {
 	BaseLab
 }
 
-func (l *PausedRolloutResume) ID() string            { return "paused_rollout_resume2" }
-func (l *PausedRolloutResume) Title() string         { return "Deployment Paused Mid-Rollout" }
-func (l *PausedRolloutResume) Category() Category    { return CategoryWorkloads }
+func (l *PausedRolloutResume) ID() string             { return "paused_rollout_resume2" }
+func (l *PausedRolloutResume) Title() string          { return "Deployment Paused Mid-Rollout" }
+func (l *PausedRolloutResume) Category() Category     { return CategoryWorkloads }
 func (l *PausedRolloutResume) Difficulty() Difficulty { return DifficultyEasy }
-func (l *PausedRolloutResume) EstimatedTime() int    { return 10 }
-func (l *PausedRolloutResume) Tags() []string        { return []string{"deployment", "rollout", "paused"} }
+func (l *PausedRolloutResume) EstimatedTime() int     { return 10 }
+func (l *PausedRolloutResume) Tags() []string         { return []string{"deployment", "rollout", "paused"} }
 
 func (l *PausedRolloutResume) Description() string {
 	return `A deployment rollout is paused. The new version cannot complete.

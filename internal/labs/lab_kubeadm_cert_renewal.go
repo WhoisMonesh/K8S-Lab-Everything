@@ -13,12 +13,14 @@ type KubeadmCertRenewal struct {
 	BaseLab
 }
 
-func (l *KubeadmCertRenewal) ID() string            { return "kubeadm_cert_renewal" }
-func (l *KubeadmCertRenewal) Title() string         { return "Kubeadm Certificate Expired" }
-func (l *KubeadmCertRenewal) Category() Category    { return CategoryControlPlane }
+func (l *KubeadmCertRenewal) ID() string             { return "kubeadm_cert_renewal" }
+func (l *KubeadmCertRenewal) Title() string          { return "Kubeadm Certificate Expired" }
+func (l *KubeadmCertRenewal) Category() Category     { return CategoryControlPlane }
 func (l *KubeadmCertRenewal) Difficulty() Difficulty { return DifficultyHard }
-func (l *KubeadmCertRenewal) EstimatedTime() int    { return 30 }
-func (l *KubeadmCertRenewal) Tags() []string        { return []string{"certificates", "kubeadm", "control-plane"} }
+func (l *KubeadmCertRenewal) EstimatedTime() int     { return 30 }
+func (l *KubeadmCertRenewal) Tags() []string {
+	return []string{"certificates", "kubeadm", "control-plane"}
+}
 
 func (l *KubeadmCertRenewal) Description() string {
 	return `The cluster certificates have expired. kubeadm cannot communicate with the API server.

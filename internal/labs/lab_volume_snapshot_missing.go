@@ -13,12 +13,12 @@ type VolumeSnapshotMissing struct {
 	BaseLab
 }
 
-func (l *VolumeSnapshotMissing) ID() string            { return "volume_snapshot_missing" }
-func (l *VolumeSnapshotMissing) Title() string         { return "Volume Snapshot Not Found" }
-func (l *VolumeSnapshotMissing) Category() Category    { return CategoryStorage }
+func (l *VolumeSnapshotMissing) ID() string             { return "volume_snapshot_missing" }
+func (l *VolumeSnapshotMissing) Title() string          { return "Volume Snapshot Not Found" }
+func (l *VolumeSnapshotMissing) Category() Category     { return CategoryStorage }
 func (l *VolumeSnapshotMissing) Difficulty() Difficulty { return DifficultyMedium }
-func (l *VolumeSnapshotMissing) EstimatedTime() int    { return 20 }
-func (l *VolumeSnapshotMissing) Tags() []string        { return []string{"storage", "snapshot", "backup"} }
+func (l *VolumeSnapshotMissing) EstimatedTime() int     { return 20 }
+func (l *VolumeSnapshotMissing) Tags() []string         { return []string{"storage", "snapshot", "backup"} }
 
 func (l *VolumeSnapshotMissing) Description() string {
 	return `A StatefulSet needs to be restored from a VolumeSnapshot but the snapshot doesn't exist.

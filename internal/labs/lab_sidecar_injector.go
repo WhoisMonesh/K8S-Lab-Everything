@@ -13,12 +13,12 @@ type SidecarInjector struct {
 	BaseLab
 }
 
-func (l *SidecarInjector) ID() string            { return "sidecar_injector" }
-func (l *SidecarInjector) Title() string         { return "Sidecar Injection Not Working" }
-func (l *SidecarInjector) Category() Category    { return CategoryWorkloads }
+func (l *SidecarInjector) ID() string             { return "sidecar_injector" }
+func (l *SidecarInjector) Title() string          { return "Sidecar Injection Not Working" }
+func (l *SidecarInjector) Category() Category     { return CategoryWorkloads }
 func (l *SidecarInjector) Difficulty() Difficulty { return DifficultyMedium }
-func (l *SidecarInjector) EstimatedTime() int    { return 20 }
-func (l *SidecarInjector) Tags() []string        { return []string{"sidecar", "injection", "istio"} }
+func (l *SidecarInjector) EstimatedTime() int     { return 20 }
+func (l *SidecarInjector) Tags() []string         { return []string{"sidecar", "injection", "istio"} }
 
 func (l *SidecarInjector) Description() string {
 	return `A pod should have a sidecar container injected by Istio but it's not being injected.

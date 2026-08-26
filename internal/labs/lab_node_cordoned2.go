@@ -13,12 +13,12 @@ type NodeCordoned2 struct {
 	BaseLab
 }
 
-func (l *NodeCordoned2) ID() string            { return "node_cordoned2" }
-func (l *NodeCordoned2) Title() string         { return "Node Cordoned - Pods Cannot Schedule" }
-func (l *NodeCordoned2) Category() Category    { return CategoryControlPlane }
+func (l *NodeCordoned2) ID() string             { return "node_cordoned2" }
+func (l *NodeCordoned2) Title() string          { return "Node Cordoned - Pods Cannot Schedule" }
+func (l *NodeCordoned2) Category() Category     { return CategoryControlPlane }
 func (l *NodeCordoned2) Difficulty() Difficulty { return DifficultyEasy }
-func (l *NodeCordoned2) EstimatedTime() int    { return 10 }
-func (l *NodeCordoned2) Tags() []string        { return []string{"nodes", "cordon", "scheduling"} }
+func (l *NodeCordoned2) EstimatedTime() int     { return 10 }
+func (l *NodeCordoned2) Tags() []string         { return []string{"nodes", "cordon", "scheduling"} }
 
 func (l *NodeCordoned2) Description() string {
 	return `A node has been cordoned and pods cannot be scheduled to it.

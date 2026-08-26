@@ -13,12 +13,12 @@ type IngressTLSMissing struct {
 	BaseLab
 }
 
-func (l *IngressTLSMissing) ID() string            { return "ingress_tls_missing" }
-func (l *IngressTLSMissing) Title() string         { return "Ingress TLS Secret Missing" }
-func (l *IngressTLSMissing) Category() Category    { return CategoryNetworking }
+func (l *IngressTLSMissing) ID() string             { return "ingress_tls_missing" }
+func (l *IngressTLSMissing) Title() string          { return "Ingress TLS Secret Missing" }
+func (l *IngressTLSMissing) Category() Category     { return CategoryNetworking }
 func (l *IngressTLSMissing) Difficulty() Difficulty { return DifficultyMedium }
-func (l *IngressTLSMissing) EstimatedTime() int    { return 20 }
-func (l *IngressTLSMissing) Tags() []string        { return []string{"ingress", "tls", "certificates"} }
+func (l *IngressTLSMissing) EstimatedTime() int     { return 20 }
+func (l *IngressTLSMissing) Tags() []string         { return []string{"ingress", "tls", "certificates"} }
 
 func (l *IngressTLSMissing) Description() string {
 	return `An Ingress resource is configured for TLS but the referenced Secret does not exist.

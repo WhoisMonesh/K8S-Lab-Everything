@@ -13,12 +13,14 @@ type RollbackRevisionWrong struct {
 	BaseLab
 }
 
-func (l *RollbackRevisionWrong) ID() string            { return "rollback_revision_wrong" }
-func (l *RollbackRevisionWrong) Title() string         { return "Deployment Rollback to Wrong Revision" }
-func (l *RollbackRevisionWrong) Category() Category    { return CategoryWorkloads }
+func (l *RollbackRevisionWrong) ID() string             { return "rollback_revision_wrong" }
+func (l *RollbackRevisionWrong) Title() string          { return "Deployment Rollback to Wrong Revision" }
+func (l *RollbackRevisionWrong) Category() Category     { return CategoryWorkloads }
 func (l *RollbackRevisionWrong) Difficulty() Difficulty { return DifficultyMedium }
-func (l *RollbackRevisionWrong) EstimatedTime() int    { return 15 }
-func (l *RollbackRevisionWrong) Tags() []string        { return []string{"deployment", "rollback", "workloads"} }
+func (l *RollbackRevisionWrong) EstimatedTime() int     { return 15 }
+func (l *RollbackRevisionWrong) Tags() []string {
+	return []string{"deployment", "rollback", "workloads"}
+}
 
 func (l *RollbackRevisionWrong) Description() string {
 	return `A deployment was rolled back to the wrong revision. The current version is broken.

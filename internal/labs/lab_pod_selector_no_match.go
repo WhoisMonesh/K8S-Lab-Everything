@@ -13,12 +13,12 @@ type PodSelectorNoMatch struct {
 	BaseLab
 }
 
-func (l *PodSelectorNoMatch) ID() string            { return "pod_selector_no_match" }
-func (l *PodSelectorNoMatch) Title() string         { return "Deployment Selector Doesn't Match Labels" }
-func (l *PodSelectorNoMatch) Category() Category    { return CategoryWorkloads }
+func (l *PodSelectorNoMatch) ID() string             { return "pod_selector_no_match" }
+func (l *PodSelectorNoMatch) Title() string          { return "Deployment Selector Doesn't Match Labels" }
+func (l *PodSelectorNoMatch) Category() Category     { return CategoryWorkloads }
 func (l *PodSelectorNoMatch) Difficulty() Difficulty { return DifficultyMedium }
-func (l *PodSelectorNoMatch) EstimatedTime() int    { return 15 }
-func (l *PodSelectorNoMatch) Tags() []string        { return []string{"deployment", "selector", "labels"} }
+func (l *PodSelectorNoMatch) EstimatedTime() int     { return 15 }
+func (l *PodSelectorNoMatch) Tags() []string         { return []string{"deployment", "selector", "labels"} }
 
 func (l *PodSelectorNoMatch) Description() string {
 	return `A deployment cannot manage its pods because the selector doesn't match the pod labels.

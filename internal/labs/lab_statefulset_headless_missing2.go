@@ -13,12 +13,14 @@ type StatefulsetHeadlessMissing struct {
 	BaseLab
 }
 
-func (l *StatefulsetHeadlessMissing) ID() string            { return "statefulset_headless_missing2" }
-func (l *StatefulsetHeadlessMissing) Title() string         { return "StatefulSet Without Headless Service" }
-func (l *StatefulsetHeadlessMissing) Category() Category    { return CategoryWorkloads }
+func (l *StatefulsetHeadlessMissing) ID() string             { return "statefulset_headless_missing2" }
+func (l *StatefulsetHeadlessMissing) Title() string          { return "StatefulSet Without Headless Service" }
+func (l *StatefulsetHeadlessMissing) Category() Category     { return CategoryWorkloads }
 func (l *StatefulsetHeadlessMissing) Difficulty() Difficulty { return DifficultyMedium }
-func (l *StatefulsetHeadlessMissing) EstimatedTime() int    { return 20 }
-func (l *StatefulsetHeadlessMissing) Tags() []string        { return []string{"statefulset", "headless", "dns"} }
+func (l *StatefulsetHeadlessMissing) EstimatedTime() int     { return 20 }
+func (l *StatefulsetHeadlessMissing) Tags() []string {
+	return []string{"statefulset", "headless", "dns"}
+}
 
 func (l *StatefulsetHeadlessMissing) Description() string {
 	return `A StatefulSet cannot start because it references a headless service that doesn't exist.

@@ -13,12 +13,12 @@ type VolumeSubpathMissing struct {
 	BaseLab
 }
 
-func (l *VolumeSubpathMissing) ID() string            { return "volume_subpath_missing2" }
-func (l *VolumeSubpathMissing) Title() string         { return "Pod CrashLoop - Wrong Volume subPath" }
-func (l *VolumeSubpathMissing) Category() Category    { return CategoryStorage }
+func (l *VolumeSubpathMissing) ID() string             { return "volume_subpath_missing2" }
+func (l *VolumeSubpathMissing) Title() string          { return "Pod CrashLoop - Wrong Volume subPath" }
+func (l *VolumeSubpathMissing) Category() Category     { return CategoryStorage }
 func (l *VolumeSubpathMissing) Difficulty() Difficulty { return DifficultyMedium }
-func (l *VolumeSubpathMissing) EstimatedTime() int    { return 15 }
-func (l *VolumeSubpathMissing) Tags() []string        { return []string{"storage", "subpath", "volumes"} }
+func (l *VolumeSubpathMissing) EstimatedTime() int     { return 15 }
+func (l *VolumeSubpathMissing) Tags() []string         { return []string{"storage", "subpath", "volumes"} }
 
 func (l *VolumeSubpathMissing) Description() string {
 	return `A pod is crashing because the volume subPath doesn't exist in the ConfigMap.

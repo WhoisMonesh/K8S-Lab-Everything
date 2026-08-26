@@ -13,12 +13,14 @@ type StorageClassWrongProvisioner struct {
 	BaseLab
 }
 
-func (l *StorageClassWrongProvisioner) ID() string            { return "storageclass_wrong_provisioner" }
-func (l *StorageClassWrongProvisioner) Title() string         { return "StorageClass Wrong Provisioner" }
-func (l *StorageClassWrongProvisioner) Category() Category    { return CategoryStorage }
+func (l *StorageClassWrongProvisioner) ID() string             { return "storageclass_wrong_provisioner" }
+func (l *StorageClassWrongProvisioner) Title() string          { return "StorageClass Wrong Provisioner" }
+func (l *StorageClassWrongProvisioner) Category() Category     { return CategoryStorage }
 func (l *StorageClassWrongProvisioner) Difficulty() Difficulty { return DifficultyMedium }
-func (l *StorageClassWrongProvisioner) EstimatedTime() int    { return 20 }
-func (l *StorageClassWrongProvisioner) Tags() []string        { return []string{"storage", "storageclass", "pv"} }
+func (l *StorageClassWrongProvisioner) EstimatedTime() int     { return 20 }
+func (l *StorageClassWrongProvisioner) Tags() []string {
+	return []string{"storage", "storageclass", "pv"}
+}
 
 func (l *StorageClassWrongProvisioner) Description() string {
 	return `A StorageClass is configured with the wrong provisioner. PVCs using this class are stuck in Pending.

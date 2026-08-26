@@ -13,12 +13,12 @@ type DNSPolicyWrongLab2 struct {
 	BaseLab
 }
 
-func (l *DNSPolicyWrongLab2) ID() string            { return "dns_policy_wrong2" }
-func (l *DNSPolicyWrongLab2) Title() string         { return "Pod DNS Resolution Broken" }
-func (l *DNSPolicyWrongLab2) Category() Category    { return CategoryDNS }
+func (l *DNSPolicyWrongLab2) ID() string             { return "dns_policy_wrong2" }
+func (l *DNSPolicyWrongLab2) Title() string          { return "Pod DNS Resolution Broken" }
+func (l *DNSPolicyWrongLab2) Category() Category     { return CategoryDNS }
 func (l *DNSPolicyWrongLab2) Difficulty() Difficulty { return DifficultyMedium }
-func (l *DNSPolicyWrongLab2) EstimatedTime() int    { return 15 }
-func (l *DNSPolicyWrongLab2) Tags() []string        { return []string{"dns", "policy", "networking"} }
+func (l *DNSPolicyWrongLab2) EstimatedTime() int     { return 15 }
+func (l *DNSPolicyWrongLab2) Tags() []string         { return []string{"dns", "policy", "networking"} }
 
 func (l *DNSPolicyWrongLab2) Description() string {
 	return `A pod cannot resolve any DNS names because its DNS policy is set incorrectly.

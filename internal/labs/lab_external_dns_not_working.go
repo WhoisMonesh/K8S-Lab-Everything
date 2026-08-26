@@ -13,12 +13,12 @@ type ExternalDNSNotWorking struct {
 	BaseLab
 }
 
-func (l *ExternalDNSNotWorking) ID() string            { return "external_dns_not_working" }
-func (l *ExternalDNSNotWorking) Title() string         { return "External DNS Resolution Failing" }
-func (l *ExternalDNSNotWorking) Category() Category    { return CategoryDNS }
+func (l *ExternalDNSNotWorking) ID() string             { return "external_dns_not_working" }
+func (l *ExternalDNSNotWorking) Title() string          { return "External DNS Resolution Failing" }
+func (l *ExternalDNSNotWorking) Category() Category     { return CategoryDNS }
 func (l *ExternalDNSNotWorking) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ExternalDNSNotWorking) EstimatedTime() int    { return 20 }
-func (l *ExternalDNSNotWorking) Tags() []string        { return []string{"dns", "coredns", "networking"} }
+func (l *ExternalDNSNotWorking) EstimatedTime() int     { return 20 }
+func (l *ExternalDNSNotWorking) Tags() []string         { return []string{"dns", "coredns", "networking"} }
 
 func (l *ExternalDNSNotWorking) Description() string {
 	return `Pods cannot resolve external DNS names like google.com.

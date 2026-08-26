@@ -13,12 +13,12 @@ type MissingCRDDependency struct {
 	BaseLab
 }
 
-func (l *MissingCRDDependency) ID() string            { return "missing_crd_dependency2" }
-func (l *MissingCRDDependency) Title() string         { return "Custom Resource Fails - Missing CRD" }
-func (l *MissingCRDDependency) Category() Category    { return CategoryControlPlane }
+func (l *MissingCRDDependency) ID() string             { return "missing_crd_dependency2" }
+func (l *MissingCRDDependency) Title() string          { return "Custom Resource Fails - Missing CRD" }
+func (l *MissingCRDDependency) Category() Category     { return CategoryControlPlane }
 func (l *MissingCRDDependency) Difficulty() Difficulty { return DifficultyHard }
-func (l *MissingCRDDependency) EstimatedTime() int    { return 20 }
-func (l *MissingCRDDependency) Tags() []string        { return []string{"crd", "custom-resources", "api"} }
+func (l *MissingCRDDependency) EstimatedTime() int     { return 20 }
+func (l *MissingCRDDependency) Tags() []string         { return []string{"crd", "custom-resources", "api"} }
 
 func (l *MissingCRDDependency) Description() string {
 	return `A Custom Resource is failing because the required CRD doesn't exist.

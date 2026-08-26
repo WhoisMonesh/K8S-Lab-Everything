@@ -13,12 +13,12 @@ type HeadlessServiceDNS struct {
 	BaseLab
 }
 
-func (l *HeadlessServiceDNS) ID() string            { return "headless_service_dns" }
-func (l *HeadlessServiceDNS) Title() string         { return "Headless Service DNS Not Working" }
-func (l *HeadlessServiceDNS) Category() Category    { return CategoryDNS }
+func (l *HeadlessServiceDNS) ID() string             { return "headless_service_dns" }
+func (l *HeadlessServiceDNS) Title() string          { return "Headless Service DNS Not Working" }
+func (l *HeadlessServiceDNS) Category() Category     { return CategoryDNS }
 func (l *HeadlessServiceDNS) Difficulty() Difficulty { return DifficultyMedium }
-func (l *HeadlessServiceDNS) EstimatedTime() int    { return 15 }
-func (l *HeadlessServiceDNS) Tags() []string        { return []string{"dns", "headless", "statefulset"} }
+func (l *HeadlessServiceDNS) EstimatedTime() int     { return 15 }
+func (l *HeadlessServiceDNS) Tags() []string         { return []string{"dns", "headless", "statefulset"} }
 
 func (l *HeadlessServiceDNS) Description() string {
 	return `A StatefulSet's pods cannot resolve each other via DNS.

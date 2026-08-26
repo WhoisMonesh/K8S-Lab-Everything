@@ -13,12 +13,14 @@ type ServiceLoadBalancerPending2 struct {
 	BaseLab
 }
 
-func (l *ServiceLoadBalancerPending2) ID() string            { return "service_loadbalancer_pending2" }
-func (l *ServiceLoadBalancerPending2) Title() string         { return "LoadBalancer Service Stuck Pending" }
-func (l *ServiceLoadBalancerPending2) Category() Category    { return CategoryNetworking }
+func (l *ServiceLoadBalancerPending2) ID() string             { return "service_loadbalancer_pending2" }
+func (l *ServiceLoadBalancerPending2) Title() string          { return "LoadBalancer Service Stuck Pending" }
+func (l *ServiceLoadBalancerPending2) Category() Category     { return CategoryNetworking }
 func (l *ServiceLoadBalancerPending2) Difficulty() Difficulty { return DifficultyEasy }
-func (l *ServiceLoadBalancerPending2) EstimatedTime() int    { return 10 }
-func (l *ServiceLoadBalancerPending2) Tags() []string        { return []string{"networking", "loadbalancer", "service"} }
+func (l *ServiceLoadBalancerPending2) EstimatedTime() int     { return 10 }
+func (l *ServiceLoadBalancerPending2) Tags() []string {
+	return []string{"networking", "loadbalancer", "service"}
+}
 
 func (l *ServiceLoadBalancerPending2) Description() string {
 	return `A LoadBalancer service is stuck in Pending state.

@@ -13,12 +13,16 @@ type PodAntiAffinityConflict struct {
 	BaseLab
 }
 
-func (l *PodAntiAffinityConflict) ID() string            { return "pod_antiaffinity_conflict2" }
-func (l *PodAntiAffinityConflict) Title() string         { return "Deployment Anti-Affinity Scheduling Failure" }
-func (l *PodAntiAffinityConflict) Category() Category    { return CategoryScheduling }
+func (l *PodAntiAffinityConflict) ID() string { return "pod_antiaffinity_conflict2" }
+func (l *PodAntiAffinityConflict) Title() string {
+	return "Deployment Anti-Affinity Scheduling Failure"
+}
+func (l *PodAntiAffinityConflict) Category() Category     { return CategoryScheduling }
 func (l *PodAntiAffinityConflict) Difficulty() Difficulty { return DifficultyHard }
-func (l *PodAntiAffinityConflict) EstimatedTime() int    { return 20 }
-func (l *PodAntiAffinityConflict) Tags() []string        { return []string{"scheduling", "antiaffinity", "pods"} }
+func (l *PodAntiAffinityConflict) EstimatedTime() int     { return 20 }
+func (l *PodAntiAffinityConflict) Tags() []string {
+	return []string{"scheduling", "antiaffinity", "pods"}
+}
 
 func (l *PodAntiAffinityConflict) Description() string {
 	return `A deployment cannot schedule pods due to conflicting pod anti-affinity rules.

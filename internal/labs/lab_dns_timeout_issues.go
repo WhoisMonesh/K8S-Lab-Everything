@@ -13,12 +13,12 @@ type DNSTimeoutIssues struct {
 	BaseLab
 }
 
-func (l *DNSTimeoutIssues) ID() string            { return "dns_timeout_issues" }
-func (l *DNSTimeoutIssues) Title() string         { return "DNS Resolution Timeout" }
-func (l *DNSTimeoutIssues) Category() Category    { return CategoryDNS }
+func (l *DNSTimeoutIssues) ID() string             { return "dns_timeout_issues" }
+func (l *DNSTimeoutIssues) Title() string          { return "DNS Resolution Timeout" }
+func (l *DNSTimeoutIssues) Category() Category     { return CategoryDNS }
 func (l *DNSTimeoutIssues) Difficulty() Difficulty { return DifficultyMedium }
-func (l *DNSTimeoutIssues) EstimatedTime() int    { return 20 }
-func (l *DNSTimeoutIssues) Tags() []string        { return []string{"dns", "timeout", "coredns"} }
+func (l *DNSTimeoutIssues) EstimatedTime() int     { return 20 }
+func (l *DNSTimeoutIssues) Tags() []string         { return []string{"dns", "timeout", "coredns"} }
 
 func (l *DNSTimeoutIssues) Description() string {
 	return `DNS resolution is timing out for services. CoreDNS is overloaded due to misconfigured cache.

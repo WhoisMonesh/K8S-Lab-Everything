@@ -13,12 +13,12 @@ type ConfigMapEnvFrom struct {
 	BaseLab
 }
 
-func (l *ConfigMapEnvFrom) ID() string            { return "configmap_env_from" }
-func (l *ConfigMapEnvFrom) Title() string         { return "ConfigMap envFrom Reference Broken" }
-func (l *ConfigMapEnvFrom) Category() Category    { return CategoryWorkloads }
+func (l *ConfigMapEnvFrom) ID() string             { return "configmap_env_from" }
+func (l *ConfigMapEnvFrom) Title() string          { return "ConfigMap envFrom Reference Broken" }
+func (l *ConfigMapEnvFrom) Category() Category     { return CategoryWorkloads }
 func (l *ConfigMapEnvFrom) Difficulty() Difficulty { return DifficultyEasy }
-func (l *ConfigMapEnvFrom) EstimatedTime() int    { return 10 }
-func (l *ConfigMapEnvFrom) Tags() []string        { return []string{"configmap", "environment", "workloads"} }
+func (l *ConfigMapEnvFrom) EstimatedTime() int     { return 10 }
+func (l *ConfigMapEnvFrom) Tags() []string         { return []string{"configmap", "environment", "workloads"} }
 
 func (l *ConfigMapEnvFrom) Description() string {
 	return `A pod is failing because it references a ConfigMap via envFrom that doesn't exist.

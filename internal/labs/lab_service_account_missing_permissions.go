@@ -13,12 +13,16 @@ type ServiceAccountMissingPermissions struct {
 	BaseLab
 }
 
-func (l *ServiceAccountMissingPermissions) ID() string            { return "service_account_missing_permissions" }
-func (l *ServiceAccountMissingPermissions) Title() string         { return "Service Account Missing Permissions" }
-func (l *ServiceAccountMissingPermissions) Category() Category    { return CategoryRBAC }
+func (l *ServiceAccountMissingPermissions) ID() string { return "service_account_missing_permissions" }
+func (l *ServiceAccountMissingPermissions) Title() string {
+	return "Service Account Missing Permissions"
+}
+func (l *ServiceAccountMissingPermissions) Category() Category     { return CategoryRBAC }
 func (l *ServiceAccountMissingPermissions) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ServiceAccountMissingPermissions) EstimatedTime() int    { return 15 }
-func (l *ServiceAccountMissingPermissions) Tags() []string        { return []string{"rbac", "serviceaccount", "permissions"} }
+func (l *ServiceAccountMissingPermissions) EstimatedTime() int     { return 15 }
+func (l *ServiceAccountMissingPermissions) Tags() []string {
+	return []string{"rbac", "serviceaccount", "permissions"}
+}
 
 func (l *ServiceAccountMissingPermissions) Description() string {
 	return `A pod using a service account cannot perform required API operations.

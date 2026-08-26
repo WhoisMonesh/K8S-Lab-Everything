@@ -12,12 +12,12 @@ type CSIDriverNotInstalled struct {
 	BaseLab
 }
 
-func (l *CSIDriverNotInstalled) ID() string            { return "csi_driver_not_installed" }
-func (l *CSIDriverNotInstalled) Title() string         { return "CSI Driver Not Installed" }
-func (l *CSIDriverNotInstalled) Category() Category    { return CategoryStorage }
+func (l *CSIDriverNotInstalled) ID() string             { return "csi_driver_not_installed" }
+func (l *CSIDriverNotInstalled) Title() string          { return "CSI Driver Not Installed" }
+func (l *CSIDriverNotInstalled) Category() Category     { return CategoryStorage }
 func (l *CSIDriverNotInstalled) Difficulty() Difficulty { return DifficultyHard }
-func (l *CSIDriverNotInstalled) EstimatedTime() int    { return 25 }
-func (l *CSIDriverNotInstalled) Tags() []string        { return []string{"storage", "csi", "driver"} }
+func (l *CSIDriverNotInstalled) EstimatedTime() int     { return 25 }
+func (l *CSIDriverNotInstalled) Tags() []string         { return []string{"storage", "csi", "driver"} }
 
 func (l *CSIDriverNotInstalled) Description() string {
 	return `A StorageClass references a CSI driver that doesn't exist.

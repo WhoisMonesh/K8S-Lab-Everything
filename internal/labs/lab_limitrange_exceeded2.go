@@ -13,12 +13,14 @@ type LimitRangeExceeded struct {
 	BaseLab
 }
 
-func (l *LimitRangeExceeded) ID() string            { return "limitrange_exceeded2" }
-func (l *LimitRangeExceeded) Title() string         { return "Pod Exceeds LimitRange" }
-func (l *LimitRangeExceeded) Category() Category    { return CategoryScheduling }
+func (l *LimitRangeExceeded) ID() string             { return "limitrange_exceeded2" }
+func (l *LimitRangeExceeded) Title() string          { return "Pod Exceeds LimitRange" }
+func (l *LimitRangeExceeded) Category() Category     { return CategoryScheduling }
 func (l *LimitRangeExceeded) Difficulty() Difficulty { return DifficultyMedium }
-func (l *LimitRangeExceeded) EstimatedTime() int    { return 15 }
-func (l *LimitRangeExceeded) Tags() []string        { return []string{"scheduling", "limitrange", "resources"} }
+func (l *LimitRangeExceeded) EstimatedTime() int     { return 15 }
+func (l *LimitRangeExceeded) Tags() []string {
+	return []string{"scheduling", "limitrange", "resources"}
+}
 
 func (l *LimitRangeExceeded) Description() string {
 	return `A pod is being rejected because it exceeds the LimitRange for the namespace.

@@ -13,12 +13,14 @@ type ClusterRoleBindingWrong struct {
 	BaseLab
 }
 
-func (l *ClusterRoleBindingWrong) ID() string            { return "cluster_role_binding_wrong" }
-func (l *ClusterRoleBindingWrong) Title() string         { return "ClusterRoleBinding References Wrong Role" }
-func (l *ClusterRoleBindingWrong) Category() Category    { return CategoryRBAC }
+func (l *ClusterRoleBindingWrong) ID() string             { return "cluster_role_binding_wrong" }
+func (l *ClusterRoleBindingWrong) Title() string          { return "ClusterRoleBinding References Wrong Role" }
+func (l *ClusterRoleBindingWrong) Category() Category     { return CategoryRBAC }
 func (l *ClusterRoleBindingWrong) Difficulty() Difficulty { return DifficultyMedium }
-func (l *ClusterRoleBindingWrong) EstimatedTime() int    { return 15 }
-func (l *ClusterRoleBindingWrong) Tags() []string        { return []string{"rbac", "clusterrolebinding", "permissions"} }
+func (l *ClusterRoleBindingWrong) EstimatedTime() int     { return 15 }
+func (l *ClusterRoleBindingWrong) Tags() []string {
+	return []string{"rbac", "clusterrolebinding", "permissions"}
+}
 
 func (l *ClusterRoleBindingWrong) Description() string {
 	return `A ClusterRoleBinding is referencing a ClusterRole that doesn't exist.
