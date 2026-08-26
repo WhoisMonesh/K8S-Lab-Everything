@@ -401,6 +401,21 @@ labs:
   defaultNamespace: lab
 ```
 
+## Uninstall
+
+**macOS / Linux:**
+```bash
+./scripts/uninstall.sh
+```
+
+**Windows (PowerShell):**
+```powershell
+.\scripts\uninstall.ps1
+```
+
+Use `--dry-run` to see what would be removed without deleting.
+Use `--force` to skip confirmation.
+
 ## Adding Your Own Labs
 
 Create a new file in `internal/labs/`:
