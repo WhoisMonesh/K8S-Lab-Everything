@@ -263,19 +263,28 @@ func SelfUpdate() error {
 		// Step 1: rename current binary to .old
 		oldFile := execPath + ".old"
 		os.Remove(oldFile)
-		if err := os.Rename(execPath, oldFile); err != nil {
+
+		// Try to rename current binary to .old (needs sudo on /usr/local/bin)
+		renameScript := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, execPath, oldFile)
+		if output, err := exec.Command("osascript", "-e", renameScript).CombinedOutput(); err != nil {
 			os.Remove(tmpFile)
-			return fmt.Errorf("failed to move current binary: %w", err)
+			return fmt.Errorf("failed to move current binary: %s: %w", string(output), err)
 		}
+
 		// Step 2: use osascript to move new binary into place
-		script := fmt.Sprintf(`do shell script "mv '%s' '%s' && rm -f '%s'" with administrator privileges`, tmpFile, execPath, oldFile)
-		cmd := exec.Command("osascript", "-e", script)
-		if output, err := cmd.CombinedOutput(); err != nil {
+		installScript := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, tmpFile, execPath)
+		if output, err := exec.Command("osascript", "-e", installScript).CombinedOutput(); err != nil {
 			// Restore old binary on failure
-			os.Rename(oldFile, execPath)
+			restoreScript := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, oldFile, execPath)
+			exec.Command("osascript", "-e", restoreScript).Run()
 			os.Remove(tmpFile)
 			return fmt.Errorf("failed to install update: %s: %w", string(output), err)
 		}
+
+		// Step 3: clean up old binary
+		cleanupScript := fmt.Sprintf(`do shell script "rm -f '%s'" with administrator privileges`, oldFile)
+		exec.Command("osascript", "-e", cleanupScript).Run()
+
 		os.Remove(tmpFile)
 		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
 		return nil
