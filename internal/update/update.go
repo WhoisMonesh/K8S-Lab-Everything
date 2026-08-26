@@ -256,34 +256,32 @@ func SelfUpdate() error {
 		return nil
 	}
 
-	// Need sudo permissions
+	// Need sudo permissions - ask password in terminal (no GUI dialog)
 	fmt.Println("Need admin permissions to install...")
 	if runtime.GOOS == "darwin" {
-		// macOS: osascript can't overwrite a running binary
-		// Step 1: rename current binary to .old
+		// macOS: first rename current binary to .old using sudo
 		oldFile := execPath + ".old"
 		os.Remove(oldFile)
 
-		// Try to rename current binary to .old (needs sudo on /usr/local/bin)
-		renameScript := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, execPath, oldFile)
-		if output, err := exec.Command("osascript", "-e", renameScript).CombinedOutput(); err != nil {
+		cmd := exec.Command("sudo", "-S", "mv", execPath, oldFile)
+		cmd.Stdin = os.Stdin
+		if output, err := cmd.CombinedOutput(); err != nil {
 			os.Remove(tmpFile)
 			return fmt.Errorf("failed to move current binary: %s: %w", string(output), err)
 		}
 
-		// Step 2: use osascript to move new binary into place
-		installScript := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, tmpFile, execPath)
-		if output, err := exec.Command("osascript", "-e", installScript).CombinedOutput(); err != nil {
-			// Restore old binary on failure
-			restoreScript := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, oldFile, execPath)
-			exec.Command("osascript", "-e", restoreScript).Run()
+		// Move new binary into place
+		cmd = exec.Command("sudo", "-S", "mv", tmpFile, execPath)
+		cmd.Stdin = os.Stdin
+		if output, err := cmd.CombinedOutput(); err != nil {
+			// Restore on failure
+			exec.Command("sudo", "-S", "mv", oldFile, execPath).Run()
 			os.Remove(tmpFile)
 			return fmt.Errorf("failed to install update: %s: %w", string(output), err)
 		}
 
-		// Step 3: clean up old binary
-		cleanupScript := fmt.Sprintf(`do shell script "rm -f '%s'" with administrator privileges`, oldFile)
-		exec.Command("osascript", "-e", cleanupScript).Run()
+		// Clean up old binary
+		exec.Command("sudo", "-S", "rm", "-f", oldFile).Run()
 
 		os.Remove(tmpFile)
 		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
