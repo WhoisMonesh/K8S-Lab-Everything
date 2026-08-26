@@ -55,6 +55,7 @@ var rootCmd = &cobra.Command{
 		fmt.Printf("    %scka-lab-runner init%s              %sCreate config file%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner up%s                %sCreate local cluster%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab list%s          %sList all labs%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab pick%s          %sPick interactively%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab run <id>%s      %sStart a lab%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab verify <id>%s   %sCheck your fix%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab solution <id>%s %sShow solution%s\n", bold, reset, dimW, reset)
@@ -597,6 +598,26 @@ func runRandomLab(cmd *cobra.Command) error {
 	return labRunCmd.RunE(rootCmd, args)
 }
 
+var labPickCmd = &cobra.Command{
+	Use:   "pick",
+	Short: "Pick a lab interactively",
+	Long:  `Opens an interactive selector to browse and pick a lab with arrow keys and mouse.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		allLabs := labs.List()
+
+		selectedLab, err := cli.RunInteractiveLabSelector(allLabs)
+		if err != nil {
+			if err.Error() == "no lab selected" {
+				cli.Info("No lab selected")
+				return nil
+			}
+			return err
+		}
+
+		return labRunCmd.RunE(cmd, []string{selectedLab.ID()})
+	},
+}
+
 func init() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -646,6 +667,7 @@ func init() {
 	labCmd.AddCommand(labHintCmd)
 	labCmd.AddCommand(labStatusCmd)
 	labCmd.AddCommand(labExportCmd)
+	labCmd.AddCommand(labPickCmd)
 }
 
 func loadConfig() error {
