@@ -26,6 +26,10 @@ import (
 var (
 	cfgFile string
 	cfg     *config.Config
+
+	bold  = "\033[1m"
+	dimW  = "\033[90m"
+	reset = "\033[0m"
 )
 
 func main() {
@@ -48,18 +52,17 @@ var rootCmd = &cobra.Command{
 		cli.PrintBanner()
 		fmt.Println("  Quick Start:")
 		fmt.Println()
-		fmt.Println("    cka-lab-runner init                  Create config file")
-		fmt.Println("    cka-lab-runner up                    Create local cluster")
-		fmt.Println("    cka-lab-runner lab list              List all labs")
-		fmt.Println("    cka-lab-runner lab run <id>          Start a lab")
-		fmt.Println("    cka-lab-runner lab verify <id>       Check your fix")
-		fmt.Println("    cka-lab-runner lab solution <id>     Show solution")
-		fmt.Println("    cka-lab-runner lab status            View progress")
-		fmt.Println("    cka-lab-runner down                  Delete cluster")
-		fmt.Println("    cka-lab-runner update                Update tool")
+		fmt.Printf("    %scka-lab-runner init%s              %sCreate config file%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner up%s                %sCreate local cluster%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list%s          %sList all labs%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab run <id>%s      %sStart a lab%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab verify <id>%s   %sCheck your fix%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab solution <id>%s %sShow solution%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab status%s        %sView progress%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner down%s              %sDelete cluster%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner update%s            %sUpdate tool%s\n", bold, reset, dimW, reset)
 		fmt.Println()
-		fmt.Println("  Run 'cka-lab-runner --help' for full command list")
-		fmt.Println()
+		fmt.Printf("  %sRun 'cka-lab-runner --help' for full command list%s\n\n", dimW, reset)
 	},
 }
 
