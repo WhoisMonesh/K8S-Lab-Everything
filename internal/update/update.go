@@ -256,31 +256,34 @@ func SelfUpdate() error {
 		return nil
 	}
 
-	// Need sudo - use osascript for macOS GUI prompt, sudo -S for Linux
-	fmt.Println("Admin permissions required to update...")
-	var cmd *exec.Cmd
+	// Need sudo permissions
+	fmt.Println("Need admin permissions to install...")
 	if runtime.GOOS == "darwin" {
-		// macOS: use osascript to get password via GUI dialog
-		// osascript can't overwrite a running binary, so rename it to .old first
+		// macOS: osascript can't overwrite a running binary
+		// Step 1: rename current binary to .old
 		oldFile := execPath + ".old"
 		os.Remove(oldFile)
-		if rErr := os.Rename(execPath, oldFile); rErr == nil {
-			if rErr := os.Rename(tmpFile, execPath); rErr == nil {
-				fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
-				fmt.Println("Restart this terminal to use the new version.")
-				return nil
-			}
-			// Restore on failure
-			os.Rename(oldFile, execPath)
+		if err := os.Rename(execPath, oldFile); err != nil {
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to move current binary: %w", err)
 		}
-		// Fallback: try osascript for permission elevation
-		script := fmt.Sprintf(`do shell script "mv '%s' '%s'" with administrator privileges`, tmpFile, execPath)
-		cmd = exec.Command("osascript", "-e", script)
-	} else {
-		// Linux: use sudo -S to read password from stdin
-		cmd = exec.Command("sudo", "-S", "mv", tmpFile, execPath)
-		cmd.Stdin = os.Stdin
+		// Step 2: use osascript to move new binary into place
+		script := fmt.Sprintf(`do shell script "mv '%s' '%s' && rm -f '%s'" with administrator privileges`, tmpFile, execPath, oldFile)
+		cmd := exec.Command("osascript", "-e", script)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			// Restore old binary on failure
+			os.Rename(oldFile, execPath)
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to install update: %s: %w", string(output), err)
+		}
+		os.Remove(tmpFile)
+		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
+		return nil
 	}
+
+	// Linux: use sudo -S to read password from stdin
+	cmd := exec.Command("sudo", "-S", "mv", tmpFile, execPath)
+	cmd.Stdin = os.Stdin
 	if output, err := cmd.CombinedOutput(); err != nil {
 		os.Remove(tmpFile)
 		return fmt.Errorf("failed to install update: %s: %w", string(output), err)
