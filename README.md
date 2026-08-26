@@ -164,15 +164,18 @@ $ cka-lab-runner down
 $ cka-lab-runner lab list
 
 === UPDATE AVAILABLE ===
-  Current version: 1.0.1
-  Latest version:  1.1.0
+  Current version: 1.0.0
+  Latest version:  2.0.0
 
   Run cka-lab-runner update to install the latest version.
 
-# Install update
-$ cka-lab-runner update
-New version available: 1.1.0 (current: 1.0.1)
-Updated successfully!
+# Install update (requires sudo for /usr/local/bin)
+$ sudo cka-lab-runner update
+Password: ****
+Checking for latest release...
+New version available: 2.0.0 (current: 1.0.0)
+Downloading...
+Updated successfully! (1.0.0 -> 2.0.0)
 ```
 
 ## Commands
