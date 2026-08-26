@@ -40,30 +40,41 @@ Just like the CKA exam: real `kubectl`, real problems, real solutions.
 ```
 $ cka-lab-runner lab run pod_crashloop
 
-╔═══════════════════════════════════════════════════════════════╗
-║  Lab: Pod in CrashLoopBackOff                                 ║
-║  Category: workloads | Difficulty: easy | Time: 15min         ║
-║                                                               ║
-║  A deployment named 'webapp' in the default namespace is      ║
-║  failing to start. The pods are stuck in CrashLoopBackOff.    ║
-║                                                               ║
-║  Hints:                                                       ║
-║    1. Check the pod status and events                         ║
-║    2. Look at the pod logs to see why it's crashing           ║
-║    3. Check the container image and command configuration     ║
-╚═══════════════════════════════════════════════════════════════╝
+▸  Preparing lab environment...
 
-$ kubectl get pods -l app=webapp
-NAME                       READY   STATUS             RESTARTS
-webapp-7f8b6c4d5-abc12     0/1     CrashLoopBackOff   5
+▸  Applying broken scenario...
 
-$ kubectl logs -l app=webapp
-Error from server: ...
+┌────────────────────────────────────────────────────────────────┐
+│  Pod in CrashLoopBackOff                                       │
+└────────────────────────────────────────────────────────────────┘
 
-# Fix it, then verify:
+▸ Details
 
-$ cka-lab-runner lab verify pod_crashloop
-✓ Congratulations! You successfully fixed: Pod in CrashLoopBackOff
+  ID          │ pod_crashloop
+  Category    │ WORKLOADS
+  Difficulty  │  EASY
+  Est. Time   │ 15 min
+  Tags        │ pods  crashloop  configmap  troubleshooting
+
+▸ Description
+
+  │ A deployment named 'webapp' in the default namespace is failing
+  │ to start. The pods are stuck in CrashLoopBackOff state.
+
+▸ Hints
+
+  1.  ▸ Check the pod status and events
+  2.  ▸ Look at the pod logs to see why it's crashing
+  3.  ▸ Check the container image and command configuration
+
+▸ Commands
+
+  cka-lab-runner lab run pod_crashloop       # Apply the broken scenario
+  cka-lab-runner lab verify pod_crashloop   # Check your fix
+  cka-lab-runner lab hint pod_crashloop     # Get help
+  cka-lab-runner lab solution pod_crashloop # Show full solution
+
+✔  Lab scenario applied successfully!
 ```
 
 ## Features
@@ -163,19 +174,15 @@ $ cka-lab-runner down
 # The binary checks for updates automatically
 $ cka-lab-runner lab list
 
-=== UPDATE AVAILABLE ===
-  Current version: 1.0.0
-  Latest version:  2.0.0
-
-  Run cka-lab-runner update to install the latest version.
+▸  New version available: 2.2.0 (current: 1.0.0)
+   Run 'cka-lab-runner update' to install
 
 # Install update (requires sudo for /usr/local/bin)
 $ sudo cka-lab-runner update
-Password: ****
 Checking for latest release...
-New version available: 2.0.0 (current: 1.0.0)
+New version available: 2.2.0 (current: 1.0.0)
 Downloading...
-Updated successfully! (1.0.0 -> 2.0.0)
+Updated successfully! (1.0.0 -> 2.2.0)
 ```
 
 ## Commands
@@ -468,7 +475,7 @@ make clean         # Remove build artifacts
 │   ├── cli/                 Terminal output formatting
 │   ├── cluster/             Cluster providers (kind/k3d/minikube)
 │   ├── config/              Configuration management
-│   ├── labs/                All 75 lab implementations
+│   ├── labs/                All 143 lab implementations
 │   └── update/              OTA auto-update system
 ├── scripts/
 │   ├── setup.sh             macOS/Linux setup
@@ -500,7 +507,7 @@ Contributions welcome! Add new labs, fix bugs, or improve docs.
 
 ## Credits
 
-Based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner). This fork adds 60+ new labs, cross-platform support, and OTA auto-update.
+Based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner). This fork adds 143+ new labs, cross-platform support, OTA auto-update, and a modern CLI interface.
 
 ## License
 
