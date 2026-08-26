@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
-[![Labs](https://img.shields.io/badge/Labs-75-orange)](#-available-labs)
+[![Labs](https://img.shields.io/badge/Labs-143-orange)](#-available-labs)
 
 <br>
 

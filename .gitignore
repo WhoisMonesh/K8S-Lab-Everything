@@ -35,3 +35,6 @@ bin/
 # OS
 .DS_Store
 Thumbs.db
+
+# Nested repo (accidentally created)
+K8S-Lab-Everything/
