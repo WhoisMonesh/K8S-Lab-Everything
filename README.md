@@ -31,7 +31,6 @@ Just like the CKA/CKAD/CKS exam: real `kubectl`, real problems, real solutions.
 |---|---|
 | **Author** | [Monesh Ram](https://github.com/WhoisMonesh) |
 | **GitHub** | [github.com/WhoisMonesh/K8S-Lab-Everything](https://github.com/WhoisMonesh/K8S-Lab-Everything) |
-| **LinkedIn** | [linkedin.com/in/whoismonesh](https://www.linkedin.com/in/whoismonesh/) |
 | **Certifications** | CKA, CKAD, CKS |
 | **Labs** | 378 hands-on scenarios |
 | **Platforms** | macOS, Linux, Windows |
@@ -511,7 +510,7 @@ Originally based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-l
 
 ## Author
 
-**Monesh Ram** — [GitHub](https://github.com/WhoisMonesh) • [LinkedIn](https://www.linkedin.com/in/whoismonesh/)
+**Monesh Ram** — [GitHub](https://github.com/WhoisMonesh)
 
 ## License
 
