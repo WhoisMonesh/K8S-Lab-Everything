@@ -27,9 +27,16 @@ var (
 	cfgFile string
 	cfg     *config.Config
 
-	bold  = "\033[1m"
-	dimW  = "\033[90m"
-	reset = "\033[0m"
+	bold     = "\033[1m"
+	dimW     = "\033[90m"
+	reset    = "\033[0m"
+	brRed    = "\033[91m"
+	brGreen  = "\033[92m"
+	brYellow = "\033[93m"
+	brBlue   = "\033[94m"
+	brMagenta= "\033[95m"
+	brCyan   = "\033[96m"
+	brWhite  = "\033[97m"
 )
 
 func main() {
@@ -52,17 +59,21 @@ var rootCmd = &cobra.Command{
 		cli.PrintBanner()
 		fmt.Println("  Quick Start:")
 		fmt.Println()
-		fmt.Printf("    %scka-lab-runner init%s              %sCreate config file%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner up%s                %sCreate local cluster%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab list%s          %sList all labs%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab list --cert CKA%s  %sFilter by certification%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab pick%s          %sPick interactively%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab run <id>%s      %sStart a lab%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab verify <id>%s   %sCheck your fix%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab solution <id>%s %sShow solution%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab status%s        %sView progress%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner down%s              %sDelete cluster%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner update%s            %sUpdate tool%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner init%s                  %sCreate config file%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner up%s                    %sCreate local cluster%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner up --version v1.35.0%s  %sSelect KinD node version%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list%s              %sList all labs%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list --cert CKA%s   %sFilter by certification%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list --search pod%s %sSearch labs%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab pick%s              %sPick interactively%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab run <id>%s          %sStart a lab%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab run <id> --timer%s  %sExam simulation (2h)%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab verify <id>%s       %sCheck your fix%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab solution <id>%s     %sShow solution%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab status%s            %sView progress%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab stats%s             %sView statistics%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner down%s                  %sDelete cluster%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner update%s                %sUpdate tool%s\n", bold, reset, dimW, reset)
 		fmt.Println()
 		fmt.Printf("  %sRun 'cka-lab-runner --help' for full command list%s\n\n", dimW, reset)
 	},
@@ -115,9 +126,40 @@ var upCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		recreate, _ := cmd.Flags().GetBool("recreate")
 		random, _ := cmd.Flags().GetBool("random")
+		versionFlag, _ := cmd.Flags().GetString("version")
 
 		if err := loadConfig(); err != nil {
 			return err
+		}
+
+		// Override config version if flag is set
+		if versionFlag != "" {
+			cfg.Cluster.KubernetesVersion = versionFlag
+		}
+
+		// Show version suggestion if no version specified
+		if cfg.Cluster.KubernetesVersion == "" || cfg.Cluster.KubernetesVersion == "v1.30.0" {
+			fmt.Println()
+			fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+			fmt.Printf("  %s║%s  %sKinD Node Version Selection%s                              %s║%s\n", bold, reset, bold+brCyan, reset, bold, reset)
+			fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sRecommended for CKA/CKAD/CKS exams:%s                     %s║%s\n", bold, reset, brGreen, reset, bold, reset)
+			fmt.Printf("  %s║%s    %s► v1.35.0%s  (exam version - recommended)               %s║%s\n", bold, reset, brGreen, reset, bold, reset)
+			fmt.Printf("  %s║%s    %s► v1.34.0%s  (previous stable)                          %s║%s\n", bold, reset, brWhite, reset, bold, reset)
+			fmt.Printf("  %s║%s    %s► v1.33.0%s  (older stable)                             %s║%s\n", bold, reset, brWhite, reset, bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sUse --version flag to select:%s                           %s║%s\n", bold, reset, brYellow, reset, bold, reset)
+			fmt.Printf("  %s║%s    cka-lab-runner up --version v1.35.0                    %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+			fmt.Println()
+
+			// Default to exam version
+			if cfg.Cluster.KubernetesVersion == "" {
+				cfg.Cluster.KubernetesVersion = "v1.35.0"
+				fmt.Printf("  %s▸%s Using default: %sv1.35.0%s (CKA/CKAD/CKS exam version)\n\n", brCyan, reset, bold, reset)
+			}
 		}
 
 		provider, err := createProvider()
@@ -148,12 +190,12 @@ var upCmd = &cobra.Command{
 			}
 		}
 
-		cli.Info(fmt.Sprintf("Creating cluster: %s", provider.Name()))
+		cli.Info(fmt.Sprintf("Creating cluster: %s with %s", provider.Name(), cfg.Cluster.KubernetesVersion))
 		if err := provider.Up(ctx); err != nil {
 			return fmt.Errorf("creating cluster: %w", err)
 		}
 
-		cli.Success(fmt.Sprintf("Cluster created: %s", provider.Name()))
+		cli.Success(fmt.Sprintf("Cluster created: %s (%s)", provider.Name(), cfg.Cluster.KubernetesVersion))
 
 		if random {
 			return runRandomLab(nil)
@@ -213,6 +255,7 @@ var labListCmd = &cobra.Command{
 		jsonOutput, _ := cmd.Flags().GetBool("json")
 		showProgress, _ := cmd.Flags().GetBool("progress")
 		tagFilter, _ := cmd.Flags().GetString("tag")
+		searchFilter, _ := cmd.Flags().GetString("search")
 
 		allLabs := labs.List()
 		var filteredLabs []labs.Lab
@@ -249,6 +292,22 @@ var labListCmd = &cobra.Command{
 					}
 				}
 				if !found {
+					matches = false
+				}
+			}
+			if searchFilter != "" {
+				searchLower := strings.ToLower(searchFilter)
+				idMatch := strings.Contains(strings.ToLower(lab.ID()), searchLower)
+				titleMatch := strings.Contains(strings.ToLower(lab.Title()), searchLower)
+				descMatch := strings.Contains(strings.ToLower(lab.Description()), searchLower)
+				tagMatch := false
+				for _, t := range lab.Tags() {
+					if strings.Contains(strings.ToLower(t), searchLower) {
+						tagMatch = true
+						break
+					}
+				}
+				if !idMatch && !titleMatch && !descMatch && !tagMatch {
 					matches = false
 				}
 			}
@@ -303,6 +362,7 @@ var labRunCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		labID := args[0]
 		timed, _ := cmd.Flags().GetBool("timed")
+		timer, _ := cmd.Flags().GetBool("timer")
 		timeLimit, _ := cmd.Flags().GetInt("time-limit")
 		ns, _ := cmd.Flags().GetString("namespace")
 
@@ -371,7 +431,27 @@ var labRunCmd = &cobra.Command{
 		cli.PrintLabDetails(lab)
 		cli.Success("Lab scenario applied successfully!")
 
-		if timed {
+		// Exam simulation mode (2 hours)
+		if timer {
+			timeLimit = 120 // 2 hours like real CKA/CKAD/CKS exam
+			fmt.Println()
+			fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+			fmt.Printf("  %s║%s  %s⏰ EXAM SIMULATION MODE%s                                    %s║%s\n", bold, reset, bold+brRed, reset, bold, reset)
+			fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+			fmt.Printf("  %s║%s  %sTime Limit:%s 2 hours (120 minutes)                        %s║%s\n", bold, reset, brYellow, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sLab:%s %-50s %s║%s\n", bold, reset, brWhite, reset, lab.ID(), bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sRules:%s                                                  %s║%s\n", bold, reset, brCyan, reset, bold, reset)
+			fmt.Printf("  %s║%s    • No hints allowed                                     %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s    • No solution viewing                                  %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s    • Use only kubectl (like real exam)                    %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+			fmt.Println()
+			cli.Info(fmt.Sprintf("Timer started! You have %d minutes to fix this lab!", timeLimit))
+			cli.Info("Fix the issue before time runs out!")
+			go runCountdown(timeLimit, labID)
+		} else if timed {
 			if timeLimit <= 0 {
 				timeLimit = lab.EstimatedTime()
 			}
@@ -570,6 +650,60 @@ var labStatusCmd = &cobra.Command{
 	},
 }
 
+var labStatsCmd = &cobra.Command{
+	Use:   "stats",
+	Short: "Show detailed statistics",
+	Long:  `Displays detailed statistics about your lab progress by certification and domain.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		allLabs := labs.List()
+		completed := progress.CompletedCount()
+		total := len(allLabs)
+
+		// Count by certification
+		ckaTotal, ckadTotal, cksTotal := 0, 0, 0
+		ckaDone, ckadDone, cksDone := 0, 0, 0
+
+		for _, lab := range allLabs {
+			cert := labs.GetCert(lab)
+			isDone := progress.IsCompleted(lab.ID())
+
+			switch cert {
+			case labs.CertCKA:
+				ckaTotal++
+				if isDone {
+					ckaDone++
+				}
+			case labs.CertCKAD:
+				ckadTotal++
+				if isDone {
+					ckadDone++
+				}
+			case labs.CertCKS:
+				cksTotal++
+				if isDone {
+					cksDone++
+				}
+			}
+		}
+
+		fmt.Println()
+		fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+		fmt.Printf("  %s║%s  %s📊 LAB STATISTICS%s                                          %s║%s\n", bold, reset, bold+brCyan, reset, bold, reset)
+		fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+		fmt.Printf("  %s║%s  %sOverall:%s %d/%d labs completed (%d%%)                      %s║%s\n", bold, reset, brWhite, reset, completed, total, completed*100/total, bold, reset)
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+		fmt.Printf("  %s║%s  %sCKA:%s   %d/%d labs completed (%d%%)                        %s║%s\n", bold, reset, brBlue, reset, ckaDone, ckaTotal, ckaDone*100/ckaTotal, bold, reset)
+		fmt.Printf("  %s║%s  %sCKAD:%s  %d/%d labs completed (%d%%)                        %s║%s\n", bold, reset, brCyan, reset, ckadDone, ckadTotal, ckadDone*100/ckadTotal, bold, reset)
+		fmt.Printf("  %s║%s  %sCKS:%s   %d/%d labs completed (%d%%)                        %s║%s\n", bold, reset, brMagenta, reset, cksDone, cksTotal, cksDone*100/cksTotal, bold, reset)
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+		fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+		fmt.Println()
+
+		return nil
+	},
+}
+
 var labExportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export completion history as JSON",
@@ -652,16 +786,19 @@ func init() {
 
 	upCmd.Flags().Bool("recreate", false, "Recreate the cluster if it already exists")
 	upCmd.Flags().Bool("random", false, "Run a random lab after creating the cluster")
+	upCmd.Flags().String("version", "", "KinD node image version (e.g., v1.35.0, v1.34.0, v1.33.0)")
 
 	labListCmd.Flags().String("category", "", "Filter by category")
 	labListCmd.Flags().String("difficulty", "", "Filter by difficulty")
 	labListCmd.Flags().String("cert", "", "Filter by certification (CKA, CKAD, CKS)")
 	labListCmd.Flags().String("domain", "", "Filter by CKA exam domain")
 	labListCmd.Flags().String("tag", "", "Filter by tag")
+	labListCmd.Flags().String("search", "", "Search labs by ID, title, description, or tags")
 	labListCmd.Flags().Bool("json", false, "Output as JSON")
 	labListCmd.Flags().Bool("progress", false, "Show completion status next to each lab")
 
 	labRunCmd.Flags().Bool("timed", false, "Enable timed challenge mode")
+	labRunCmd.Flags().Bool("timer", false, "Enable exam simulation mode (2 hours, no hints)")
 	labRunCmd.Flags().Int("time-limit", 0, "Time limit in minutes (default: lab estimated time)")
 	labRunCmd.Flags().String("namespace", "", "Override target namespace for the lab")
 	labRunCmd.Flags().Bool("force", false, "Run even if prerequisites are not completed")
@@ -689,6 +826,7 @@ func init() {
 	labCmd.AddCommand(labVerifyCmd)
 	labCmd.AddCommand(labHintCmd)
 	labCmd.AddCommand(labStatusCmd)
+	labCmd.AddCommand(labStatsCmd)
 	labCmd.AddCommand(labExportCmd)
 	labCmd.AddCommand(labPickCmd)
 }
