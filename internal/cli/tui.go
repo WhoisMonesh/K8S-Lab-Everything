@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/labs"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/progress"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var (
@@ -41,8 +41,8 @@ var (
 			Bold(true)
 
 	diffMediumStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("220")).
-				Bold(true)
+			Foreground(lipgloss.Color("220")).
+			Bold(true)
 
 	diffHardStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).

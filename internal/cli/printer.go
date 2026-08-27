@@ -10,29 +10,29 @@ import (
 )
 
 const (
-	reset      = "\033[0m"
-	bold       = "\033[1m"
-	dim        = "\033[2m"
-	italic     = "\033[3m"
-	underline  = "\033[4m"
-	red        = "\033[31m"
-	green      = "\033[32m"
-	yellow     = "\033[33m"
-	blue       = "\033[34m"
-	magenta    = "\033[35m"
-	cyan       = "\033[36m"
-	white      = "\033[37m"
-	brRed      = "\033[91m"
-	brGreen    = "\033[92m"
-	brYellow   = "\033[93m"
-	brBlue     = "\033[94m"
-	brMagenta  = "\033[95m"
-	brCyan     = "\033[96m"
-	brWhite    = "\033[97m"
-	dimW       = "\033[90m"
-	bgRed      = "\033[41m"
-	bgGreen    = "\033[42m"
-	bgYellow   = "\033[43m"
+	reset     = "\033[0m"
+	bold      = "\033[1m"
+	dim       = "\033[2m"
+	italic    = "\033[3m"
+	underline = "\033[4m"
+	red       = "\033[31m"
+	green     = "\033[32m"
+	yellow    = "\033[33m"
+	blue      = "\033[34m"
+	magenta   = "\033[35m"
+	cyan      = "\033[36m"
+	white     = "\033[37m"
+	brRed     = "\033[91m"
+	brGreen   = "\033[92m"
+	brYellow  = "\033[93m"
+	brBlue    = "\033[94m"
+	brMagenta = "\033[95m"
+	brCyan    = "\033[96m"
+	brWhite   = "\033[97m"
+	dimW      = "\033[90m"
+	bgRed     = "\033[41m"
+	bgGreen   = "\033[42m"
+	bgYellow  = "\033[43m"
 )
 
 func padRight(s string, width int) string {
@@ -145,7 +145,7 @@ func PrintBanner() {
 	fmt.Println()
 	fmt.Printf("  %s%s   ██ K8S-Lab-Everything ██%s\n", bold, brGreen, reset)
 	fmt.Println()
-	fmt.Printf("  %s143 Hands-On Labs  │  Kubernetes Troubleshooting  │  Interactive TUI%s\n", dimW, reset)
+	fmt.Printf("  %s143 → 203 Hands-On Labs  │  Kubernetes Troubleshooting  │  Interactive TUI%s\n", dimW, reset)
 	fmt.Println()
 	fmt.Printf("  %s▸%s Run %scka-lab-runner lab pick%s to select a lab interactively\n", brCyan, reset, bold, reset)
 	fmt.Printf("  %s▸%s Run %scka-lab-runner lab list%s to see all available labs\n\n", brCyan, reset, bold, reset)
