@@ -134,12 +134,33 @@ func getDownloadURL(version string) (string, error) {
 			return asset.BrowserDownloadURL, nil
 		}
 	}
-	return "", fmt.Errorf("no binary found for %s/%s", runtime.GOOS, arch)
+	// Fallback: construct URL directly
+	tag := release.TagName
+	if tag == "" {
+		tag = "v" + version
+	}
+	fallbackURL := fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/%s",
+		githubOwner, githubRepo, tag, expectedName)
+	return fallbackURL, nil
 }
 
 func downloadFile(url, dest string) error {
-	client := &http.Client{Timeout: 5 * time.Minute}
-	resp, err := client.Get(url)
+	client := &http.Client{
+		Timeout: 5 * time.Minute,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("too many redirects")
+			}
+			return nil
+		},
+	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", "cka-lab-runner/"+Version)
+	req.Header.Set("Accept", "application/octet-stream")
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
