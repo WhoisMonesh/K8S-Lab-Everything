@@ -47,6 +47,7 @@ type LabResult struct {
 	Timed       bool          `json:"timed,omitempty"`
 	TimedOut    bool          `json:"timed_out,omitempty"`
 	Namespace   string        `json:"namespace,omitempty"`
+	Rating      int           `json:"rating,omitempty"`
 }
 
 type Progress struct {
@@ -299,4 +300,117 @@ func ExportJSON() ([]byte, error) {
 		Total:     len(results),
 		Labs:      results,
 	}, "", "  ")
+}
+
+func RateLab(labID string, rating int) error {
+	if rating < 1 || rating > 5 {
+		return fmt.Errorf("rating must be between 1 and 5")
+	}
+
+	p := Load()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	r, ok := p.Labs[labID]
+	if !ok {
+		return fmt.Errorf("lab %s not completed yet", labID)
+	}
+
+	r.Rating = rating
+	return Save()
+}
+
+func GetRating(labID string) int {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	r, ok := p.Labs[labID]
+	if !ok {
+		return 0
+	}
+	return r.Rating
+}
+
+func AverageRating() float64 {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	total, count := 0, 0
+	for _, r := range p.Labs {
+		if r.Rating > 0 {
+			total += r.Rating
+			count++
+		}
+	}
+
+	if count == 0 {
+		return 0
+	}
+	return float64(total) / float64(count)
+}
+
+func Streak() (current int, longest int, lastPracticeDate string) {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if len(p.Labs) == 0 {
+		return 0, 0, ""
+	}
+
+	dates := make(map[time.Time]bool)
+	for _, r := range p.Labs {
+		d := r.CompletedAt.Truncate(24 * time.Hour)
+		dates[d] = true
+	}
+
+	sortedDates := make([]time.Time, 0, len(dates))
+	for d := range dates {
+		sortedDates = append(sortedDates, d)
+	}
+	sort.Slice(sortedDates, func(i, j int) bool {
+		return sortedDates[i].Before(sortedDates[j])
+	})
+
+	lastDate := sortedDates[len(sortedDates)-1]
+	today := time.Now().Truncate(24 * time.Hour)
+
+	if lastDate.Before(today) {
+		return 0, len(sortedDates), lastDate.Format("2006-01-02")
+	}
+
+	longest = 1
+	current = 1
+	for i := len(sortedDates) - 1; i > 0; i-- {
+		diff := sortedDates[i].Sub(sortedDates[i-1])
+		if diff == 24*time.Hour {
+			current++
+			if current > longest {
+				longest = current
+			}
+		} else {
+			current = 1
+		}
+	}
+
+	return current, longest, lastDate.Format("2006-01-02")
+}
+
+func StreakInfo() string {
+	current, longest, lastDate := Streak()
+
+	if current == 0 && longest == 0 {
+		return "  No practice streak yet. Complete a lab to start one!\n"
+	}
+
+	var b strings.Builder
+	if current > 0 {
+		b.WriteString(fmt.Sprintf("  %s🔥 Current Streak:%s %s%d day(s)%s\n", bold, reset, green, current, reset))
+	} else {
+		b.WriteString(fmt.Sprintf("  %s🔥 Current Streak:%s %s0 day(s)%s (last practice: %s)\n", bold, reset, dimWhite, reset, lastDate))
+	}
+	b.WriteString(fmt.Sprintf("  %s🏆 Longest Streak:%s  %s%d day(s)%s\n", bold, reset, yellow, longest, reset))
+	return b.String()
 }

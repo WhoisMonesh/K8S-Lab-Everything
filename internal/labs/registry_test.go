@@ -81,16 +81,16 @@ func TestIDs(t *testing.T) {
 }
 
 func TestListByCategory(t *testing.T) {
-	labs := ListByCategory(CategoryControlPlane)
-	// We know we have at least one control plane lab
+	labs := ListByCategory(CategoryClusterArchitecture)
+	// We know we have at least one cluster-architecture lab
 	if len(labs) == 0 {
-		t.Error("expected at least one control-plane lab")
+		t.Error("expected at least one cluster-architecture lab")
 	}
 
 	// Verify all returned labs match the category
 	for _, lab := range labs {
-		if lab.Category() != CategoryControlPlane {
-			t.Errorf("expected category %s, got %s", CategoryControlPlane, lab.Category())
+		if lab.Category() != CategoryClusterArchitecture {
+			t.Errorf("expected category %s, got %s", CategoryClusterArchitecture, lab.Category())
 		}
 	}
 }
@@ -110,15 +110,40 @@ func TestListByDifficulty(t *testing.T) {
 	}
 }
 
+func TestListByCert(t *testing.T) {
+	// All CKA labs
+	ckaLabs := ListByCert(CertCKA)
+	if len(ckaLabs) == 0 {
+		t.Error("expected at least one CKA lab")
+	}
+	for _, lab := range ckaLabs {
+		cert := GetCert(lab)
+		if cert != CertCKA {
+			t.Errorf("expected cert CKA, got %s for lab %s", cert, lab.ID())
+		}
+	}
+
+	// All CKAD labs
+	ckadLabs := ListByCert(CertCKAD)
+	// May be empty since existing labs are CKA-focused
+	_ = ckadLabs
+
+	// All = no filter
+	allLabs := ListByCert(CertAll)
+	if len(allLabs) != len(List()) {
+		t.Errorf("CertAll should return all labs, got %d, want %d", len(allLabs), len(List()))
+	}
+}
+
 func TestRandom(t *testing.T) {
 	// Test with fixed seed for reproducibility
-	lab1, err := Random(42, "", "")
+	lab1, err := Random(42, "", "", CertAll)
 	if err != nil {
 		t.Fatalf("failed to get random lab: %v", err)
 	}
 
 	// Same seed should return same lab
-	lab2, err := Random(42, "", "")
+	lab2, err := Random(42, "", "", CertAll)
 	if err != nil {
 		t.Fatalf("failed to get random lab: %v", err)
 	}
@@ -128,7 +153,7 @@ func TestRandom(t *testing.T) {
 	}
 
 	// Different seed might return different lab (not guaranteed, but likely)
-	lab3, err := Random(123, "", "")
+	lab3, err := Random(123, "", "", CertAll)
 	if err != nil {
 		t.Fatalf("failed to get random lab: %v", err)
 	}
@@ -138,17 +163,17 @@ func TestRandom(t *testing.T) {
 
 func TestRandomWithFilters(t *testing.T) {
 	// Test with category filter
-	lab, err := Random(42, CategoryDNS, "")
+	lab, err := Random(42, CategoryServicesNetworking, "", CertAll)
 	if err != nil {
-		t.Fatalf("failed to get random DNS lab: %v", err)
+		t.Fatalf("failed to get random services-networking lab: %v", err)
 	}
 
-	if lab.Category() != CategoryDNS {
-		t.Errorf("expected DNS lab, got %s", lab.Category())
+	if lab.Category() != CategoryServicesNetworking {
+		t.Errorf("expected services-networking lab, got %s", lab.Category())
 	}
 
 	// Test with difficulty filter
-	lab, err = Random(42, "", DifficultyEasy)
+	lab, err = Random(42, "", DifficultyEasy, CertAll)
 	if err != nil {
 		t.Fatalf("failed to get random easy lab: %v", err)
 	}
@@ -156,13 +181,23 @@ func TestRandomWithFilters(t *testing.T) {
 	if lab.Difficulty() != DifficultyEasy {
 		t.Errorf("expected easy lab, got %s", lab.Difficulty())
 	}
+
+	// Test with cert filter
+	lab, err = Random(42, "", "", CertCKA)
+	if err != nil {
+		t.Fatalf("failed to get random CKA lab: %v", err)
+	}
+
+	if GetCert(lab) != CertCKA {
+		t.Errorf("expected CKA lab, got %s", GetCert(lab))
+	}
 }
 
 func TestFormatSolution(t *testing.T) {
 	mock := &mockLab{
 		id:         "test",
 		title:      "Test Lab",
-		category:   CategoryWorkloads,
+		category:   CategoryWorkloadsScheduling,
 		difficulty: DifficultyEasy,
 	}
 
@@ -174,5 +209,66 @@ func TestFormatSolution(t *testing.T) {
 	// Check if it contains the title
 	if len(solution) < len(mock.title) {
 		t.Error("solution seems too short")
+	}
+}
+
+func TestCertCategories(t *testing.T) {
+	// Verify each cert returns the expected number of categories
+	ckaCats := CertCategories(CertCKA)
+	if len(ckaCats) != 5 {
+		t.Errorf("CKA should have 5 categories, got %d", len(ckaCats))
+	}
+
+	ckadCats := CertCategories(CertCKAD)
+	if len(ckadCats) != 5 {
+		t.Errorf("CKAD should have 5 categories, got %d", len(ckadCats))
+	}
+
+	cksCats := CertCategories(CertCKS)
+	if len(cksCats) != 6 {
+		t.Errorf("CKS should have 6 categories, got %d", len(cksCats))
+	}
+}
+
+func TestDomainWeightForCategory(t *testing.T) {
+	tests := []struct {
+		cat    Category
+		weight int
+	}{
+		{CategoryClusterArchitecture, 25},
+		{CategoryWorkloadsScheduling, 15},
+		{CategoryServicesNetworking, 20},
+		{CategoryStorage, 10},
+		{CategoryTroubleshooting, 30},
+		{CategoryAppDesignBuild, 20},
+		{CategoryAppDeployment, 20},
+		{CategoryAppObservability, 15},
+		{CategoryAppConfigSecurity, 25},
+		{CategoryServicesNetworkCKAD, 20},
+		{CategoryClusterSetupCKS, 15},
+		{CategoryClusterHardening, 15},
+		{CategorySystemHardening, 10},
+		{CategoryMicroserviceVulns, 20},
+		{CategorySupplyChain, 20},
+		{CategoryMonitoringLogging, 20},
+	}
+
+	for _, tt := range tests {
+		w := DomainWeightForCategory(tt.cat)
+		if w != tt.weight {
+			t.Errorf("DomainWeightForCategory(%s) = %d, want %d", tt.cat, w, tt.weight)
+		}
+	}
+}
+
+func TestCertForCategory(t *testing.T) {
+	if CertForCategory(CategoryClusterArchitecture) != CertCKA {
+		t.Error("cluster-architecture should be CKA")
+	}
+	if CertForCategory(CategoryAppDeployment) != CertCKAD {
+		t.Error("app-deployment should be CKAD")
+	}
+	if CertForCategory(CategorySupplyChain) != CertCKS {
+		t.Error("supply-chain should be CKS")
 	}
 }

@@ -17,8 +17,8 @@ func TestDefault(t *testing.T) {
 		t.Errorf("expected name 'cka-lab', got '%s'", cfg.Cluster.Name)
 	}
 
-	if cfg.Cluster.KubernetesVersion != "v1.30.0" {
-		t.Errorf("expected version 'v1.30.0', got '%s'", cfg.Cluster.KubernetesVersion)
+	if cfg.Cluster.KubernetesVersion != "v1.35.0" {
+		t.Errorf("expected version 'v1.35.0', got '%s'", cfg.Cluster.KubernetesVersion)
 	}
 
 	if cfg.Labs.DefaultNamespace != "lab" {

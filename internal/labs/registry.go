@@ -70,6 +70,36 @@ func ListByCategory(category Category) []Lab {
 	return filtered
 }
 
+// ListByCert returns labs filtered by certification (CKA, CKAD, CKS)
+func ListByCert(cert Cert) []Lab {
+	if cert == CertAll || cert == "" {
+		return List()
+	}
+
+	cats := CertCategories(cert)
+	catSet := make(map[Category]bool, len(cats))
+	for _, c := range cats {
+		catSet[c] = true
+	}
+
+	all := List()
+	filtered := make([]Lab, 0)
+
+	for _, lab := range all {
+		// Direct category match
+		if catSet[lab.Category()] {
+			filtered = append(filtered, lab)
+			continue
+		}
+		// Check explicit cert implementation
+		if GetCert(lab) == cert {
+			filtered = append(filtered, lab)
+		}
+	}
+
+	return filtered
+}
+
 // ListByDifficulty returns labs filtered by difficulty
 func ListByDifficulty(difficulty Difficulty) []Lab {
 	all := List()
@@ -84,8 +114,8 @@ func ListByDifficulty(difficulty Difficulty) []Lab {
 	return filtered
 }
 
-// Random returns a random lab, optionally filtered by category and difficulty
-func Random(seed int64, category Category, difficulty Difficulty) (Lab, error) {
+// Random returns a random lab, optionally filtered by category, difficulty, and cert
+func Random(seed int64, category Category, difficulty Difficulty, cert Cert) (Lab, error) {
 	all := List()
 	filtered := make([]Lab, 0)
 
@@ -95,6 +125,9 @@ func Random(seed int64, category Category, difficulty Difficulty) (Lab, error) {
 			matches = false
 		}
 		if difficulty != "" && lab.Difficulty() != difficulty {
+			matches = false
+		}
+		if cert != CertAll && cert != "" && GetCert(lab) != cert {
 			matches = false
 		}
 		if matches {
