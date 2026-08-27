@@ -38,7 +38,7 @@ func Default() *Config {
 		Cluster: ClusterConfig{
 			Provider:          "kind",
 			Name:              "cka-lab",
-			KubernetesVersion: "v1.30.0",
+			KubernetesVersion: "v1.35.0",
 		},
 		Labs: LabsConfig{
 			DefaultNamespace: "lab",

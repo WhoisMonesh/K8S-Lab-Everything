@@ -27,9 +27,16 @@ var (
 	cfgFile string
 	cfg     *config.Config
 
-	bold  = "\033[1m"
-	dimW  = "\033[90m"
-	reset = "\033[0m"
+	bold      = "\033[1m"
+	dimW      = "\033[90m"
+	reset     = "\033[0m"
+	brRed     = "\033[91m"
+	brGreen   = "\033[92m"
+	brYellow  = "\033[93m"
+	brBlue    = "\033[94m"
+	brMagenta = "\033[95m"
+	brCyan    = "\033[96m"
+	brWhite   = "\033[97m"
 )
 
 func main() {
@@ -40,11 +47,15 @@ func main() {
 
 var rootCmd = &cobra.Command{
 	Use:   "cka-lab-runner",
-	Short: "A CKA practice lab runner",
+	Short: "A CKA/CKAD/CKS practice lab runner",
 	Long:  ``,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if cmd.Name() == "version" || cmd.Name() == "update" || cmd.Name() == "help" {
 			return
+		}
+		theme, _ := cmd.Flags().GetString("theme")
+		if theme != "" {
+			cli.SetTheme(theme)
 		}
 		update.CheckForUpdate()
 	},
@@ -52,16 +63,21 @@ var rootCmd = &cobra.Command{
 		cli.PrintBanner()
 		fmt.Println("  Quick Start:")
 		fmt.Println()
-		fmt.Printf("    %scka-lab-runner init%s              %sCreate config file%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner up%s                %sCreate local cluster%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab list%s          %sList all labs%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab pick%s          %sPick interactively%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab run <id>%s      %sStart a lab%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab verify <id>%s   %sCheck your fix%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab solution <id>%s %sShow solution%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner lab status%s        %sView progress%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner down%s              %sDelete cluster%s\n", bold, reset, dimW, reset)
-		fmt.Printf("    %scka-lab-runner update%s            %sUpdate tool%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner init%s                  %sCreate config file%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner up%s                    %sCreate local cluster%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner up --version v1.35.0%s  %sSelect KinD node version%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list%s              %sList all labs%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list --cert CKA%s   %sFilter by certification%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list --search pod%s %sSearch labs%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab pick%s              %sPick interactively%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab run <id>%s          %sStart a lab%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab run <id> --timer%s  %sExam simulation (2h)%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab verify <id>%s       %sCheck your fix%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab solution <id>%s     %sShow solution%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab status%s            %sView progress%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab stats%s             %sView statistics%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner down%s                  %sDelete cluster%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner update%s                %sUpdate tool%s\n", bold, reset, dimW, reset)
 		fmt.Println()
 		fmt.Printf("  %sRun 'cka-lab-runner --help' for full command list%s\n\n", dimW, reset)
 	},
@@ -114,9 +130,40 @@ var upCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		recreate, _ := cmd.Flags().GetBool("recreate")
 		random, _ := cmd.Flags().GetBool("random")
+		versionFlag, _ := cmd.Flags().GetString("version")
 
 		if err := loadConfig(); err != nil {
 			return err
+		}
+
+		// Override config version if flag is set
+		if versionFlag != "" {
+			cfg.Cluster.KubernetesVersion = versionFlag
+		}
+
+		// Show version suggestion if no version specified
+		if cfg.Cluster.KubernetesVersion == "" || cfg.Cluster.KubernetesVersion == "v1.30.0" {
+			fmt.Println()
+			fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+			fmt.Printf("  %s║%s  %sKinD Node Version Selection%s                              %s║%s\n", bold, reset, bold+brCyan, reset, bold, reset)
+			fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sRecommended for CKA/CKAD/CKS exams:%s                     %s║%s\n", bold, reset, brGreen, reset, bold, reset)
+			fmt.Printf("  %s║%s    %s► v1.35.0%s  (exam version - recommended)               %s║%s\n", bold, reset, brGreen, reset, bold, reset)
+			fmt.Printf("  %s║%s    %s► v1.34.0%s  (previous stable)                          %s║%s\n", bold, reset, brWhite, reset, bold, reset)
+			fmt.Printf("  %s║%s    %s► v1.33.0%s  (older stable)                             %s║%s\n", bold, reset, brWhite, reset, bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sUse --version flag to select:%s                           %s║%s\n", bold, reset, brYellow, reset, bold, reset)
+			fmt.Printf("  %s║%s    cka-lab-runner up --version v1.35.0                    %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+			fmt.Println()
+
+			// Default to exam version
+			if cfg.Cluster.KubernetesVersion == "" {
+				cfg.Cluster.KubernetesVersion = "v1.35.0"
+				fmt.Printf("  %s▸%s Using default: %sv1.35.0%s (CKA/CKAD/CKS exam version)\n\n", brCyan, reset, bold, reset)
+			}
 		}
 
 		provider, err := createProvider()
@@ -147,12 +194,12 @@ var upCmd = &cobra.Command{
 			}
 		}
 
-		cli.Info(fmt.Sprintf("Creating cluster: %s", provider.Name()))
+		cli.Info(fmt.Sprintf("Creating cluster: %s with %s", provider.Name(), cfg.Cluster.KubernetesVersion))
 		if err := provider.Up(ctx); err != nil {
 			return fmt.Errorf("creating cluster: %w", err)
 		}
 
-		cli.Success(fmt.Sprintf("Cluster created: %s", provider.Name()))
+		cli.Success(fmt.Sprintf("Cluster created: %s (%s)", provider.Name(), cfg.Cluster.KubernetesVersion))
 
 		if random {
 			return runRandomLab(nil)
@@ -207,10 +254,13 @@ var labListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		categoryFilter, _ := cmd.Flags().GetString("category")
 		difficultyFilter, _ := cmd.Flags().GetString("difficulty")
+		certFilter, _ := cmd.Flags().GetString("cert")
 		domainFilter, _ := cmd.Flags().GetString("domain")
 		jsonOutput, _ := cmd.Flags().GetBool("json")
 		showProgress, _ := cmd.Flags().GetBool("progress")
 		tagFilter, _ := cmd.Flags().GetString("tag")
+		searchFilter, _ := cmd.Flags().GetString("search")
+		resourceFilter, _ := cmd.Flags().GetString("resource")
 
 		allLabs := labs.List()
 		var filteredLabs []labs.Lab
@@ -222,6 +272,15 @@ var labListCmd = &cobra.Command{
 			}
 			if difficultyFilter != "" && string(lab.Difficulty()) != difficultyFilter {
 				matches = false
+			}
+			if certFilter != "" {
+				cert := labs.Cert(strings.ToUpper(certFilter))
+				if cert != labs.CertCKA && cert != labs.CertCKAD && cert != labs.CertCKS {
+					return fmt.Errorf("invalid cert %q: must be CKA, CKAD, or CKS", certFilter)
+				}
+				if labs.GetCert(lab) != cert {
+					matches = false
+				}
 			}
 			if domainFilter != "" {
 				d := labs.GetDomain(lab)
@@ -241,6 +300,41 @@ var labListCmd = &cobra.Command{
 					matches = false
 				}
 			}
+			if searchFilter != "" {
+				searchLower := strings.ToLower(searchFilter)
+				idMatch := strings.Contains(strings.ToLower(lab.ID()), searchLower)
+				titleMatch := strings.Contains(strings.ToLower(lab.Title()), searchLower)
+				descMatch := strings.Contains(strings.ToLower(lab.Description()), searchLower)
+				tagMatch := false
+				for _, t := range lab.Tags() {
+					if strings.Contains(strings.ToLower(t), searchLower) {
+						tagMatch = true
+						break
+					}
+				}
+				if !idMatch && !titleMatch && !descMatch && !tagMatch {
+					matches = false
+				}
+			}
+			if resourceFilter != "" {
+				resourceLower := strings.ToLower(resourceFilter)
+				found := false
+				idLower := strings.ToLower(lab.ID())
+				titleLower := strings.ToLower(lab.Title())
+				descLower := strings.ToLower(lab.Description())
+				if strings.Contains(idLower, resourceLower) || strings.Contains(titleLower, resourceLower) || strings.Contains(descLower, resourceLower) {
+					found = true
+				}
+				for _, t := range lab.Tags() {
+					if strings.Contains(strings.ToLower(t), resourceLower) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					matches = false
+				}
+			}
 			if matches {
 				filteredLabs = append(filteredLabs, lab)
 			}
@@ -248,26 +342,30 @@ var labListCmd = &cobra.Command{
 
 		if jsonOutput {
 			type labJSON struct {
-				ID         string   `json:"id"`
-				Title      string   `json:"title"`
-				Category   string   `json:"category"`
-				Difficulty string   `json:"difficulty"`
-				Estimated  int      `json:"estimated_minutes"`
-				Tags       []string `json:"tags"`
-				Domain     string   `json:"domain,omitempty"`
-				Completed  bool     `json:"completed"`
+				ID           string   `json:"id"`
+				Title        string   `json:"title"`
+				Category     string   `json:"category"`
+				Cert         string   `json:"cert"`
+				DomainWeight int      `json:"domain_weight"`
+				Difficulty   string   `json:"difficulty"`
+				Estimated    int      `json:"estimated_minutes"`
+				Tags         []string `json:"tags"`
+				Domain       string   `json:"domain,omitempty"`
+				Completed    bool     `json:"completed"`
 			}
 			var out []labJSON
 			for _, lab := range filteredLabs {
 				out = append(out, labJSON{
-					ID:         lab.ID(),
-					Title:      lab.Title(),
-					Category:   string(lab.Category()),
-					Difficulty: string(lab.Difficulty()),
-					Estimated:  lab.EstimatedTime(),
-					Tags:       lab.Tags(),
-					Domain:     labs.GetDomain(lab),
-					Completed:  progress.IsCompleted(lab.ID()),
+					ID:           lab.ID(),
+					Title:        lab.Title(),
+					Category:     string(lab.Category()),
+					Cert:         string(labs.GetCert(lab)),
+					DomainWeight: labs.GetDomainWeight(lab),
+					Difficulty:   string(lab.Difficulty()),
+					Estimated:    lab.EstimatedTime(),
+					Tags:         lab.Tags(),
+					Domain:       labs.GetDomain(lab),
+					Completed:    progress.IsCompleted(lab.ID()),
 				})
 			}
 			data, _ := json.MarshalIndent(out, "", "  ")
@@ -288,6 +386,7 @@ var labRunCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		labID := args[0]
 		timed, _ := cmd.Flags().GetBool("timed")
+		timer, _ := cmd.Flags().GetBool("timer")
 		timeLimit, _ := cmd.Flags().GetInt("time-limit")
 		ns, _ := cmd.Flags().GetString("namespace")
 
@@ -356,7 +455,27 @@ var labRunCmd = &cobra.Command{
 		cli.PrintLabDetails(lab)
 		cli.Success("Lab scenario applied successfully!")
 
-		if timed {
+		// Exam simulation mode (2 hours)
+		if timer {
+			timeLimit = 120 // 2 hours like real CKA/CKAD/CKS exam
+			fmt.Println()
+			fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+			fmt.Printf("  %s║%s  %s⏰ EXAM SIMULATION MODE%s                                    %s║%s\n", bold, reset, bold+brRed, reset, bold, reset)
+			fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+			fmt.Printf("  %s║%s  %sTime Limit:%s 2 hours (120 minutes)                        %s║%s\n", bold, reset, brYellow, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sLab:%s %-50s %s║%s\n", bold, reset, brWhite, reset, lab.ID(), bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s  %sRules:%s                                                  %s║%s\n", bold, reset, brCyan, reset, bold, reset)
+			fmt.Printf("  %s║%s    • No hints allowed                                     %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s    • No solution viewing                                  %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s    • Use only kubectl (like real exam)                    %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+			fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+			fmt.Println()
+			cli.Info(fmt.Sprintf("Timer started! You have %d minutes to fix this lab!", timeLimit))
+			cli.Info("Fix the issue before time runs out!")
+			go runCountdown(timeLimit, labID)
+		} else if timed {
 			if timeLimit <= 0 {
 				timeLimit = lab.EstimatedTime()
 			}
@@ -395,11 +514,12 @@ var labSolutionCmd = &cobra.Command{
 var labRandomCmd = &cobra.Command{
 	Use:   "random",
 	Short: "Select a random lab",
-	Long:  `Selects and runs a random lab, optionally filtered by category and difficulty.`,
+	Long:  `Selects and runs a random lab, optionally filtered by category, difficulty, and certification.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		seed, _ := cmd.Flags().GetInt64("seed")
 		categoryFilter, _ := cmd.Flags().GetString("category")
 		difficultyFilter, _ := cmd.Flags().GetString("difficulty")
+		certFilter, _ := cmd.Flags().GetString("cert")
 
 		if seed == 0 {
 			seed = time.Now().UnixNano()
@@ -415,7 +535,12 @@ var labRandomCmd = &cobra.Command{
 			difficulty = labs.Difficulty(difficultyFilter)
 		}
 
-		lab, err := labs.Random(seed, category, difficulty)
+		var cert labs.Cert
+		if certFilter != "" {
+			cert = labs.Cert(strings.ToUpper(certFilter))
+		}
+
+		lab, err := labs.Random(seed, category, difficulty, cert)
 		if err != nil {
 			return err
 		}
@@ -549,19 +674,153 @@ var labStatusCmd = &cobra.Command{
 	},
 }
 
-var labExportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Export completion history as JSON",
-	Long:  `Exports your lab completion history to stdout as JSON.`,
+var labStatsCmd = &cobra.Command{
+	Use:   "stats",
+	Short: "Show detailed statistics",
+	Long:  `Displays detailed statistics about your lab progress by certification and domain.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		data, err := progress.ExportJSON()
-		if err != nil {
-			return fmt.Errorf("exporting progress: %w", err)
+		allLabs := labs.List()
+		completed := progress.CompletedCount()
+		total := len(allLabs)
+
+		// Count by certification
+		ckaTotal, ckadTotal, cksTotal := 0, 0, 0
+		ckaDone, ckadDone, cksDone := 0, 0, 0
+
+		for _, lab := range allLabs {
+			cert := labs.GetCert(lab)
+			isDone := progress.IsCompleted(lab.ID())
+
+			switch cert {
+			case labs.CertCKA:
+				ckaTotal++
+				if isDone {
+					ckaDone++
+				}
+			case labs.CertCKAD:
+				ckadTotal++
+				if isDone {
+					ckadDone++
+				}
+			case labs.CertCKS:
+				cksTotal++
+				if isDone {
+					cksDone++
+				}
+			}
 		}
-		fmt.Println(string(data))
+
+		fmt.Println()
+		fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+		fmt.Printf("  %s║%s  %s📊 LAB STATISTICS%s                                          %s║%s\n", bold, reset, bold+brCyan, reset, bold, reset)
+		fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+		fmt.Printf("  %s║%s  %sOverall:%s %d/%d labs completed (%d%%)                      %s║%s\n", bold, reset, brWhite, reset, completed, total, completed*100/total, bold, reset)
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+		fmt.Printf("  %s║%s  %sCKA:%s   %d/%d labs completed (%d%%)                        %s║%s\n", bold, reset, brBlue, reset, ckaDone, ckaTotal, ckaDone*100/ckaTotal, bold, reset)
+		fmt.Printf("  %s║%s  %sCKAD:%s  %d/%d labs completed (%d%%)                        %s║%s\n", bold, reset, brCyan, reset, ckadDone, ckadTotal, ckadDone*100/ckadTotal, bold, reset)
+		fmt.Printf("  %s║%s  %sCKS:%s   %d/%d labs completed (%d%%)                        %s║%s\n", bold, reset, brMagenta, reset, cksDone, cksTotal, cksDone*100/cksTotal, bold, reset)
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+		fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+		fmt.Println()
+
 		return nil
 	},
 }
+
+var labExportCmd = &cobra.Command{
+	Use:   "export",
+	Short: "Export completion history",
+	Long:  `Exports your lab completion history as JSON, markdown report, or certificate.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		format, _ := cmd.Flags().GetString("format")
+
+		switch format {
+		case "markdown", "md":
+			fmt.Println(progress.ExportMarkdown())
+		case "certificate", "cert":
+			fmt.Println(progress.ExportCertificate())
+		default:
+			data, err := progress.ExportJSON()
+			if err != nil {
+				return fmt.Errorf("exporting progress: %w", err)
+			}
+			fmt.Println(string(data))
+		}
+		return nil
+	},
+}
+
+var labStreakCmd = &cobra.Command{
+	Use:   "streak",
+	Short: "Show your practice streak",
+	Long:  `Displays your current and longest practice streak.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Println()
+		fmt.Printf("  %s%sPractice Streak%s\n", bold, brCyan, reset)
+		fmt.Println()
+		fmt.Println(progress.StreakInfo())
+		return nil
+	},
+}
+
+var labRateCmd = &cobra.Command{
+	Use:   "rate <lab-id> <1-5>",
+	Short: "Rate a lab you completed",
+	Long:  `Rate a lab from 1 (easy) to 5 (very hard) based on your experience.`,
+	Args:  cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		labID := args[0]
+		var rating int
+		if _, err := fmt.Sscanf(args[1], "%d", &rating); err != nil {
+			return fmt.Errorf("invalid rating: %s (must be 1-5)", args[1])
+		}
+
+		if err := progress.RateLab(labID, rating); err != nil {
+			return err
+		}
+
+		stars := ""
+		for i := 0; i < 5; i++ {
+			if i < rating {
+				stars += "★"
+			} else {
+				stars += "☆"
+			}
+		}
+		cli.Success(fmt.Sprintf("Rated %s: %s (%d/5)", labID, stars, rating))
+		return nil
+	},
+}
+
+var labExamCmd = &cobra.Command{
+	Use:   "exam",
+	Short: "Start an exam simulation",
+	Long:  `Generates a timed exam with random labs matching real CKA/CKAD/CKS structure.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cert, _ := cmd.Flags().GetString("cert")
+		numLabs, _ := cmd.Flags().GetInt("num-labs")
+
+		if cert == "" {
+			cert = "CKA"
+		}
+		if numLabs <= 0 {
+			numLabs = 15
+		}
+
+		plan, totalMinutes := cli.GenerateExamPlan(cert, numLabs)
+		if len(plan) == 0 {
+			return fmt.Errorf("no labs found for cert %s", cert)
+		}
+
+		cli.PrintExamBanner(cert, plan, totalMinutes)
+
+		fmt.Printf("  %s▸%s Starting first lab...\n\n", brCyan, reset)
+		return labRunCmd.RunE(cmd, []string{plan[0].Lab.ID()})
+	},
+}
+
+var completionCmd *cobra.Command
 
 func runCountdown(minutes int, labID string) {
 	total := time.Duration(minutes) * time.Minute
@@ -586,7 +845,7 @@ func runCountdown(minutes int, labID string) {
 
 func runRandomLab(cmd *cobra.Command) error {
 	seed := time.Now().UnixNano()
-	lab, err := labs.Random(seed, "", "")
+	lab, err := labs.Random(seed, "", "", labs.CertAll)
 	if err != nil {
 		return err
 	}
@@ -631,15 +890,19 @@ func init() {
 
 	upCmd.Flags().Bool("recreate", false, "Recreate the cluster if it already exists")
 	upCmd.Flags().Bool("random", false, "Run a random lab after creating the cluster")
+	upCmd.Flags().String("version", "", "KinD node image version (e.g., v1.35.0, v1.34.0, v1.33.0)")
 
 	labListCmd.Flags().String("category", "", "Filter by category")
 	labListCmd.Flags().String("difficulty", "", "Filter by difficulty")
+	labListCmd.Flags().String("cert", "", "Filter by certification (CKA, CKAD, CKS)")
 	labListCmd.Flags().String("domain", "", "Filter by CKA exam domain")
 	labListCmd.Flags().String("tag", "", "Filter by tag")
+	labListCmd.Flags().String("search", "", "Search labs by ID, title, description, or tags")
 	labListCmd.Flags().Bool("json", false, "Output as JSON")
 	labListCmd.Flags().Bool("progress", false, "Show completion status next to each lab")
 
 	labRunCmd.Flags().Bool("timed", false, "Enable timed challenge mode")
+	labRunCmd.Flags().Bool("timer", false, "Enable exam simulation mode (2 hours, no hints)")
 	labRunCmd.Flags().Int("time-limit", 0, "Time limit in minutes (default: lab estimated time)")
 	labRunCmd.Flags().String("namespace", "", "Override target namespace for the lab")
 	labRunCmd.Flags().Bool("force", false, "Run even if prerequisites are not completed")
@@ -647,10 +910,20 @@ func init() {
 	labRandomCmd.Flags().Int64("seed", 0, "Random seed for reproducible selection")
 	labRandomCmd.Flags().String("category", "", "Filter by category")
 	labRandomCmd.Flags().String("difficulty", "", "Filter by difficulty")
+	labRandomCmd.Flags().String("cert", "", "Filter by certification (CKA, CKAD, CKS)")
 
 	labHintCmd.Flags().Int("level", 1, "Hint level (1 = vague, 2 = moderate, 3 = specific)")
 
 	labStatusCmd.Flags().Bool("json", false, "Output as JSON")
+
+	labExportCmd.Flags().String("format", "json", "Export format: json, markdown, certificate")
+
+	labExamCmd.Flags().String("cert", "CKA", "Certification to simulate (CKA, CKAD, CKS)")
+	labExamCmd.Flags().Int("num-labs", 15, "Number of labs in the exam")
+
+	labListCmd.Flags().String("resource", "", "Filter by Kubernetes resource type (pod, service, pv, etc.)")
+
+	rootCmd.PersistentFlags().String("theme", "", "Color theme: dark, light (auto-detect if empty)")
 
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(upCmd)
@@ -659,6 +932,9 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(updateCmd)
 
+	completionCmd = cli.NewCompletionCmd(rootCmd)
+	rootCmd.AddCommand(completionCmd)
+
 	labCmd.AddCommand(labListCmd)
 	labCmd.AddCommand(labRunCmd)
 	labCmd.AddCommand(labSolutionCmd)
@@ -666,8 +942,12 @@ func init() {
 	labCmd.AddCommand(labVerifyCmd)
 	labCmd.AddCommand(labHintCmd)
 	labCmd.AddCommand(labStatusCmd)
+	labCmd.AddCommand(labStatsCmd)
 	labCmd.AddCommand(labExportCmd)
 	labCmd.AddCommand(labPickCmd)
+	labCmd.AddCommand(labStreakCmd)
+	labCmd.AddCommand(labRateCmd)
+	labCmd.AddCommand(labExamCmd)
 }
 
 func loadConfig() error {

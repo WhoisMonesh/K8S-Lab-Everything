@@ -14,19 +14,110 @@ const (
 	DifficultyHard   Difficulty = "hard"
 )
 
-// Category represents the type/category of a lab
-type Category string
+// Cert represents the CNCF certification a lab maps to
+type Cert string
 
 const (
-	CategoryControlPlane Category = "control-plane"
-	CategoryNetworking   Category = "networking"
-	CategoryScheduling   Category = "scheduling"
-	CategoryDNS          Category = "dns"
-	CategoryStorage      Category = "storage"
-	CategoryWorkloads    Category = "workloads"
-	CategoryRBAC         Category = "rbac"
-	CategorySecurity     Category = "security"
+	CertCKA  Cert = "CKA"
+	CertCKAD Cert = "CKAD"
+	CertCKS  Cert = "CKS"
+	CertAll  Cert = ""
 )
+
+// Category represents the exam domain category of a lab
+type Category string
+
+// CKA Domains
+const (
+	CategoryClusterArchitecture Category = "cluster-architecture"
+	CategoryWorkloadsScheduling Category = "workloads-scheduling"
+	CategoryServicesNetworking  Category = "services-networking"
+	CategoryStorage             Category = "storage"
+	CategoryTroubleshooting     Category = "troubleshooting"
+)
+
+// CKAD Domains
+const (
+	CategoryAppDesignBuild      Category = "app-design-build"
+	CategoryAppDeployment       Category = "app-deployment"
+	CategoryAppObservability    Category = "app-observability"
+	CategoryAppConfigSecurity   Category = "app-config-security"
+	CategoryServicesNetworkCKAD Category = "services-networking-ckad"
+)
+
+// CKS Domains
+const (
+	CategoryClusterSetupCKS   Category = "cluster-setup-cks"
+	CategoryClusterHardening  Category = "cluster-hardening"
+	CategorySystemHardening   Category = "system-hardening"
+	CategoryMicroserviceVulns Category = "microservice-vulns"
+	CategorySupplyChain       Category = "supply-chain"
+	CategoryMonitoringLogging Category = "monitoring-logging"
+)
+
+// Legacy category aliases for backward compatibility
+const (
+	CategoryControlPlane = CategoryClusterArchitecture
+	CategoryWorkloads    = CategoryWorkloadsScheduling
+	CategoryNetworking   = CategoryServicesNetworking
+	CategoryDNS          = CategoryServicesNetworking
+	CategoryScheduling   = CategoryWorkloadsScheduling
+	CategorySecurity     = CategoryAppConfigSecurity
+	CategoryRBAC         = CategoryClusterHardening
+)
+
+// CertCategories returns all categories belonging to a certification
+func CertCategories(cert Cert) []Category {
+	switch cert {
+	case CertCKA:
+		return []Category{
+			CategoryClusterArchitecture,
+			CategoryWorkloadsScheduling,
+			CategoryServicesNetworking,
+			CategoryStorage,
+			CategoryTroubleshooting,
+		}
+	case CertCKAD:
+		return []Category{
+			CategoryAppDesignBuild,
+			CategoryAppDeployment,
+			CategoryAppObservability,
+			CategoryAppConfigSecurity,
+			CategoryServicesNetworkCKAD,
+		}
+	case CertCKS:
+		return []Category{
+			CategoryClusterSetupCKS,
+			CategoryClusterHardening,
+			CategorySystemHardening,
+			CategoryMicroserviceVulns,
+			CategorySupplyChain,
+			CategoryMonitoringLogging,
+		}
+	default:
+		return nil
+	}
+}
+
+// CertForCategory returns the certification a category belongs to
+func CertForCategory(c Category) Cert {
+	for _, cat := range CertCategories(CertCKA) {
+		if c == cat {
+			return CertCKA
+		}
+	}
+	for _, cat := range CertCategories(CertCKAD) {
+		if c == cat {
+			return CertCKAD
+		}
+	}
+	for _, cat := range CertCategories(CertCKS) {
+		if c == cat {
+			return CertCKS
+		}
+	}
+	return CertAll
+}
 
 // SolutionStep represents a single step in the solution
 type SolutionStep struct {
@@ -82,6 +173,8 @@ type Info struct {
 	ID            string
 	Title         string
 	Category      Category
+	Cert          Cert
+	DomainWeight  int
 	Difficulty    Difficulty
 	EstimatedTime int
 	Tags          []string
@@ -100,10 +193,13 @@ func (b *BaseLab) Verify(_ context.Context, _ string) error {
 
 // GetInfo returns the metadata for a lab
 func GetInfo(lab Lab) Info {
+	cat := lab.Category()
 	return Info{
 		ID:            lab.ID(),
 		Title:         lab.Title(),
-		Category:      lab.Category(),
+		Category:      cat,
+		Cert:          GetCert(lab),
+		DomainWeight:  GetDomainWeight(lab),
 		Difficulty:    lab.Difficulty(),
 		EstimatedTime: lab.EstimatedTime(),
 		Tags:          lab.Tags(),
