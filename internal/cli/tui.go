@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/labs"
 	"github.com/WhoisMonesh/K8S-Lab-Everything/internal/progress"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 var (
@@ -41,8 +41,8 @@ var (
 			Bold(true)
 
 	diffMediumStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("220")).
-				Bold(true)
+			Foreground(lipgloss.Color("220")).
+			Bold(true)
 
 	diffHardStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("196")).
@@ -65,23 +65,40 @@ var (
 	footerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			MarginTop(1)
+
+	ckaStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("39")).
+			Bold(true)
+
+	ckadStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("51")).
+			Bold(true)
+
+	cksStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("135")).
+			Bold(true)
+
+	certFilterStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("220")).
+			Bold(true)
 )
 
 type labItem struct {
-	lab      labs.Lab
-	info     labs.Info
+	lab       labs.Lab
+	info      labs.Info
 	completed bool
 }
 
 type labSelectorModel struct {
-	labs        []labItem
-	cursor      int
-	filtered    []labItem
-	filter      string
-	selected    int
-	quitting    bool
-	width       int
-	height      int
+	labs       []labItem
+	cursor     int
+	filtered   []labItem
+	filter     string
+	certFilter labs.Cert
+	selected   int
+	quitting   bool
+	width      int
+	height     int
 }
 
 func newLabSelectorModel(labList []labs.Lab, showProgress bool) labSelectorModel {
@@ -166,12 +183,41 @@ func (m labSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.filter = ""
 				m.applyFilter()
 			}
+
+		case "1":
+			m.certFilter = labs.CertCKA
+			m.applyFilter()
+		case "2":
+			m.certFilter = labs.CertCKAD
+			m.applyFilter()
+		case "3":
+			m.certFilter = labs.CertCKS
+			m.applyFilter()
+		case "0":
+			m.certFilter = labs.CertAll
+			m.applyFilter()
+
+		default:
+			if len(msg.String()) == 1 && msg.String() >= "a" && msg.String() <= "z" {
+				m.filter += msg.String()
+				m.applyFilter()
+			}
+			if len(msg.String()) == 1 && msg.String() >= "A" && msg.String() <= "Z" {
+				m.filter += strings.ToLower(msg.String())
+				m.applyFilter()
+			}
+			if len(msg.String()) == 1 && msg.String() >= "0" && msg.String() <= "9" {
+				// Already handled above for 0-3
+			}
+			if msg.String() == "_" || msg.String() == "-" {
+				m.filter += msg.String()
+				m.applyFilter()
+			}
 		}
 
 	case tea.MouseMsg:
 		if msg.Type == tea.MouseLeft {
-			// Calculate which item was clicked based on row
-			clickRow := msg.Y - 8 // Offset for header
+			clickRow := msg.Y - 7
 			if clickRow >= 0 && clickRow < len(m.filtered) {
 				m.cursor = clickRow
 				m.selected = m.cursor
@@ -194,11 +240,23 @@ func (m labSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *labSelectorModel) applyFilter() {
-	if m.filter == "" {
-		m.filtered = m.labs
-	} else {
+	m.filtered = m.labs
+
+	// Apply cert filter
+	if m.certFilter != labs.CertAll && m.certFilter != "" {
 		var result []labItem
-		for _, item := range m.labs {
+		for _, item := range m.filtered {
+			if labs.GetCert(item.lab) == m.certFilter {
+				result = append(result, item)
+			}
+		}
+		m.filtered = result
+	}
+
+	// Apply text filter
+	if m.filter != "" {
+		var result []labItem
+		for _, item := range m.filtered {
 			if strings.Contains(strings.ToLower(item.info.ID), strings.ToLower(m.filter)) ||
 				strings.Contains(strings.ToLower(item.info.Title), strings.ToLower(m.filter)) ||
 				strings.Contains(strings.ToLower(string(item.info.Category)), strings.ToLower(m.filter)) {
@@ -207,6 +265,7 @@ func (m *labSelectorModel) applyFilter() {
 		}
 		m.filtered = result
 	}
+
 	if m.cursor >= len(m.filtered) {
 		m.cursor = len(m.filtered) - 1
 	}
@@ -228,6 +287,32 @@ func diffStyle(d string) lipgloss.Style {
 	}
 }
 
+func certStyle(cert labs.Cert) lipgloss.Style {
+	switch cert {
+	case labs.CertCKA:
+		return ckaStyle
+	case labs.CertCKAD:
+		return ckadStyle
+	case labs.CertCKS:
+		return cksStyle
+	default:
+		return normalItemStyle
+	}
+}
+
+func certLabel(cert labs.Cert) string {
+	switch cert {
+	case labs.CertCKA:
+		return "CKA"
+	case labs.CertCKAD:
+		return "CKAD"
+	case labs.CertCKS:
+		return "CKS"
+	default:
+		return ""
+	}
+}
+
 func (m labSelectorModel) View() string {
 	if m.quitting {
 		return ""
@@ -235,22 +320,20 @@ func (m labSelectorModel) View() string {
 
 	var b strings.Builder
 
-	// Header
 	b.WriteString("\n")
-	b.WriteString(titleStyle.Render("  K8S-Lab-Everything"))
+	b.WriteString(titleStyle.Render("  K8S-Lab-Everything — CKA │ CKAD │ CKS"))
 	b.WriteString("\n")
-	b.WriteString(subtitleStyle.Render("  Select a lab to practice with"))
+	b.WriteString(subtitleStyle.Render("  ↑↓ navigate  ↵ select  / filter  1=CKA 2=CKAD 3=CKS 0=All  q quit"))
 	b.WriteString("\n")
 
-	// Filter input
-	if m.filter != "" {
-		b.WriteString(fmt.Sprintf("  Filter: %s\n\n", m.filter))
+	if m.certFilter != labs.CertAll {
+		b.WriteString(fmt.Sprintf("  %sCert Filter:%s %s\n", certFilterStyle.Render(""), "", certStyle(m.certFilter).Render(string(m.certFilter))))
+	} else if m.filter != "" {
+		b.WriteString(fmt.Sprintf("  %s🔍 Filter:%s %s%s%s\n", catStyle.Render(""), "", lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render(""), m.filter, ""))
 	} else {
 		b.WriteString("\n")
 	}
 
-	// Lab list
-	visibleCount := 0
 	for i, item := range m.filtered {
 		isSelected := i == m.cursor
 
@@ -271,23 +354,22 @@ func (m labSelectorModel) View() string {
 			id = id[:25] + "..."
 		}
 
+		cat := lipgloss.NewStyle().Foreground(lipgloss.Color("99")).Render(string(item.info.Category))
+		cert := certStyle(item.info.Cert).Render(certLabel(item.info.Cert))
+
 		if isSelected {
-			row := selectedItemBarStyle.Render(fmt.Sprintf(" ▸ %-28s  %-38s  %s", id, title, diffTag))
+			row := selectedItemBarStyle.Render(fmt.Sprintf(" ▸ %-22s  %-34s  %-10s  %-6s  %s", id, title, cat, cert, diffTag))
 			b.WriteString(fmt.Sprintf("  %s%s\n", check, row))
 		} else {
-			row := normalItemStyle.Render(fmt.Sprintf("  %-28s  %-38s  %s", id, title, diffTag))
+			row := normalItemStyle.Render(fmt.Sprintf("   %-22s  %-34s  %-10s  %-6s  %s", id, title, cat, cert, diffTag))
 			b.WriteString(fmt.Sprintf("  %s%s\n", check, row))
 		}
-		visibleCount++
-		_ = visibleCount
 	}
 
-	// Footer
 	b.WriteString("\n")
-	b.WriteString(separatorStyle.Render(strings.Repeat("─", 70)))
+	b.WriteString(separatorStyle.Render(strings.Repeat("─", 80)))
 	b.WriteString("\n")
 
-	// Stats
 	easy, medium, hard := 0, 0, 0
 	for _, item := range m.filtered {
 		switch strings.ToLower(string(item.info.Difficulty)) {
@@ -299,20 +381,15 @@ func (m labSelectorModel) View() string {
 			hard++
 		}
 	}
-	b.WriteString(fmt.Sprintf("  %s%d lab(s)%s  %s  %s  %s",
-		lipgloss.NewStyle().Bold(true).Render(""),
-		len(m.filtered),
-		"",
+	b.WriteString(fmt.Sprintf("  %s  %s  %s",
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("255")).Render(fmt.Sprintf("%d labs", len(m.filtered))),
 		diffEasyStyle.Render(fmt.Sprintf("● %d easy", easy)),
 		diffMediumStyle.Render(fmt.Sprintf("● %d medium", medium)),
-		diffHardStyle.Render(fmt.Sprintf("● %d hard", hard)),
 	))
-
+	b.WriteString(fmt.Sprintf("  %s", diffHardStyle.Render(fmt.Sprintf("● %d hard", hard))))
 	b.WriteString("\n")
 
-	// Help
-	b.WriteString(helpStyle.Render("  ↑↓ navigate  ↵ select  / filter  q quit"))
-
+	b.WriteString(helpStyle.Render("  ↑↓ navigate  ↵ select  / filter  1=CKA 2=CKAD 3=CKS 0=All  scroll mouse  click select  q quit"))
 	b.WriteString("\n")
 
 	return b.String()

@@ -10,37 +10,32 @@ import (
 )
 
 const (
-	reset      = "\033[0m"
-	bold       = "\033[1m"
-	dim        = "\033[2m"
-	italic     = "\033[3m"
-	underline  = "\033[4m"
-	strike     = "\033[9m"
-	red        = "\033[31m"
-	green      = "\033[32m"
-	yellow     = "\033[33m"
-	blue       = "\033[34m"
-	magenta    = "\033[35m"
-	cyan       = "\033[36m"
-	white      = "\033[37m"
-	brRed      = "\033[91m"
-	brGreen    = "\033[92m"
-	brYellow   = "\033[93m"
-	brBlue     = "\033[94m"
-	brMagenta  = "\033[95m"
-	brCyan     = "\033[96m"
-	brWhite    = "\033[97m"
-	dimW       = "\033[90m"
-	bgRed      = "\033[41m"
-	bgGreen    = "\033[42m"
-	bgYellow   = "\033[43m"
-	bgBlue     = "\033[44m"
-	bgMagenta  = "\033[45m"
-	bgCyan     = "\033[46m"
-	bgWhite    = "\033[47m"
-	bgBrRed    = "\033[101m"
-	bgBrGreen  = "\033[102m"
-	bgBrYellow = "\033[103m"
+	reset     = "\033[0m"
+	bold      = "\033[1m"
+	dim       = "\033[2m"
+	italic    = "\033[3m"
+	underline = "\033[4m"
+	red       = "\033[31m"
+	green     = "\033[32m"
+	yellow    = "\033[33m"
+	blue      = "\033[34m"
+	magenta   = "\033[35m"
+	cyan      = "\033[36m"
+	white     = "\033[37m"
+	brRed     = "\033[91m"
+	brGreen   = "\033[92m"
+	brYellow  = "\033[93m"
+	brBlue    = "\033[94m"
+	brMagenta = "\033[95m"
+	brCyan    = "\033[96m"
+	brWhite   = "\033[97m"
+	dimW      = "\033[90m"
+	bgRed     = "\033[41m"
+	bgGreen   = "\033[42m"
+	bgYellow  = "\033[43m"
+	bgBlue    = "\033[44m"
+	bgMagenta = "\033[45m"
+	bgCyan    = "\033[46m"
 )
 
 func padRight(s string, width int) string {
@@ -51,22 +46,14 @@ func padRight(s string, width int) string {
 	return s + strings.Repeat(" ", width-w)
 }
 
-func padLeft(s string, width int) string {
-	w := utf8.RuneCountInString(s)
-	if w >= width {
-		return s
-	}
-	return strings.Repeat(" ", width-w) + s
-}
-
 func diffTag(d string) string {
 	switch strings.ToLower(d) {
 	case "easy":
-		return bgBrGreen + bold + " EASY " + reset
+		return bgGreen + bold + " EASY " + reset
 	case "medium":
-		return bgBrYellow + bold + " MEDIUM " + reset
+		return bgYellow + bold + " MEDIUM " + reset
 	case "hard":
-		return bgBrRed + bold + " HARD " + reset
+		return bgRed + bold + " HARD " + reset
 	default:
 		return d
 	}
@@ -85,8 +72,57 @@ func diffColor(d string) string {
 	}
 }
 
+func certBadge(cert labs.Cert) string {
+	switch cert {
+	case labs.CertCKA:
+		return bgBlue + bold + " CKA " + reset
+	case labs.CertCKAD:
+		return bgCyan + bold + " CKAD " + reset
+	case labs.CertCKS:
+		return bgMagenta + bold + " CKS " + reset
+	default:
+		return ""
+	}
+}
+
 func catColor(c string) string {
 	switch strings.ToLower(c) {
+	// CKA domains
+	case "cluster-architecture":
+		return brCyan
+	case "workloads-scheduling":
+		return brBlue
+	case "services-networking":
+		return brMagenta
+	case "storage":
+		return brWhite
+	case "troubleshooting":
+		return brRed
+	// CKAD domains
+	case "app-design-build":
+		return cyan
+	case "app-deployment":
+		return brGreen
+	case "app-observability":
+		return brYellow
+	case "app-config-security":
+		return magenta
+	case "services-networking-ckad":
+		return brBlue
+	// CKS domains
+	case "cluster-setup-cks":
+		return brCyan
+	case "cluster-hardening":
+		return brGreen
+	case "system-hardening":
+		return brYellow
+	case "microservice-vulns":
+		return brRed
+	case "supply-chain":
+		return white
+	case "monitoring-logging":
+		return brMagenta
+	// Legacy aliases
 	case "control-plane":
 		return brCyan
 	case "networking":
@@ -95,8 +131,6 @@ func catColor(c string) string {
 		return brMagenta
 	case "dns":
 		return brYellow
-	case "storage":
-		return brWhite
 	case "security":
 		return brRed
 	case "rbac":
@@ -110,6 +144,42 @@ func catColor(c string) string {
 
 func catIcon(c string) string {
 	switch strings.ToLower(c) {
+	// CKA domains
+	case "cluster-architecture":
+		return "⚙"
+	case "workloads-scheduling":
+		return "📦"
+	case "services-networking":
+		return "⛓"
+	case "storage":
+		return "💾"
+	case "troubleshooting":
+		return "🔍"
+	// CKAD domains
+	case "app-design-build":
+		return "🏗"
+	case "app-deployment":
+		return "🚀"
+	case "app-observability":
+		return "📊"
+	case "app-config-security":
+		return "🔒"
+	case "services-networking-ckad":
+		return "🌐"
+	// CKS domains
+	case "cluster-setup-cks":
+		return "🛡"
+	case "cluster-hardening":
+		return "🔐"
+	case "system-hardening":
+		return "🖥"
+	case "microservice-vulns":
+		return "🐛"
+	case "supply-chain":
+		return "📦"
+	case "monitoring-logging":
+		return "📋"
+	// Legacy aliases
 	case "control-plane":
 		return "⚙"
 	case "networking":
@@ -118,8 +188,6 @@ func catIcon(c string) string {
 		return "📅"
 	case "dns":
 		return "🔍"
-	case "storage":
-		return "💾"
 	case "security":
 		return "🔒"
 	case "rbac":
@@ -144,23 +212,29 @@ func progressBar(completed, total, width int) string {
 
 func PrintBanner() {
 	fmt.Println()
-	fmt.Printf("  %s%s┌───────────────────────────────────────────────────────────────────────────┐%s\n", dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██╗  ██╗██╗      ██████╗ ███╗   ██╗███████╗██╗    ██╗ ██████╗ %s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██║  ██║██║     ██╔═══██╗████╗  ██║██╔════╝██║    ██║██╔═══██╗%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s███████║██║     ██║   ██║██╔██╗ ██║█████╗  ██║ █╗ ██║██║   ██║%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  ██║███╗██║██║   ██║%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗╚███╔███╔╝╚██████╔╝%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝ ╚══╝╚══╝  ╚═════╝%s      %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s       %s%sK8S-Lab-Everything%s                                              %s%s│%s\n", dim, cyan, reset, bold, brGreen, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s       %s143 Hands-On Labs  │  Kubernetes Troubleshooting%s                     %s%s│%s\n", dim, cyan, reset, bold, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s└───────────────────────────────────────────────────────────────────────────┘%s\n", dim, cyan, reset)
+	lines := []string{
+		"  █████   ████  ████████    █████████             █████                 █████                ██████████                                            █████    █████       ███",
+		"  ▒███  ███   ▒███   ▒███ ▒███    ▒▒▒             ▒███         ██████   ▒███████             ▒███  █ ▒  █████ █████  ██████  ████████  █████ ████ ███████   ▒███████   ████",
+		"  ▒███████    ▒▒████████  ▒▒█████████  ██████████ ▒███        ▒▒▒▒▒███  ▒███▒▒███ ██████████ ▒██████   ▒▒███ ▒▒███  ███▒▒███▒▒███▒▒███▒▒███ ▒███ ▒▒▒███▒    ▒███▒▒███ ▒▒███",
+		"  ▒███▒▒███    ███▒▒▒▒███  ▒▒▒▒▒▒▒▒███▒▒▒▒▒▒▒▒▒▒  ▒███         ███████  ▒███ ▒███▒▒▒▒▒▒▒▒▒▒  ▒███▒▒█    ▒███  ▒███ ▒███████  ▒███ ▒▒▒  ▒███ ▒███   ▒███     ▒███ ▒███  ▒███",
+		"  ▒███ ▒▒███  ▒███   ▒███  ███    ▒███            ▒███      █ ███▒▒███  ▒███ ▒███            ▒███ ▒   █ ▒▒███ ███  ▒███▒▒▒   ▒███      ▒███ ▒███   ▒███ ███ ▒███ ▒███  ▒███",
+		"  █████ ▒▒████▒▒████████  ▒▒█████████             ███████████▒▒████████ ████████             ██████████  ▒▒█████   ▒▒██████  █████     ▒▒███████   ▒▒█████  ████ █████ █████",
+		"  ▒▒▒▒▒   ▒▒▒▒  ▒▒▒▒▒▒▒▒    ▒▒▒▒▒▒▒▒▒             ▒▒▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒▒ ▒▒▒▒▒▒▒▒             ▒▒▒▒▒▒▒▒▒▒    ▒▒▒▒▒     ▒▒▒▒▒▒  ▒▒▒▒▒       ▒▒▒▒▒███    ▒▒▒▒▒  ▒▒▒▒ ▒▒▒▒▒",
+	}
+
+	for _, line := range lines {
+		fmt.Printf("  %s%s%s%s\n", dim, cyan, line, reset)
+	}
+
+	fmt.Println()
+	fmt.Printf("  %s%s   ██ K8S-Lab-Everything ██%s\n", bold, brGreen, reset)
+	fmt.Println()
+	fmt.Printf("  %sCKA%s │ %sCKAD%s │ %sCKS%s  │  378 Hands-On Labs  │  Interactive TUI\n",
+		bold+bgBlue, reset, bold+bgCyan, reset, bold+bgMagenta, reset)
 	fmt.Println()
 	fmt.Printf("  %s▸%s Run %scka-lab-runner lab list%s to see all available labs\n", brCyan, reset, bold, reset)
-	fmt.Printf("  %s▸%s Run %scka-lab-runner lab pick%s to select interactively\n\n", brCyan, reset, bold, reset)
+	fmt.Printf("  %s▸%s Run %scka-lab-runner lab list --cert CKA%s to filter by certification\n", brCyan, reset, bold, reset)
+	fmt.Printf("  %s▸%s Run %scka-lab-runner lab pick%s to select a lab interactively\n\n", brCyan, reset, bold, reset)
 }
 
 func PrintLabList(labList []labs.Lab) {
@@ -173,6 +247,17 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		return
 	}
 
+	w := 90
+
+	fmt.Println()
+	fmt.Printf("  %s┌%s%s┐%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
+	title := "K8S-Lab-Everything — CKA │ CKAD │ CKS Labs"
+	pad := (w - 2 - len(title)) / 2
+	leftPad := strings.Repeat(" ", pad)
+	rightPad := strings.Repeat(" ", w-2-pad-len(title))
+	fmt.Printf("  %s│%s%s%s%s%s%s%s│%s\n",
+		cyan, reset, leftPad, bold, brWhite, title, reset, rightPad, cyan)
+	fmt.Printf("  %s└%s%s┘%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
 	fmt.Println()
 
 	if showProgress {
@@ -182,55 +267,103 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		fmt.Printf("  %s\n\n", progressBar(completed, total, 40))
 	}
 
-	// Group by category
-	grouped := make(map[string][]labs.Lab)
-	order := []string{"control-plane", "workloads", "networking", "scheduling", "dns", "storage", "security", "rbac"}
-	seen := make(map[string]bool)
+	// Group by cert, then by category
+	certOrder := []labs.Cert{labs.CertCKA, labs.CertCKAD, labs.CertCKS}
+	certLabels := map[labs.Cert]string{
+		labs.CertCKA:  "CKA — Certified Kubernetes Administrator",
+		labs.CertCKAD: "CKAD — Certified Kubernetes Application Developer",
+		labs.CertCKS:  "CKS — Certified Kubernetes Security Specialist",
+	}
+	certColors := map[labs.Cert]string{
+		labs.CertCKA:  bgBlue,
+		labs.CertCKAD: bgCyan,
+		labs.CertCKS:  bgMagenta,
+	}
+
+	// Group labs by cert then category
+	type certGroup struct {
+		cert       labs.Cert
+		categories map[string][]labs.Lab
+		order      []string
+	}
+	groups := map[labs.Cert]*certGroup{}
+	for _, cert := range certOrder {
+		groups[cert] = &certGroup{cert: cert, categories: make(map[string][]labs.Lab)}
+	}
 
 	for _, lab := range labList {
+		cert := labs.GetCert(lab)
+		if cert == labs.CertAll {
+			continue
+		}
+		g, ok := groups[cert]
+		if !ok {
+			continue
+		}
 		cat := string(lab.Category())
-		grouped[cat] = append(grouped[cat], lab)
-		if !seen[cat] {
-			if !contains(order, cat) {
-				order = append(order, cat)
-			}
-			seen[cat] = true
+		g.categories[cat] = append(g.categories[cat], lab)
+		if !contains(g.order, cat) {
+			g.order = append(g.order, cat)
 		}
 	}
 
-	totalShown := 0
-	for _, cat := range order {
-		catLabs, ok := grouped[cat]
-		if !ok || len(catLabs) == 0 {
+	for _, cert := range certOrder {
+		g := groups[cert]
+		if len(g.categories) == 0 {
 			continue
 		}
 
-		color := catColor(cat)
-		icon := catIcon(cat)
-		fmt.Printf("  %s%s  %s %s%s  %s%s%d labs%s\n", color, icon, bold, strings.ToUpper(cat), reset, dimW, reset, len(catLabs), reset)
-		fmt.Printf("  %s%s\n", dim, strings.Repeat("┄", 66))
+		certColor := certColors[cert]
 
-		for i, lab := range catLabs {
-			info := labs.GetInfo(lab)
-			check := "  "
-			if showProgress && progress.IsCompleted(info.ID) {
-				check = fmt.Sprintf("%s%s✔%s", dim, brGreen, reset)
+		// Count labs for this cert
+		totalCert := 0
+		for _, catLabs := range g.categories {
+			totalCert += len(catLabs)
+		}
+
+		fmt.Printf("  %s┌%s%s┐%s\n", certColor, strings.Repeat("─", w-2), certColor, reset)
+		certHeader := fmt.Sprintf("%s  %s  %s", certBadge(cert), certLabels[cert], fmt.Sprintf("(%d labs)", totalCert))
+		fmt.Printf("  %s│%s  %s%s%-*s%s%s│%s\n",
+			certColor, reset, certColor, bold, w-6, certHeader, reset, certColor, reset)
+		fmt.Printf("  %s├%s%s┤%s\n", certColor, strings.Repeat("─", w-2), certColor, reset)
+
+		for _, cat := range g.order {
+			catLabs := g.categories[cat]
+			if len(catLabs) == 0 {
+				continue
 			}
 
-			title := padRight(truncate(info.Title, 34), 36)
-			id := padRight(info.ID, 30)
+			color := catColor(cat)
+			icon := catIcon(cat)
+			weight := labs.DomainWeightForCategory(labs.Category(cat))
 
-			fmt.Printf("  %s  %s%s%s  %s%s%s  %s%s%s\n",
-				check,
-				dimW, id, reset,
-				"", title, reset,
-				diffTag(string(info.Difficulty)),
-				"",
-				reset,
-			)
-			totalShown++
-			_ = i
+			fmt.Printf("  %s│%s  %s%s %s %s %s%s(%d labs, %d%%%s)%s│%s\n",
+				certColor, reset, color, bold, icon,
+				strings.ToUpper(cat), reset,
+				dimW, len(catLabs), weight, reset, certColor, reset)
+
+			for _, lab := range catLabs {
+				info := labs.GetInfo(lab)
+				check := "  "
+				if showProgress && progress.IsCompleted(info.ID) {
+					check = fmt.Sprintf("%s✔%s", brGreen, reset)
+				}
+
+				diffBadge := diffTag(string(info.Difficulty))
+
+				idStr := padRight(info.ID, 28)
+				titleStr := padRight(truncate(info.Title, 30), 32)
+
+				fmt.Printf("  %s│%s %s%s%s  %s%s%s  %s%s%s  %s%s│%s\n",
+					certColor, reset,
+					check, "", "",
+					dimW, idStr, reset,
+					brWhite, titleStr, reset,
+					diffBadge, "", reset)
+			}
 		}
+
+		fmt.Printf("  %s└%s%s┘%s\n", certColor, strings.Repeat("─", w-2), certColor, reset)
 		fmt.Println()
 	}
 
@@ -239,8 +372,8 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		diffCounts[string(lab.Difficulty())]++
 	}
 
-	fmt.Printf("  %s%s──────────────────────────────────────────────────────%s\n", dim, white, reset)
-	fmt.Printf("  %sTotal:%s %s%d labs%s", bold, reset, brWhite, len(labList), reset)
+	fmt.Printf("  %s┌%s%s┐%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
+	fmt.Printf("  %s│%s  %sTotal:%s %s%d labs%s", cyan, reset, bold, reset, brWhite, len(labList), reset)
 	if c, ok := diffCounts["easy"]; ok {
 		fmt.Printf("  %s● %d easy%s", brGreen, c, reset)
 	}
@@ -250,11 +383,13 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 	if c, ok := diffCounts["hard"]; ok {
 		fmt.Printf("  %s● %d hard%s", brRed, c, reset)
 	}
+	fmt.Printf("  %s│%s\n", cyan, reset)
+	fmt.Printf("  %s└%s%s┘%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
 	fmt.Println()
 }
 
 func PrintLabDetails(lab labs.Lab) {
-	w := 60
+	w := 70
 
 	fmt.Println()
 	fmt.Printf("  %s┌%s%s┐%s\n", cyan, strings.Repeat("─", w), cyan, reset)
@@ -262,10 +397,22 @@ func PrintLabDetails(lab labs.Lab) {
 	fmt.Printf("  %s└%s%s┘%s\n", cyan, strings.Repeat("─", w), cyan, reset)
 	fmt.Println()
 
+	cert := labs.GetCert(lab)
+	certStr := string(cert)
+	if cert != labs.CertAll {
+		certStr = fmt.Sprintf("%s %s%s", certBadge(cert), certStr, reset)
+	} else {
+		certStr = "N/A"
+	}
+
 	fmt.Printf("  %s%s▸ Details%s\n", bold, cyan, reset)
 	fmt.Println()
 	fmt.Printf("  %s  ID %s│%s  %s%s%s\n", dimW, dim, reset, bold, lab.ID(), reset)
 	fmt.Printf("  %s  Category %s│%s  %s%s%s\n", dimW, dim, reset, bold, catColor(string(lab.Category()))+strings.ToUpper(string(lab.Category())), reset)
+	fmt.Printf("  %s  Cert %s│%s  %s%s\n", dimW, dim, reset, certStr, reset)
+	if weight := labs.GetDomainWeight(lab); weight > 0 {
+		fmt.Printf("  %s  Domain Weight %s│%s  %s%d%%%s\n", dimW, dim, reset, brYellow, weight, reset)
+	}
 	fmt.Printf("  %s  Difficulty %s│%s  %s%s\n", dimW, dim, reset, diffTag(string(lab.Difficulty())), reset)
 	fmt.Printf("  %s  Est. Time %s│%s  %s%d min%s\n", dimW, dim, reset, brWhite, lab.EstimatedTime(), reset)
 
