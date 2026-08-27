@@ -15,7 +15,6 @@ const (
 	dim        = "\033[2m"
 	italic     = "\033[3m"
 	underline  = "\033[4m"
-	strike     = "\033[9m"
 	red        = "\033[31m"
 	green      = "\033[32m"
 	yellow     = "\033[33m"
@@ -34,13 +33,6 @@ const (
 	bgRed      = "\033[41m"
 	bgGreen    = "\033[42m"
 	bgYellow   = "\033[43m"
-	bgBlue     = "\033[44m"
-	bgMagenta  = "\033[45m"
-	bgCyan     = "\033[46m"
-	bgWhite    = "\033[47m"
-	bgBrRed    = "\033[101m"
-	bgBrGreen  = "\033[102m"
-	bgBrYellow = "\033[103m"
 )
 
 func padRight(s string, width int) string {
@@ -51,22 +43,14 @@ func padRight(s string, width int) string {
 	return s + strings.Repeat(" ", width-w)
 }
 
-func padLeft(s string, width int) string {
-	w := utf8.RuneCountInString(s)
-	if w >= width {
-		return s
-	}
-	return strings.Repeat(" ", width-w) + s
-}
-
 func diffTag(d string) string {
 	switch strings.ToLower(d) {
 	case "easy":
-		return bgBrGreen + bold + " EASY " + reset
+		return bgGreen + bold + " EASY " + reset
 	case "medium":
-		return bgBrYellow + bold + " MEDIUM " + reset
+		return bgYellow + bold + " MEDIUM " + reset
 	case "hard":
-		return bgBrRed + bold + " HARD " + reset
+		return bgRed + bold + " HARD " + reset
 	default:
 		return d
 	}
@@ -144,23 +128,27 @@ func progressBar(completed, total, width int) string {
 
 func PrintBanner() {
 	fmt.Println()
-	fmt.Printf("  %s%s┌───────────────────────────────────────────────────────────────────────────┐%s\n", dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██╗  ██╗██╗      ██████╗ ███╗   ██╗███████╗██╗    ██╗ ██████╗ %s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██║  ██║██║     ██╔═══██╗████╗  ██║██╔════╝██║    ██║██╔═══██╗%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s███████║██║     ██║   ██║██╔██╗ ██║█████╗  ██║ █╗ ██║██║   ██║%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██╔══██║██║     ██║   ██║██║╚██╗██║██╔══╝  ██║███╗██║██║   ██║%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s██║  ██║███████╗╚██████╔╝██║ ╚████║███████╗╚███╔███╔╝╚██████╔╝%s     %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s    %s╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝ ╚══╝╚══╝  ╚═════╝%s      %s%s│%s\n", dim, cyan, reset, brCyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s       %s%sK8S-Lab-Everything%s                                              %s%s│%s\n", dim, cyan, reset, bold, brGreen, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s       %s143 Hands-On Labs  │  Kubernetes Troubleshooting%s                     %s%s│%s\n", dim, cyan, reset, bold, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s│%s                                                                           %s%s│%s\n", dim, cyan, reset, dim, cyan, reset)
-	fmt.Printf("  %s%s└───────────────────────────────────────────────────────────────────────────┘%s\n", dim, cyan, reset)
+	lines := []string{
+		"  █████   ████  ████████    █████████             █████                 █████                ██████████                                            █████    █████       ███",
+		"  ▒███  ███   ▒███   ▒███ ▒███    ▒▒▒             ▒███         ██████   ▒███████             ▒███  █ ▒  █████ █████  ██████  ████████  █████ ████ ███████   ▒███████   ████",
+		"  ▒███████    ▒▒████████  ▒▒█████████  ██████████ ▒███        ▒▒▒▒▒███  ▒███▒▒███ ██████████ ▒██████   ▒▒███ ▒▒███  ███▒▒███▒▒███▒▒███▒▒███ ▒███ ▒▒▒███▒    ▒███▒▒███ ▒▒███",
+		"  ▒███▒▒███    ███▒▒▒▒███  ▒▒▒▒▒▒▒▒███▒▒▒▒▒▒▒▒▒▒  ▒███         ███████  ▒███ ▒███▒▒▒▒▒▒▒▒▒▒  ▒███▒▒█    ▒███  ▒███ ▒███████  ▒███ ▒▒▒  ▒███ ▒███   ▒███     ▒███ ▒███  ▒███",
+		"  ▒███ ▒▒███  ▒███   ▒███  ███    ▒███            ▒███      █ ███▒▒███  ▒███ ▒███            ▒███ ▒   █ ▒▒███ ███  ▒███▒▒▒   ▒███      ▒███ ▒███   ▒███ ███ ▒███ ▒███  ▒███",
+		"  █████ ▒▒████▒▒████████  ▒▒█████████             ███████████▒▒████████ ████████             ██████████  ▒▒█████   ▒▒██████  █████     ▒▒███████   ▒▒█████  ████ █████ █████",
+		"  ▒▒▒▒▒   ▒▒▒▒  ▒▒▒▒▒▒▒▒    ▒▒▒▒▒▒▒▒▒             ▒▒▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒▒ ▒▒▒▒▒▒▒▒             ▒▒▒▒▒▒▒▒▒▒    ▒▒▒▒▒     ▒▒▒▒▒▒  ▒▒▒▒▒       ▒▒▒▒▒███    ▒▒▒▒▒  ▒▒▒▒ ▒▒▒▒▒",
+	}
+
+	for _, line := range lines {
+		fmt.Printf("  %s%s%s%s\n", dim, cyan, line, reset)
+	}
+
 	fmt.Println()
-	fmt.Printf("  %s▸%s Run %scka-lab-runner lab list%s to see all available labs\n", brCyan, reset, bold, reset)
-	fmt.Printf("  %s▸%s Run %scka-lab-runner lab pick%s to select interactively\n\n", brCyan, reset, bold, reset)
+	fmt.Printf("  %s%s   ██ K8S-Lab-Everything ██%s\n", bold, brGreen, reset)
+	fmt.Println()
+	fmt.Printf("  %s143 Hands-On Labs  │  Kubernetes Troubleshooting  │  Interactive TUI%s\n", dimW, reset)
+	fmt.Println()
+	fmt.Printf("  %s▸%s Run %scka-lab-runner lab pick%s to select a lab interactively\n", brCyan, reset, bold, reset)
+	fmt.Printf("  %s▸%s Run %scka-lab-runner lab list%s to see all available labs\n\n", brCyan, reset, bold, reset)
 }
 
 func PrintLabList(labList []labs.Lab) {
@@ -182,7 +170,6 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		fmt.Printf("  %s\n\n", progressBar(completed, total, 40))
 	}
 
-	// Group by category
 	grouped := make(map[string][]labs.Lab)
 	order := []string{"control-plane", "workloads", "networking", "scheduling", "dns", "storage", "security", "rbac"}
 	seen := make(map[string]bool)
@@ -198,7 +185,6 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		}
 	}
 
-	totalShown := 0
 	for _, cat := range order {
 		catLabs, ok := grouped[cat]
 		if !ok || len(catLabs) == 0 {
@@ -210,26 +196,22 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		fmt.Printf("  %s%s  %s %s%s  %s%s%d labs%s\n", color, icon, bold, strings.ToUpper(cat), reset, dimW, reset, len(catLabs), reset)
 		fmt.Printf("  %s%s\n", dim, strings.Repeat("┄", 66))
 
-		for i, lab := range catLabs {
+		for _, lab := range catLabs {
 			info := labs.GetInfo(lab)
 			check := "  "
 			if showProgress && progress.IsCompleted(info.ID) {
-				check = fmt.Sprintf("%s%s✔%s", dim, brGreen, reset)
+				check = fmt.Sprintf("%s✔%s", brGreen, reset)
 			}
 
 			title := padRight(truncate(info.Title, 34), 36)
 			id := padRight(info.ID, 30)
 
-			fmt.Printf("  %s  %s%s%s  %s%s%s  %s%s%s\n",
+			fmt.Printf("  %s  %s%s%s  %s%s  %s%s%s\n",
 				check,
 				dimW, id, reset,
-				"", title, reset,
-				diffTag(string(info.Difficulty)),
-				"",
-				reset,
+				title, reset,
+				"", diffTag(string(info.Difficulty)), reset,
 			)
-			totalShown++
-			_ = i
 		}
 		fmt.Println()
 	}

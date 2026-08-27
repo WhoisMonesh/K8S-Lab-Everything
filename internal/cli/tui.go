@@ -68,20 +68,20 @@ var (
 )
 
 type labItem struct {
-	lab      labs.Lab
-	info     labs.Info
+	lab       labs.Lab
+	info      labs.Info
 	completed bool
 }
 
 type labSelectorModel struct {
-	labs        []labItem
-	cursor      int
-	filtered    []labItem
-	filter      string
-	selected    int
-	quitting    bool
-	width       int
-	height      int
+	labs     []labItem
+	cursor   int
+	filtered []labItem
+	filter   string
+	selected int
+	quitting bool
+	width    int
+	height   int
 }
 
 func newLabSelectorModel(labList []labs.Lab, showProgress bool) labSelectorModel {
@@ -166,12 +166,29 @@ func (m labSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.filter = ""
 				m.applyFilter()
 			}
+
+		default:
+			if len(msg.String()) == 1 && msg.String() >= "a" && msg.String() <= "z" {
+				m.filter += msg.String()
+				m.applyFilter()
+			}
+			if len(msg.String()) == 1 && msg.String() >= "A" && msg.String() <= "Z" {
+				m.filter += strings.ToLower(msg.String())
+				m.applyFilter()
+			}
+			if len(msg.String()) == 1 && msg.String() >= "0" && msg.String() <= "9" {
+				m.filter += msg.String()
+				m.applyFilter()
+			}
+			if msg.String() == "_" || msg.String() == "-" {
+				m.filter += msg.String()
+				m.applyFilter()
+			}
 		}
 
 	case tea.MouseMsg:
 		if msg.Type == tea.MouseLeft {
-			// Calculate which item was clicked based on row
-			clickRow := msg.Y - 8 // Offset for header
+			clickRow := msg.Y - 7
 			if clickRow >= 0 && clickRow < len(m.filtered) {
 				m.cursor = clickRow
 				m.selected = m.cursor
@@ -235,22 +252,18 @@ func (m labSelectorModel) View() string {
 
 	var b strings.Builder
 
-	// Header
 	b.WriteString("\n")
-	b.WriteString(titleStyle.Render("  K8S-Lab-Everything"))
+	b.WriteString(titleStyle.Render("  K8S-Lab-Everything — Pick a Lab"))
 	b.WriteString("\n")
-	b.WriteString(subtitleStyle.Render("  Select a lab to practice with"))
+	b.WriteString(subtitleStyle.Render("  Use arrow keys or mouse to navigate, Enter to select"))
 	b.WriteString("\n")
 
-	// Filter input
 	if m.filter != "" {
-		b.WriteString(fmt.Sprintf("  Filter: %s\n\n", m.filter))
+		b.WriteString(fmt.Sprintf("  %s🔍 Filter:%s %s%s%s\n", catStyle.Render(""), "", lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render(""), m.filter, ""))
 	} else {
 		b.WriteString("\n")
 	}
 
-	// Lab list
-	visibleCount := 0
 	for i, item := range m.filtered {
 		isSelected := i == m.cursor
 
@@ -271,23 +284,21 @@ func (m labSelectorModel) View() string {
 			id = id[:25] + "..."
 		}
 
+		cat := lipgloss.NewStyle().Foreground(lipgloss.Color("99")).Render(string(item.info.Category))
+
 		if isSelected {
-			row := selectedItemBarStyle.Render(fmt.Sprintf(" ▸ %-28s  %-38s  %s", id, title, diffTag))
+			row := selectedItemBarStyle.Render(fmt.Sprintf(" ▸ %-24s  %-34s  %-12s  %s", id, title, cat, diffTag))
 			b.WriteString(fmt.Sprintf("  %s%s\n", check, row))
 		} else {
-			row := normalItemStyle.Render(fmt.Sprintf("  %-28s  %-38s  %s", id, title, diffTag))
+			row := normalItemStyle.Render(fmt.Sprintf("   %-24s  %-34s  %-12s  %s", id, title, cat, diffTag))
 			b.WriteString(fmt.Sprintf("  %s%s\n", check, row))
 		}
-		visibleCount++
-		_ = visibleCount
 	}
 
-	// Footer
 	b.WriteString("\n")
-	b.WriteString(separatorStyle.Render(strings.Repeat("─", 70)))
+	b.WriteString(separatorStyle.Render(strings.Repeat("─", 80)))
 	b.WriteString("\n")
 
-	// Stats
 	easy, medium, hard := 0, 0, 0
 	for _, item := range m.filtered {
 		switch strings.ToLower(string(item.info.Difficulty)) {
@@ -299,20 +310,15 @@ func (m labSelectorModel) View() string {
 			hard++
 		}
 	}
-	b.WriteString(fmt.Sprintf("  %s%d lab(s)%s  %s  %s  %s",
-		lipgloss.NewStyle().Bold(true).Render(""),
-		len(m.filtered),
-		"",
+	b.WriteString(fmt.Sprintf("  %s  %s  %s",
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("255")).Render(fmt.Sprintf("%d labs", len(m.filtered))),
 		diffEasyStyle.Render(fmt.Sprintf("● %d easy", easy)),
 		diffMediumStyle.Render(fmt.Sprintf("● %d medium", medium)),
-		diffHardStyle.Render(fmt.Sprintf("● %d hard", hard)),
 	))
-
+	b.WriteString(fmt.Sprintf("  %s", diffHardStyle.Render(fmt.Sprintf("● %d hard", hard))))
 	b.WriteString("\n")
 
-	// Help
-	b.WriteString(helpStyle.Render("  ↑↓ navigate  ↵ select  / filter  q quit"))
-
+	b.WriteString(helpStyle.Render("  ↑↓ navigate  ↵ select  / filter  scroll mouse  click select  q quit"))
 	b.WriteString("\n")
 
 	return b.String()
