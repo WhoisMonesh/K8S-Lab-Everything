@@ -15,11 +15,36 @@
 
 **A CLI tool that breaks Kubernetes clusters on purpose — so you can learn to fix them.**
 
-Just like the CKA exam: real `kubectl`, real problems, real solutions.
+Just like the CKA/CKAD/CKS exam: real `kubectl`, real problems, real solutions.
 
 [Quick Start](#-quick-start) • [Available Labs](#-available-labs) • [Contributing](#-contributing)
 
 </div>
+
+---
+
+## About
+
+**K8S-Lab-Everything** is an open-source CLI tool built to help Kubernetes practitioners prepare for CKA, CKAD, and CKS certifications through hands-on practice. It creates local Kubernetes clusters and deliberately breaks them so you can learn to troubleshoot and fix real-world issues.
+
+| | |
+|---|---|
+| **Author** | [Monesh Ram](https://github.com/WhoisMonesh) |
+| **GitHub** | [github.com/WhoisMonesh/K8S-Lab-Everything](https://github.com/WhoisMonesh/K8S-Lab-Everything) |
+| **LinkedIn** | [linkedin.com/in/whoismonesh](https://www.linkedin.com/in/whoismonesh/) |
+| **Certifications** | CKA, CKAD, CKS |
+| **Labs** | 378 hands-on scenarios |
+| **Platforms** | macOS, Linux, Windows |
+| **License** | MIT |
+
+### Why K8S-Lab-Everything?
+
+- **378 Real Labs** — Covers CKA, CKAD, and CKS exam domains with realistic failure scenarios
+- **Zero Cloud Costs** — Practice entirely on your local machine using KinD
+- **Exam Simulation** — Timed mode with random labs matching real exam structure
+- **Instant Verification** — Know immediately if your fix is correct
+- **Cross-Platform** — Works on macOS (Intel & Apple Silicon), Linux, and Windows
+- **OTA Auto-Update** — Always get the latest labs and features
 
 ---
 
@@ -92,17 +117,23 @@ Checks for new labs on every run. Run `cka-lab-runner update` to install.
 ### Instant Verification
 Know immediately if your fix is correct — no guessing.
 
+### Exam Simulation
+Timed exam mode with random labs matching real CKA/CKAD/CKS structure.
+
 </td>
 <td width="50%">
 
 ### Cross-Platform
 Works on macOS (Intel & Apple Silicon), Linux (x86_64 & ARM64), and Windows.
 
-### 143 Realistic Labs
-Covers all CKA exam domains with increasing difficulty levels.
+### 378 Realistic Labs
+Covers all CKA, CKAD, and CKS exam domains with increasing difficulty.
 
-### Extensible
-Add your own labs in Go — just implement the `Lab` interface.
+### Progress Tracking
+Track completions, streaks, and ratings. Export as markdown or certificate.
+
+### Shell Completion
+Bash, Zsh, Fish, and PowerShell autocompletion for all commands.
 
 </td>
 </tr>
@@ -174,58 +205,70 @@ $ cka-lab-runner down
 # The binary checks for updates automatically
 $ cka-lab-runner lab list
 
-▸  New version available: 2.2.0 (current: 1.0.0)
+▸  New version available: 3.2.0 (current: 1.0.0)
    Run 'cka-lab-runner update' to install
 
 # Install update (requires sudo for /usr/local/bin)
 $ sudo cka-lab-runner update
-Checking for latest release...
-New version available: 2.2.0 (current: 1.0.0)
-Downloading...
-Updated successfully! (1.0.0 -> 2.2.0)
 ```
 
 ## Commands
 
-<details>
-<summary><b>Cluster Management</b></summary>
+**Cluster Management**
 
 | Command | Description |
 |---------|-------------|
 | `cka-lab-runner init` | Create config file |
 | `cka-lab-runner up` | Create local cluster |
 | `cka-lab-runner up --recreate` | Recreate existing cluster |
+| `cka-lab-runner up --version v1.35.0` | Select KinD node version |
 | `cka-lab-runner down` | Delete cluster |
 
-</details>
-
-<details>
-<summary><b>Lab Operations</b></summary>
+**Lab Operations**
 
 | Command | Description |
 |---------|-------------|
 | `cka-lab-runner lab list` | List all labs |
-| `cka-lab-runner lab list --category networking` | Filter by category |
-| `cka-lab-runner lab list --difficulty easy` | Filter by difficulty |
+| `cka-lab-runner lab list --cert CKA` | Filter by certification |
+| `cka-lab-runner lab list --resource pod` | Filter by K8s resource |
+| `cka-lab-runner lab list --search pod` | Search labs |
 | `cka-lab-runner lab random` | Random lab |
-| `cka-lab-runner lab random --category storage` | Random in category |
 | `cka-lab-runner lab run <lab-id>` | Run a lab |
 | `cka-lab-runner lab verify <lab-id>` | Verify your fix |
 | `cka-lab-runner lab solution <lab-id>` | Show solution |
+| `cka-lab-runner lab hint <lab-id>` | Get hint |
+| `cka-lab-runner lab hint <lab-id> --level 3` | Specific hint |
 
-</details>
+**Exam & Progress**
 
-<details>
-<summary><b>System</b></summary>
+| Command | Description |
+|---------|-------------|
+| `cka-lab-runner lab exam --cert CKA` | Start exam simulation |
+| `cka-lab-runner lab streak` | View practice streak |
+| `cka-lab-runner lab rate <id> <1-5>` | Rate a lab |
+| `cka-lab-runner lab status` | View progress |
+| `cka-lab-runner lab stats` | View statistics |
+| `cka-lab-runner lab export` | Export as JSON |
+| `cka-lab-runner lab export --format markdown` | Export as markdown |
+| `cka-lab-runner lab export --format certificate` | Export certificate |
+
+**System**
 
 | Command | Description |
 |---------|-------------|
 | `cka-lab-runner version` | Show current version |
 | `cka-lab-runner update` | Update to latest release |
-
-</details>
+| `cka-lab-runner completion bash` | Generate shell completion |
 
 ## Available Labs
+
+### By Certification
+
+| Certification | Labs | Domains |
+|--------------|------|---------|
+| **CKA** | ~235 | Cluster Architecture, Workloads, Networking, Storage, Troubleshooting |
+| **CKAD** | ~77 | App Design, Deployment, Observability, Config/Security, Networking |
+| **CKS** | ~66 | Cluster Setup, Hardening, System Hardening, Microservices, Supply Chain |
 
 ### By Difficulty
 
@@ -235,158 +278,82 @@ Updated successfully! (1.0.0 -> 2.2.0)
 | **Medium** (82) | Real scenarios, 15-25 min | CKA exam prep |
 | **Hard** (26) | Complex problems, 25-30 min | Advanced troubleshooting |
 
-### Control Plane (18 labs)
+<details>
+<summary>View all labs by category (click to expand)</summary>
 
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `api_server_audit_log_disabled` | API Server Audit Logging Disabled | Hard | 25min |
-| `cluster_upgrade` | Cluster upgrade simulation | Hard | 30min |
-| `controller_manager_wrong_config` | Controller Manager Misconfiguration | Hard | 25min |
-| `etcd_backup_restore` | etcd backup and restore | Hard | 30min |
-| `etcd_wrong_ip` | Fix API server → etcd communication | Medium | 25min |
-| `kubeadm_cert_renewal` | Kubeadm Certificate Expired | Hard | 30min |
-| `kubelet_stopped` | Fix stopped kubelet service | Medium | 20min |
-| `missing_crd_dependency` | Custom Resource fails — missing CRD | Hard | 20min |
-| `namespace_finalizer_stuck` | Namespace stuck in Terminating | Hard | 20min |
-| `node_cordoned` | Node cordoned — pods cannot schedule | Easy | 10min |
-| `node_not_ready` | Fix kubelet on NotReady node | Medium | 20min |
-| `node_pressure` | Clear disk/memory pressure on node | Hard | 25min |
-| `node_registration_error` | Node Registration Error | Medium | 20min |
-| `scheduler_not_running` | Debug broken kube-scheduler | Medium | 20min |
-| `stray_static_pod` | Stray static pod consuming resources | Medium | 15min |
+### Control Plane (18 labs)
+| ID | Lab | Difficulty |
+|----|-----|-----------|
+| `api_server_audit_log_disabled` | API Server Audit Logging Disabled | Hard |
+| `cluster_upgrade` | Cluster upgrade simulation | Hard |
+| `controller_manager_wrong_config` | Controller Manager Misconfiguration | Hard |
+| `etcd_backup_restore` | etcd backup and restore | Hard |
+| `etcd_wrong_ip` | Fix API server → etcd communication | Medium |
+| `kubeadm_cert_renewal` | Kubeadm Certificate Expired | Hard |
+| `kubelet_stopped` | Fix stopped kubelet service | Medium |
+| `missing_crd_dependency` | Custom Resource fails — missing CRD | Hard |
+| `namespace_finalizer_stuck` | Namespace stuck in Terminating | Hard |
+| `node_cordoned` | Node cordoned — pods cannot schedule | Easy |
+| `node_not_ready` | Fix kubelet on NotReady node | Medium |
+| `node_pressure` | Clear disk/memory pressure on node | Hard |
+| `node_registration_error` | Node Registration Error | Medium |
+| `scheduler_not_running` | Debug broken kube-scheduler | Medium |
+| `stray_static_pod` | Stray static pod consuming resources | Medium |
 
 ### Networking (17 labs)
-
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `external_ip_not_assigned` | External IP Not Assigned | Medium | 15min |
-| `ingress_broken` | Fix Ingress configuration | Medium | 20min |
-| `ingress_tls_missing` | Ingress TLS Secret Missing | Medium | 20min |
-| `loadbalancer_wrong_protocol` | LoadBalancer Wrong Protocol | Medium | 15min |
-| `multi_container_pod` | Fix multi-container pod communication | Medium | 15min |
-| `network_policy_audit_mode` | NetworkPolicy in Audit Mode | Medium | 20min |
-| `network_policy_blocking` | Fix NetworkPolicy blocking traffic | Medium | 20min |
-| `network_policy_egress_blocked` | NetworkPolicy Blocks Egress | Medium | 20min |
-| `networkpolicy_egress_dns_blocked` | NetworkPolicy blocks DNS resolution | Hard | 20min |
-| `pod_network_connectivity` | Pod-to-Pod Network Connectivity | Hard | 25min |
-| `service_clusterip_not_working` | ClusterIP Service Not Responding | Medium | 15min |
-| `service_loadbalancer_pending` | LoadBalancer Service stuck Pending | Easy | 10min |
-| `service_no_endpoints` | Fix Service with no endpoints | Medium | 20min |
-| `service_wrong_selector` | Fix Service selector not matching pods | Easy | 10min |
-| `service_wrong_targetport` | Service points to wrong targetPort | Easy | 10min |
-
-### Scheduling (17 labs)
-
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `cm_immutable_migration` | Immutable ConfigMap migration | Hard | 20min |
-| `limitrange_exceeded` | Pod rejected by LimitRange | Medium | 15min |
-| `node_affinity_mismatch` | Fix broken node affinity selectors | Hard | 25min |
-| `nodeselector_label_missing` | Pod Pending - Missing Node Label | Easy | 10min |
-| `nodeselector_no_match` | Pod Pending — no node matches NodeSelector | Easy | 10min |
-| `pod_antiaffinity_conflict` | Deployment can't schedule due to anti-affinity | Hard | 20min |
-| `pod_preemption_occurred` | Low Priority Pod Preempted | Medium | 15min |
-| `pod_scheduling_failed` | Fix pod nodeSelector mismatch | Easy | 10min |
-| `pod_topology_spread_violation` | Pod Topology Spread Constraint Violation | Hard | 20min |
-| `priorityclass_missing` | Pod uses nonexistent PriorityClass | Medium | 15min |
-| `resource_request_too_high` | Pod Pending - Resource Request Too High | Easy | 10min |
-| `taint_no_toleration` | Schedule pods onto tainted nodes | Medium | 20min |
-
-### DNS (7 labs)
-
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `coredns_broken_config` | Fix CoreDNS configuration | Easy | 15min |
-| `dns_policy_wrong` | Pod cannot resolve cluster DNS | Medium | 15min |
-| `dns_timeout_issues` | DNS Resolution Timeout | Medium | 20min |
-| `external_dns_not_working` | External DNS Resolution Failing | Medium | 20min |
-| `headless_service_dns` | Headless Service DNS Not Working | Medium | 15min |
-| `hostalias_wrong_ip` | Pod /etc/hosts points to wrong IP | Medium | 15min |
-
-### Storage (12 labs)
-
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `csi_driver_not_installed` | CSI Driver Not Installed | Hard | 25min |
-| `persistent_volume_reclaim_policy` | PV Reclaim Policy Prevents PVC Delete | Medium | 15min |
-| `pod_host_path_wrong` | Fix wrong hostPath mount | Medium | 15min |
-| `pv_not_binding` | Fix PersistentVolume not binding to PVC | Medium | 20min |
-| `pvc_pending` | Debug PVC stuck in Pending | Medium | 20min |
-| `storageclass_wrong_provisioner` | StorageClass Wrong Provisioner | Medium | 20min |
-| `volume_mount_conflict` | Volume Mount Path Conflict | Medium | 15min |
-| `volume_readonly_write_fail` | Pod CrashLoop — writing to read-only volume | Easy | 10min |
-| `volume_snapshot_missing` | Volume Snapshot Not Found | Medium | 20min |
-| `volume_subpath_missing` | Pod CrashLoop — wrong volume subPath | Medium | 15min |
-
-### Security (12 labs)
-
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `admission_controller_blocked` | Admission Controller Blocking Pods | Hard | 20min |
-| `cert_expiration` | Check certificate expiration | Hard | 25min |
-| `pod_security_context` | Fix pod securityContext misconfiguration | Medium | 15min |
-| `pod_security_policy_violation` | Pod Security Policy Violation | Medium | 15min |
-| `runasnonroot_rejected` | Pod rejected — runAsNonRoot violation | Medium | 15min |
-| `seccomp_invalid_profile` | Pod rejected — invalid seccomp profile | Hard | 20min |
-| `secret_encryption_disabled` | Secret Encryption at Rest Disabled | Hard | 25min |
-| `secret_env_broken` | Fix app failing due to bad Secret data | Easy | 15min |
-| `secret_missing` | Create missing Secret for pod | Easy | 10min |
-| `service_account_token_expired` | Service Account Token Expired | Medium | 15min |
-
-### RBAC (6 labs)
-
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `cluster_role_binding_wrong` | ClusterRoleBinding References Wrong Role | Medium | 15min |
-| `impersonation_header` | Impersonation Header Denied | Hard | 20min |
-| `rbac_permission_denied` | Fix missing Role permissions | Medium | 20min |
-| `rolebinding_wrong_role` | RoleBinding references missing Role | Medium | 15min |
-| `service_account_missing_permissions` | Service Account Missing Permissions | Medium | 15min |
+| ID | Lab | Difficulty |
+|----|-----|-----------|
+| `external_ip_not_assigned` | External IP Not Assigned | Medium |
+| `ingress_broken` | Fix Ingress configuration | Medium |
+| `ingress_tls_missing` | Ingress TLS Secret Missing | Medium |
+| `loadbalancer_wrong_protocol` | LoadBalancer Wrong Protocol | Medium |
+| `multi_container_pod` | Fix multi-container pod communication | Medium |
+| `network_policy_audit_mode` | NetworkPolicy in Audit Mode | Medium |
+| `network_policy_blocking` | Fix NetworkPolicy blocking traffic | Medium |
+| `network_policy_egress_blocked` | NetworkPolicy Blocks Egress | Medium |
+| `networkpolicy_egress_dns_blocked` | NetworkPolicy blocks DNS resolution | Hard |
+| `pod_network_connectivity` | Pod-to-Pod Network Connectivity | Hard |
+| `service_clusterip_not_working` | ClusterIP Service Not Responding | Medium |
+| `service_loadbalancer_pending` | LoadBalancer Service stuck Pending | Easy |
+| `service_no_endpoints` | Fix Service with no endpoints | Medium |
+| `service_wrong_selector` | Fix Service selector not matching pods | Easy |
+| `service_wrong_targetport` | Service points to wrong targetPort | Easy |
 
 ### Workloads (54 labs)
+| ID | Lab | Difficulty |
+|----|-----|-----------|
+| `pod_crashloop` | Debug CrashLoopBackOff | Easy |
+| `image_pull_backoff` | Fix image name typo | Easy |
+| `deployment_replicas_mismatch` | Fix readiness probe for full replicas | Medium |
+| `deployment_rolling_update_stuck` | Fix stuck rolling update | Medium |
+| `hpa_not_working` | Fix HPA target reference | Medium |
+| `oomkilled_limits` | Fix pods OOMKilled by low memory limits | Easy |
+| `liveness_probe_wrong` | Fix wrong liveness probe port | Medium |
+| `readiness_probe_wrong` | Fix wrong readiness probe path | Medium |
+| `statefulset_broken` | Fix StatefulSet configuration | Medium |
+| `cronjob_failed` | Fix broken CronJob image | Medium |
+| ... and 44 more | | |
 
-| ID | Lab | Difficulty | Time |
-|----|-----|-----------|------|
-| `bad_image_undo` | Roll back a bad image update | Medium | 15min |
-| `configmap_env_from` | ConfigMap envFrom Reference Broken | Easy | 10min |
-| `configmap_wrong_key` | Fix ConfigMap key reference mismatch | Easy | 10min |
-| `container_command_wrong` | Fix container command causing CrashLoop | Easy | 10min |
-| `container_image_tag_wrong` | Fix non-existent image tag | Easy | 10min |
-| `cronjob_failed` | Fix broken CronJob image | Medium | 20min |
-| `daemonset_not_scheduled` | Fix DaemonSet scheduling | Medium | 20min |
-| `daemonset_wrong_node_selector` | Fix DaemonSet nodeSelector | Medium | 15min |
-| `deployment_progress_deadline` | Deployment Progress Deadline Exceeded | Medium | 20min |
-| `deployment_replicas_mismatch` | Fix readiness probe for full replicas | Medium | 20min |
-| `deployment_rolling_update_stuck` | Fix stuck rolling update | Medium | 20min |
-| `deployment_wrong_strategy` | Change Recreate to RollingUpdate | Medium | 15min |
-| `downward_api_missing` | DownwardAPI Volume Missing | Medium | 15min |
-| `env_var_missing` | Add missing environment variable | Easy | 10min |
-| `ephemeral_container` | Debug Pod with Ephemeral Container | Medium | 20min |
-| `hpa_not_working` | Fix HPA target reference | Medium | 20min |
-| `image_pull_backoff` | Fix image name typo | Easy | 10min |
-| `image_pull_backoff_name` | Fix wrong registry image reference | Easy | 10min |
-| `init_container_fail` | Debug failed init container | Medium | 20min |
-| `job_deadline_exceeded` | Job killed by activeDeadlineSeconds | Medium | 15min |
-| `liveness_probe_flap` | Fix misconfigured liveness probes | Medium | 20min |
-| `liveness_probe_wrong` | Fix wrong liveness probe port | Medium | 15min |
-| `oomkilled_limits` | Fix pods OOMKilled by low memory limits | Easy | 15min |
-| `paused_rollout_resume` | Deployment paused mid-rollout | Easy | 10min |
-| `pod_crashloop` | Debug CrashLoopBackOff | Easy | 15min |
-| `pod_missing_configmap` | Create missing ConfigMap mount | Easy | 10min |
-| `pod_oomkilled_memory` | Increase memory limits for Redis | Easy | 10min |
-| `pod_selector_no_match` | Deployment Selector Doesn't Match Labels | Medium | 15min |
-| `pod_stuck_in_init` | Fix failing init container | Medium | 15min |
-| `pod_wrong_env` | Fix wrong environment variable value | Easy | 10min |
-| `prestop_hook_wrong` | PreStop Hook Causing Pod Termination Issues | Medium | 15min |
-| `readiness_probe_wrong` | Fix wrong readiness probe path | Medium | 15min |
-| `resource_quota_block` | Fix pods blocked by ResourceQuota | Medium | 20min |
-| `resource_quota_exceeded` | Clean up or increase ResourceQuota | Medium | 20min |
-| `rollback_revision_wrong` | Deployment Rollback to Wrong Revision | Medium | 15min |
-| `sidecar_injector` | Sidecar Injection Not Working | Medium | 20min |
-| `slow_pod_termination` | Pod stuck terminating | Medium | 15min |
-| `startup_probe_missing` | Liveness probe kills slow-starting app | Medium | 20min |
-| `statefulset_broken` | Fix StatefulSet configuration | Medium | 25min |
-| `statefulset_headless_missing` | StatefulSet without headless Service | Medium | 20min |
+### Storage (12 labs)
+| ID | Lab | Difficulty |
+|----|-----|-----------|
+| `pvc_pending` | Debug PVC stuck in Pending | Medium |
+| `pv_not_binding` | Fix PersistentVolume not binding to PVC | Medium |
+| `storageclass_wrong_provisioner` | StorageClass Wrong Provisioner | Medium |
+| `volume_mount_conflict` | Volume Mount Path Conflict | Medium |
+| `csi_driver_not_installed` | CSI Driver Not Installed | Hard |
+| ... and 7 more | | |
+
+### Security (12 labs)
+| ID | Lab | Difficulty |
+|----|-----|-----------|
+| `secret_missing` | Create missing Secret for pod | Easy |
+| `pod_security_context` | Fix pod securityContext misconfiguration | Medium |
+| `rbac_permission_denied` | Fix missing Role permissions | Medium |
+| `cert_expiration` | Check certificate expiration | Hard |
+| ... and 8 more | | |
+
+</details>
 
 ## Configuration
 
@@ -395,7 +362,7 @@ Updated successfully! (1.0.0 -> 2.2.0)
 cluster:
   provider: kind      # kind | k3d | minikube (auto-detected)
   name: cka-lab
-  k8sVersion: v1.30.0
+  k8sVersion: v1.35.0
 
 labs:
   defaultNamespace: lab
@@ -487,10 +454,15 @@ make clean         # Remove build artifacts
 ```
 ├── cmd/cka-lab-runner/      CLI entry point
 ├── internal/
-│   ├── cli/                 Terminal output formatting
+│   ├── cli/                 Terminal output formatting, themes, TUI
+│   │   ├── printer.go       Colored output, banners, lab details
+│   │   ├── tui.go           Interactive Bubble Tea lab selector
+│   │   ├── theme.go         Dark/light theme support
+│   │   ├── exam.go          Exam simulation mode
+│   │   └── completion.go    Shell completion generation
 │   ├── cluster/             Cluster providers (kind/k3d/minikube)
 │   ├── config/              Configuration management
-│   ├── labs/                All 143 lab implementations
+│   ├── labs/                All 378 lab implementations
 │   └── update/              OTA auto-update system
 ├── scripts/
 │   ├── setup.sh             macOS/Linux setup
@@ -520,9 +492,26 @@ Contributions welcome! Add new labs, fix bugs, or improve docs.
 4. Run tests (`make test`)
 5. Submit a PR
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and lab ideas.
+
 ## Credits
 
-Based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner). This fork adds 143+ new labs, cross-platform support, OTA auto-update, and a modern CLI interface.
+Originally based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner).
+
+**K8S-Lab-Everything** extends it with:
+- 378+ hands-on labs covering CKA, CKAD, and CKS
+- Cross-platform support (macOS, Linux, Windows)
+- Interactive TUI lab picker with search and filtering
+- OTA auto-update system
+- Exam simulation mode
+- Progress tracking with streaks and ratings
+- Shell completion for bash/zsh/fish/powershell
+- Dark/light theme support
+- Markdown and certificate export
+
+## Author
+
+**Monesh Ram** — [GitHub](https://github.com/WhoisMonesh) • [LinkedIn](https://www.linkedin.com/in/whoismonesh/)
 
 ## License
 
