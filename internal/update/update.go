@@ -1,0 +1,307 @@
+package update
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"time"
+)
+
+var (
+	Version   = "dev"
+	GitCommit = "unknown"
+)
+
+const (
+	githubOwner = "WhoisMonesh"
+	githubRepo  = "K8S-Lab-Everything"
+	checkURL    = "https://api.github.com/repos/" + githubOwner + "/" + githubRepo + "/releases/latest"
+)
+
+type githubRelease struct {
+	TagName string `json:"tag_name"`
+	Assets  []struct {
+		Name               string `json:"name"`
+		BrowserDownloadURL string `json:"browser_download_url"`
+	} `json:"assets"`
+}
+
+type cacheData struct {
+	LastCheck time.Time `json:"last_check"`
+	Version   string    `json:"version"`
+}
+
+func cachePath() string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".cka-lab-runner-update-cache")
+}
+
+func isCacheValid() bool {
+	data, err := os.ReadFile(cachePath())
+	if err != nil {
+		return false
+	}
+	var c cacheData
+	if json.Unmarshal(data, &c) != nil {
+		return false
+	}
+	return time.Since(c.LastCheck) < 24*time.Hour
+}
+
+func saveCache(version string) {
+	c := cacheData{LastCheck: time.Now(), Version: version}
+	data, _ := json.Marshal(c)
+	os.WriteFile(cachePath(), data, 0644)
+}
+
+func printUpdateMessage(latest string) {
+	green := "\033[32m"
+	cyan := "\033[36m"
+	bold := "\033[1m"
+	reset := "\033[0m"
+	fmt.Println()
+	fmt.Printf("%s%s=== UPDATE AVAILABLE ===%s\n", bold, green, reset)
+	fmt.Printf("  Current version: %s%s%s\n", cyan, Version, reset)
+	fmt.Printf("  Latest version:  %s%s%s\n", green, latest, reset)
+	fmt.Println()
+	fmt.Printf("  Run %scka-lab-runner update%s to install the latest version.\n", bold, reset)
+	fmt.Println()
+}
+
+func isNewer(latest, current string) bool {
+	lParts := strings.Split(latest, ".")
+	cParts := strings.Split(current, ".")
+	for i := 0; i < len(lParts) && i < len(cParts); i++ {
+		lNum := 0
+		cNum := 0
+		fmt.Sscanf(lParts[i], "%d", &lNum)
+		fmt.Sscanf(cParts[i], "%d", &cNum)
+		if lNum > cNum {
+			return true
+		}
+		if lNum < cNum {
+			return false
+		}
+	}
+	return len(lParts) > len(cParts)
+}
+
+func fetchLatestVersion() (string, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(checkURL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("GitHub API returned %d", resp.StatusCode)
+	}
+	var release githubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return "", err
+	}
+	return strings.TrimPrefix(release.TagName, "v"), nil
+}
+
+func getDownloadURL(version string) (string, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(checkURL)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	var release githubRelease
+	if err := json.NewDecoder(resp.Body).Decode(&release); err != nil {
+		return "", err
+	}
+	ext := ""
+	if runtime.GOOS == "windows" {
+		ext = ".exe"
+	}
+	arch := "amd64"
+	if runtime.GOARCH == "arm64" {
+		arch = "arm64"
+	}
+	expectedName := fmt.Sprintf("cka-lab-runner-%s-%s%s", runtime.GOOS, arch, ext)
+	for _, asset := range release.Assets {
+		if asset.Name == expectedName {
+			return asset.BrowserDownloadURL, nil
+		}
+	}
+	return "", fmt.Errorf("no binary found for %s/%s", runtime.GOOS, arch)
+}
+
+func downloadFile(url, dest string) error {
+	client := &http.Client{Timeout: 5 * time.Minute}
+	resp, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("download failed with status %d", resp.StatusCode)
+	}
+	out, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
+
+// CheckForUpdate checks GitHub for a newer version in the background.
+func CheckForUpdate() {
+	if Version == "dev" || os.Getenv("CKA_LAB_SKIP_UPDATE_CHECK") != "" {
+		return
+	}
+	if isCacheValid() {
+		return
+	}
+	go func() {
+		latestVersion, err := fetchLatestVersion()
+		if err != nil {
+			return
+		}
+		if isNewer(latestVersion, Version) {
+			printUpdateMessage(latestVersion)
+		}
+		saveCache(latestVersion)
+	}()
+}
+
+// SelfUpdate downloads and installs the latest release binary.
+func SelfUpdate() error {
+	fmt.Println("Checking for latest release...")
+	latestVersion, err := fetchLatestVersion()
+	if err != nil {
+		return fmt.Errorf("failed to check for updates: %w", err)
+	}
+	if !isNewer(latestVersion, Version) {
+		fmt.Printf("Already on latest version (%s)\n", Version)
+		return nil
+	}
+	fmt.Printf("New version available: %s (current: %s)\n", latestVersion, Version)
+	fmt.Println("Downloading...")
+	downloadURL, err := getDownloadURL(latestVersion)
+	if err != nil {
+		return fmt.Errorf("failed to find download URL: %w", err)
+	}
+	execPath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+	execPath, err = filepath.EvalSymlinks(execPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve executable path: %w", err)
+	}
+
+	// Download to temp file
+	tmpFile := filepath.Join(os.TempDir(), "cka-lab-runner-update")
+	if err := downloadFile(downloadURL, tmpFile); err != nil {
+		os.Remove(tmpFile)
+		return fmt.Errorf("failed to download: %w", err)
+	}
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(tmpFile, 0755); err != nil {
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to set permissions: %w", err)
+		}
+	}
+
+	// Windows: can't overwrite a running .exe directly.
+	// Strategy: download as .new, rename running exe to .old, rename .new to correct name.
+	// The .old file is automatically deleted by Windows when all handles close.
+	if runtime.GOOS == "windows" {
+		newFile := execPath + ".new"
+		oldFile := execPath + ".old"
+
+		// Clean up any leftover .old from a previous update
+		os.Remove(oldFile)
+
+		// Move downloaded file to <exe>.new
+		if err := os.Rename(tmpFile, newFile); err != nil {
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to stage update: %w", err)
+		}
+
+		// Rename running exe to .old (allowed on Windows even while running)
+		if err := os.Rename(execPath, oldFile); err != nil {
+			os.Remove(newFile)
+			return fmt.Errorf("failed to move current binary: %w", err)
+		}
+
+		// Rename .new to the correct name
+		if err := os.Rename(newFile, execPath); err != nil {
+			// Try to restore
+			os.Rename(oldFile, execPath)
+			os.Remove(newFile)
+			return fmt.Errorf("failed to install update: %w", err)
+		}
+
+		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
+		fmt.Println("Restart this terminal to use the new version.")
+		return nil
+	}
+
+	// macOS and Linux: try direct rename first, then fall back to elevated permissions.
+	if err := os.Rename(tmpFile, execPath); err == nil {
+		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
+		return nil
+	}
+
+	// Need sudo permissions - ask password in terminal (no GUI dialog)
+	fmt.Println("Need admin permissions to install...")
+	if runtime.GOOS == "darwin" {
+		// macOS: first rename current binary to .old using sudo
+		oldFile := execPath + ".old"
+		os.Remove(oldFile)
+
+		cmd := exec.Command("sudo", "-S", "mv", execPath, oldFile)
+		cmd.Stdin = os.Stdin
+		if output, err := cmd.CombinedOutput(); err != nil {
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to move current binary: %s: %w", string(output), err)
+		}
+
+		// Move new binary into place
+		cmd = exec.Command("sudo", "-S", "mv", tmpFile, execPath)
+		cmd.Stdin = os.Stdin
+		if output, err := cmd.CombinedOutput(); err != nil {
+			// Restore on failure
+			exec.Command("sudo", "-S", "mv", oldFile, execPath).Run()
+			os.Remove(tmpFile)
+			return fmt.Errorf("failed to install update: %s: %w", string(output), err)
+		}
+
+		// Clean up old binary
+		exec.Command("sudo", "-S", "rm", "-f", oldFile).Run()
+
+		os.Remove(tmpFile)
+		fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
+		return nil
+	}
+
+	// Linux: use sudo -S to read password from stdin
+	cmd := exec.Command("sudo", "-S", "mv", tmpFile, execPath)
+	cmd.Stdin = os.Stdin
+	if output, err := cmd.CombinedOutput(); err != nil {
+		os.Remove(tmpFile)
+		return fmt.Errorf("failed to install update: %s: %w", string(output), err)
+	}
+
+	os.Remove(tmpFile)
+	fmt.Printf("Updated successfully! (%s -> %s)\n", Version, latestVersion)
+	return nil
+}
+
+// GetVersion returns the current version string.
+func GetVersion() string {
+	return Version
+}

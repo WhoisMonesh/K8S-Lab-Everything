@@ -1,0 +1,128 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Get git commit
+      id: commit
+      run: echo "COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Build linux/amd64
+      env:
+        GOOS: linux
+        GOARCH: amd64
+        CGO_ENABLED: '0'
+      run: |
+        go build -trimpath -ldflags="-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=${{ steps.version.outputs.VERSION }} -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=${{ steps.commit.outputs.COMMIT }}" \
+          -o cka-lab-runner-linux-amd64 ./cmd/cka-lab-runner
+
+    - name: Build linux/arm64
+      env:
+        GOOS: linux
+        GOARCH: arm64
+        CGO_ENABLED: '0'
+      run: |
+        go build -trimpath -ldflags="-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=${{ steps.version.outputs.VERSION }} -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=${{ steps.commit.outputs.COMMIT }}" \
+          -o cka-lab-runner-linux-arm64 ./cmd/cka-lab-runner
+
+    - name: Build darwin/amd64
+      env:
+        GOOS: darwin
+        GOARCH: amd64
+        CGO_ENABLED: '0'
+      run: |
+        go build -trimpath -ldflags="-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=${{ steps.version.outputs.VERSION }} -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=${{ steps.commit.outputs.COMMIT }}" \
+          -o cka-lab-runner-darwin-amd64 ./cmd/cka-lab-runner
+
+    - name: Build darwin/arm64
+      env:
+        GOOS: darwin
+        GOARCH: arm64
+        CGO_ENABLED: '0'
+      run: |
+        go build -trimpath -ldflags="-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=${{ steps.version.outputs.VERSION }} -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=${{ steps.commit.outputs.COMMIT }}" \
+          -o cka-lab-runner-darwin-arm64 ./cmd/cka-lab-runner
+
+    - name: Build windows/amd64
+      env:
+        GOOS: windows
+        GOARCH: amd64
+        CGO_ENABLED: '0'
+      run: |
+        go build -trimpath -ldflags="-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=${{ steps.version.outputs.VERSION }} -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=${{ steps.commit.outputs.COMMIT }}" \
+          -o cka-lab-runner-windows-amd64.exe ./cmd/cka-lab-runner
+
+    - name: Build windows/arm64
+      env:
+        GOOS: windows
+        GOARCH: arm64
+        CGO_ENABLED: '0'
+      run: |
+        go build -trimpath -ldflags="-s -w -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.Version=${{ steps.version.outputs.VERSION }} -X github.com/WhoisMonesh/K8S-Lab-Everything/internal/update.GitCommit=${{ steps.commit.outputs.COMMIT }}" \
+          -o cka-lab-runner-windows-arm64.exe ./cmd/cka-lab-runner
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: K8S-Lab-Everything ${{ github.ref_name }}
+        body: |
+          ## K8S-Lab-Everything ${{ github.ref_name }}
+
+          **75 CKA practice labs** with cross-platform support.
+
+          ### Install
+          ```bash
+          git clone https://github.com/WhoisMonesh/K8S-Lab-Everything.git
+          cd K8S-Lab-Everything
+          # macOS/Linux:
+          ./scripts/setup.sh
+          # Windows:
+          powershell -ExecutionPolicy Bypass -File scripts\setup.ps1
+          ```
+
+          ### Auto-Update
+          ```bash
+          cka-lab-runner update
+          ```
+
+          ### Binaries
+          | Platform | Binary |
+          |----------|--------|
+          | Linux x86_64 | `cka-lab-runner-linux-amd64` |
+          | Linux ARM64 | `cka-lab-runner-linux-arm64` |
+          | macOS Intel | `cka-lab-runner-darwin-amd64` |
+          | macOS Apple Silicon | `cka-lab-runner-darwin-arm64` |
+          | Windows | `cka-lab-runner-windows-amd64.exe` |
+        files: |
+          cka-lab-runner-linux-amd64
+          cka-lab-runner-linux-arm64
+          cka-lab-runner-darwin-amd64
+          cka-lab-runner-darwin-arm64
+          cka-lab-runner-windows-amd64.exe
+          cka-lab-runner-windows-arm64.exe
