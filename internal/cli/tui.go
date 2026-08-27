@@ -65,6 +65,22 @@ var (
 	footerStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("241")).
 			MarginTop(1)
+
+	ckaStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("39")).
+			Bold(true)
+
+	ckadStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("51")).
+			Bold(true)
+
+	cksStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("135")).
+			Bold(true)
+
+	certFilterStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("220")).
+			Bold(true)
 )
 
 type labItem struct {
@@ -74,14 +90,15 @@ type labItem struct {
 }
 
 type labSelectorModel struct {
-	labs     []labItem
-	cursor   int
-	filtered []labItem
-	filter   string
-	selected int
-	quitting bool
-	width    int
-	height   int
+	labs       []labItem
+	cursor     int
+	filtered   []labItem
+	filter     string
+	certFilter labs.Cert
+	selected   int
+	quitting   bool
+	width      int
+	height     int
 }
 
 func newLabSelectorModel(labList []labs.Lab, showProgress bool) labSelectorModel {
@@ -167,6 +184,19 @@ func (m labSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.applyFilter()
 			}
 
+		case "1":
+			m.certFilter = labs.CertCKA
+			m.applyFilter()
+		case "2":
+			m.certFilter = labs.CertCKAD
+			m.applyFilter()
+		case "3":
+			m.certFilter = labs.CertCKS
+			m.applyFilter()
+		case "0":
+			m.certFilter = labs.CertAll
+			m.applyFilter()
+
 		default:
 			if len(msg.String()) == 1 && msg.String() >= "a" && msg.String() <= "z" {
 				m.filter += msg.String()
@@ -177,8 +207,7 @@ func (m labSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.applyFilter()
 			}
 			if len(msg.String()) == 1 && msg.String() >= "0" && msg.String() <= "9" {
-				m.filter += msg.String()
-				m.applyFilter()
+				// Already handled above for 0-3
 			}
 			if msg.String() == "_" || msg.String() == "-" {
 				m.filter += msg.String()
@@ -211,11 +240,23 @@ func (m labSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *labSelectorModel) applyFilter() {
-	if m.filter == "" {
-		m.filtered = m.labs
-	} else {
+	m.filtered = m.labs
+
+	// Apply cert filter
+	if m.certFilter != labs.CertAll && m.certFilter != "" {
 		var result []labItem
-		for _, item := range m.labs {
+		for _, item := range m.filtered {
+			if labs.GetCert(item.lab) == m.certFilter {
+				result = append(result, item)
+			}
+		}
+		m.filtered = result
+	}
+
+	// Apply text filter
+	if m.filter != "" {
+		var result []labItem
+		for _, item := range m.filtered {
 			if strings.Contains(strings.ToLower(item.info.ID), strings.ToLower(m.filter)) ||
 				strings.Contains(strings.ToLower(item.info.Title), strings.ToLower(m.filter)) ||
 				strings.Contains(strings.ToLower(string(item.info.Category)), strings.ToLower(m.filter)) {
@@ -224,6 +265,7 @@ func (m *labSelectorModel) applyFilter() {
 		}
 		m.filtered = result
 	}
+
 	if m.cursor >= len(m.filtered) {
 		m.cursor = len(m.filtered) - 1
 	}
@@ -245,6 +287,32 @@ func diffStyle(d string) lipgloss.Style {
 	}
 }
 
+func certStyle(cert labs.Cert) lipgloss.Style {
+	switch cert {
+	case labs.CertCKA:
+		return ckaStyle
+	case labs.CertCKAD:
+		return ckadStyle
+	case labs.CertCKS:
+		return cksStyle
+	default:
+		return normalItemStyle
+	}
+}
+
+func certLabel(cert labs.Cert) string {
+	switch cert {
+	case labs.CertCKA:
+		return "CKA"
+	case labs.CertCKAD:
+		return "CKAD"
+	case labs.CertCKS:
+		return "CKS"
+	default:
+		return ""
+	}
+}
+
 func (m labSelectorModel) View() string {
 	if m.quitting {
 		return ""
@@ -253,12 +321,14 @@ func (m labSelectorModel) View() string {
 	var b strings.Builder
 
 	b.WriteString("\n")
-	b.WriteString(titleStyle.Render("  K8S-Lab-Everything — Pick a Lab"))
+	b.WriteString(titleStyle.Render("  K8S-Lab-Everything — CKA │ CKAD │ CKS"))
 	b.WriteString("\n")
-	b.WriteString(subtitleStyle.Render("  Use arrow keys or mouse to navigate, Enter to select"))
+	b.WriteString(subtitleStyle.Render("  ↑↓ navigate  ↵ select  / filter  1=CKA 2=CKAD 3=CKS 0=All  q quit"))
 	b.WriteString("\n")
 
-	if m.filter != "" {
+	if m.certFilter != labs.CertAll {
+		b.WriteString(fmt.Sprintf("  %sCert Filter:%s %s\n", certFilterStyle.Render(""), "", certStyle(m.certFilter).Render(string(m.certFilter))))
+	} else if m.filter != "" {
 		b.WriteString(fmt.Sprintf("  %s🔍 Filter:%s %s%s%s\n", catStyle.Render(""), "", lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render(""), m.filter, ""))
 	} else {
 		b.WriteString("\n")
@@ -285,12 +355,13 @@ func (m labSelectorModel) View() string {
 		}
 
 		cat := lipgloss.NewStyle().Foreground(lipgloss.Color("99")).Render(string(item.info.Category))
+		cert := certStyle(item.info.Cert).Render(certLabel(item.info.Cert))
 
 		if isSelected {
-			row := selectedItemBarStyle.Render(fmt.Sprintf(" ▸ %-24s  %-34s  %-12s  %s", id, title, cat, diffTag))
+			row := selectedItemBarStyle.Render(fmt.Sprintf(" ▸ %-22s  %-34s  %-10s  %-6s  %s", id, title, cat, cert, diffTag))
 			b.WriteString(fmt.Sprintf("  %s%s\n", check, row))
 		} else {
-			row := normalItemStyle.Render(fmt.Sprintf("   %-24s  %-34s  %-12s  %s", id, title, cat, diffTag))
+			row := normalItemStyle.Render(fmt.Sprintf("   %-22s  %-34s  %-10s  %-6s  %s", id, title, cat, cert, diffTag))
 			b.WriteString(fmt.Sprintf("  %s%s\n", check, row))
 		}
 	}
@@ -318,7 +389,7 @@ func (m labSelectorModel) View() string {
 	b.WriteString(fmt.Sprintf("  %s", diffHardStyle.Render(fmt.Sprintf("● %d hard", hard))))
 	b.WriteString("\n")
 
-	b.WriteString(helpStyle.Render("  ↑↓ navigate  ↵ select  / filter  scroll mouse  click select  q quit"))
+	b.WriteString(helpStyle.Render("  ↑↓ navigate  ↵ select  / filter  1=CKA 2=CKAD 3=CKS 0=All  scroll mouse  click select  q quit"))
 	b.WriteString("\n")
 
 	return b.String()

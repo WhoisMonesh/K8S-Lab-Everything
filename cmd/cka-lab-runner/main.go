@@ -40,7 +40,7 @@ func main() {
 
 var rootCmd = &cobra.Command{
 	Use:   "cka-lab-runner",
-	Short: "A CKA practice lab runner",
+	Short: "A CKA/CKAD/CKS practice lab runner",
 	Long:  ``,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if cmd.Name() == "version" || cmd.Name() == "update" || cmd.Name() == "help" {
@@ -55,6 +55,7 @@ var rootCmd = &cobra.Command{
 		fmt.Printf("    %scka-lab-runner init%s              %sCreate config file%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner up%s                %sCreate local cluster%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab list%s          %sList all labs%s\n", bold, reset, dimW, reset)
+		fmt.Printf("    %scka-lab-runner lab list --cert CKA%s  %sFilter by certification%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab pick%s          %sPick interactively%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab run <id>%s      %sStart a lab%s\n", bold, reset, dimW, reset)
 		fmt.Printf("    %scka-lab-runner lab verify <id>%s   %sCheck your fix%s\n", bold, reset, dimW, reset)
@@ -207,6 +208,7 @@ var labListCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		categoryFilter, _ := cmd.Flags().GetString("category")
 		difficultyFilter, _ := cmd.Flags().GetString("difficulty")
+		certFilter, _ := cmd.Flags().GetString("cert")
 		domainFilter, _ := cmd.Flags().GetString("domain")
 		jsonOutput, _ := cmd.Flags().GetBool("json")
 		showProgress, _ := cmd.Flags().GetBool("progress")
@@ -222,6 +224,15 @@ var labListCmd = &cobra.Command{
 			}
 			if difficultyFilter != "" && string(lab.Difficulty()) != difficultyFilter {
 				matches = false
+			}
+			if certFilter != "" {
+				cert := labs.Cert(strings.ToUpper(certFilter))
+				if cert != labs.CertCKA && cert != labs.CertCKAD && cert != labs.CertCKS {
+					return fmt.Errorf("invalid cert %q: must be CKA, CKAD, or CKS", certFilter)
+				}
+				if labs.GetCert(lab) != cert {
+					matches = false
+				}
 			}
 			if domainFilter != "" {
 				d := labs.GetDomain(lab)
@@ -248,26 +259,30 @@ var labListCmd = &cobra.Command{
 
 		if jsonOutput {
 			type labJSON struct {
-				ID         string   `json:"id"`
-				Title      string   `json:"title"`
-				Category   string   `json:"category"`
-				Difficulty string   `json:"difficulty"`
-				Estimated  int      `json:"estimated_minutes"`
-				Tags       []string `json:"tags"`
-				Domain     string   `json:"domain,omitempty"`
-				Completed  bool     `json:"completed"`
+				ID           string   `json:"id"`
+				Title        string   `json:"title"`
+				Category     string   `json:"category"`
+				Cert         string   `json:"cert"`
+				DomainWeight int      `json:"domain_weight"`
+				Difficulty   string   `json:"difficulty"`
+				Estimated    int      `json:"estimated_minutes"`
+				Tags         []string `json:"tags"`
+				Domain       string   `json:"domain,omitempty"`
+				Completed    bool     `json:"completed"`
 			}
 			var out []labJSON
 			for _, lab := range filteredLabs {
 				out = append(out, labJSON{
-					ID:         lab.ID(),
-					Title:      lab.Title(),
-					Category:   string(lab.Category()),
-					Difficulty: string(lab.Difficulty()),
-					Estimated:  lab.EstimatedTime(),
-					Tags:       lab.Tags(),
-					Domain:     labs.GetDomain(lab),
-					Completed:  progress.IsCompleted(lab.ID()),
+					ID:           lab.ID(),
+					Title:        lab.Title(),
+					Category:     string(lab.Category()),
+					Cert:         string(labs.GetCert(lab)),
+					DomainWeight: labs.GetDomainWeight(lab),
+					Difficulty:   string(lab.Difficulty()),
+					Estimated:    lab.EstimatedTime(),
+					Tags:         lab.Tags(),
+					Domain:       labs.GetDomain(lab),
+					Completed:    progress.IsCompleted(lab.ID()),
 				})
 			}
 			data, _ := json.MarshalIndent(out, "", "  ")
@@ -395,11 +410,12 @@ var labSolutionCmd = &cobra.Command{
 var labRandomCmd = &cobra.Command{
 	Use:   "random",
 	Short: "Select a random lab",
-	Long:  `Selects and runs a random lab, optionally filtered by category and difficulty.`,
+	Long:  `Selects and runs a random lab, optionally filtered by category, difficulty, and certification.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		seed, _ := cmd.Flags().GetInt64("seed")
 		categoryFilter, _ := cmd.Flags().GetString("category")
 		difficultyFilter, _ := cmd.Flags().GetString("difficulty")
+		certFilter, _ := cmd.Flags().GetString("cert")
 
 		if seed == 0 {
 			seed = time.Now().UnixNano()
@@ -415,7 +431,12 @@ var labRandomCmd = &cobra.Command{
 			difficulty = labs.Difficulty(difficultyFilter)
 		}
 
-		lab, err := labs.Random(seed, category, difficulty)
+		var cert labs.Cert
+		if certFilter != "" {
+			cert = labs.Cert(strings.ToUpper(certFilter))
+		}
+
+		lab, err := labs.Random(seed, category, difficulty, cert)
 		if err != nil {
 			return err
 		}
@@ -586,7 +607,7 @@ func runCountdown(minutes int, labID string) {
 
 func runRandomLab(cmd *cobra.Command) error {
 	seed := time.Now().UnixNano()
-	lab, err := labs.Random(seed, "", "")
+	lab, err := labs.Random(seed, "", "", labs.CertAll)
 	if err != nil {
 		return err
 	}
@@ -634,6 +655,7 @@ func init() {
 
 	labListCmd.Flags().String("category", "", "Filter by category")
 	labListCmd.Flags().String("difficulty", "", "Filter by difficulty")
+	labListCmd.Flags().String("cert", "", "Filter by certification (CKA, CKAD, CKS)")
 	labListCmd.Flags().String("domain", "", "Filter by CKA exam domain")
 	labListCmd.Flags().String("tag", "", "Filter by tag")
 	labListCmd.Flags().Bool("json", false, "Output as JSON")
@@ -647,6 +669,7 @@ func init() {
 	labRandomCmd.Flags().Int64("seed", 0, "Random seed for reproducible selection")
 	labRandomCmd.Flags().String("category", "", "Filter by category")
 	labRandomCmd.Flags().String("difficulty", "", "Filter by difficulty")
+	labRandomCmd.Flags().String("cert", "", "Filter by certification (CKA, CKAD, CKS)")
 
 	labHintCmd.Flags().Int("level", 1, "Hint level (1 = vague, 2 = moderate, 3 = specific)")
 
