@@ -1,0 +1,20 @@
+{
+  "name": "K8S Lab Everything",
+  "image": "mcr.microsoft.com/devcontainers/go:1.24",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/kubectl:1": {}
+  },
+  "postCreateCommand": "go mod download && go build -o bin/cka-lab-runner ./cmd/cka-lab-runner",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "ms-kubernetes-tools.vscode-kubernetes-tools"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "PATH": "${containerWorkspaceFolder}/bin:${containerEnv:PATH}"
+  }
+}

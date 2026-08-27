@@ -1,0 +1,21 @@
+K8S-Lab-Everything (cka-lab-runner)
+Copyright (c) 2025 cka-lab-runner contributors
+Modifications Copyright (c) 2026 WhoisMonesh
+
+This product includes software originally developed by CuriousLearner:
+https://github.com/CuriousLearner/cka-lab-runner
+
+The original work — including the project concept, CLI architecture,
+cluster provider integrations (kind/k3d/minikube), and the following 15 labs —
+was created by CuriousLearner and is used here under the MIT License:
+
+  etcd_wrong_ip, scheduler_not_running, cluster_upgrade, etcd_backup_restore,
+  kubelet_stopped, network_policy_blocking, ingress_broken, coredns_broken_config,
+  pvc_pending, rbac_permission_denied, cert_expiration, pod_crashloop,
+  image_pull_backoff, statefulset_broken, daemonset_not_scheduled
+
+Additions in this repository (8 new labs plus cross-platform build/setup
+tooling) are maintained by WhoisMonesh:
+https://github.com/WhoisMonesh/K8S-Lab-Everything
+
+Licensed under the MIT License. See the LICENSE file for full terms.
