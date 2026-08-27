@@ -161,6 +161,17 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		return
 	}
 
+	w := 82
+
+	fmt.Println()
+	fmt.Printf("  %s┌%s%s┐%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
+	title := "K8S-Lab-Everything — All Labs"
+	pad := (w - 2 - len(title)) / 2
+	leftPad := strings.Repeat(" ", pad)
+	rightPad := strings.Repeat(" ", w-2-pad-len(title))
+	fmt.Printf("  %s│%s%s%s%s%s%s%s│%s\n",
+		cyan, reset, leftPad, bold, brWhite, title, reset, rightPad, cyan)
+	fmt.Printf("  %s└%s%s┘%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
 	fmt.Println()
 
 	if showProgress {
@@ -193,8 +204,12 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 
 		color := catColor(cat)
 		icon := catIcon(cat)
-		fmt.Printf("  %s%s  %s %s%s  %s%s%d labs%s\n", color, icon, bold, strings.ToUpper(cat), reset, dimW, reset, len(catLabs), reset)
-		fmt.Printf("  %s%s\n", dim, strings.Repeat("┄", 66))
+
+		fmt.Printf("  %s┌%s%s┐%s\n", color, strings.Repeat("─", w-2), color, reset)
+		catHeader := fmt.Sprintf("%s  %s  %s", icon, strings.ToUpper(cat), fmt.Sprintf("(%d labs)", len(catLabs)))
+		fmt.Printf("  %s│%s  %s%s%-*s%s%s│%s\n",
+			color, reset, color, bold, w-6, catHeader, reset, color, reset)
+		fmt.Printf("  %s├%s%s┤%s\n", color, strings.Repeat("─", w-2), color, reset)
 
 		for _, lab := range catLabs {
 			info := labs.GetInfo(lab)
@@ -203,16 +218,20 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 				check = fmt.Sprintf("%s✔%s", brGreen, reset)
 			}
 
-			title := padRight(truncate(info.Title, 34), 36)
-			id := padRight(info.ID, 30)
+			diffBadge := diffTag(string(info.Difficulty))
 
-			fmt.Printf("  %s  %s%s%s  %s%s  %s%s%s\n",
-				check,
-				dimW, id, reset,
-				title, reset,
-				"", diffTag(string(info.Difficulty)), reset,
-			)
+			idStr := padRight(info.ID, 28)
+			titleStr := padRight(truncate(info.Title, 30), 32)
+
+			fmt.Printf("  %s│%s %s%s%s  %s%s%s  %s%s%s  %s%s│%s\n",
+				color, reset,
+				check, "", "",
+				dimW, idStr, reset,
+				brWhite, titleStr, reset,
+				diffBadge, "", reset)
 		}
+
+		fmt.Printf("  %s└%s%s┘%s\n", color, strings.Repeat("─", w-2), color, reset)
 		fmt.Println()
 	}
 
@@ -221,8 +240,8 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 		diffCounts[string(lab.Difficulty())]++
 	}
 
-	fmt.Printf("  %s%s──────────────────────────────────────────────────────%s\n", dim, white, reset)
-	fmt.Printf("  %sTotal:%s %s%d labs%s", bold, reset, brWhite, len(labList), reset)
+	fmt.Printf("  %s┌%s%s┐%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
+	fmt.Printf("  %s│%s  %sTotal:%s %s%d labs%s", cyan, reset, bold, reset, brWhite, len(labList), reset)
 	if c, ok := diffCounts["easy"]; ok {
 		fmt.Printf("  %s● %d easy%s", brGreen, c, reset)
 	}
@@ -232,6 +251,8 @@ func PrintLabListWithProgress(labList []labs.Lab, showProgress bool) {
 	if c, ok := diffCounts["hard"]; ok {
 		fmt.Printf("  %s● %d hard%s", brRed, c, reset)
 	}
+	fmt.Printf("  %s│%s\n", cyan, reset)
+	fmt.Printf("  %s└%s%s┘%s\n", cyan, strings.Repeat("─", w-2), cyan, reset)
 	fmt.Println()
 }
 
