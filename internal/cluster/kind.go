@@ -61,6 +61,7 @@ func (k *KindProvider) Up(ctx context.Context) error {
 		}
 		defer os.Remove(configPath)
 		args = append(args, "--config", configPath)
+		fmt.Printf("  Multi-node config: %d workers\n", k.workers)
 	} else if k.k8sVersion != "" {
 		// Single-node: use --image flag
 		nodeImage := k.versionToNodeImage(k.k8sVersion)
@@ -70,6 +71,8 @@ func (k *KindProvider) Up(ctx context.Context) error {
 	cmd := exec.CommandContext(ctx, "kind", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	fmt.Printf("  Running: kind %s\n", strings.Join(args, " "))
 
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("creating kind cluster: %w", err)
@@ -111,6 +114,9 @@ func (k *KindProvider) generateConfig() (string, error) {
 	}
 
 	tmpFile.Close()
+
+	fmt.Printf("  Kind config file: %s\n", tmpFile.Name())
+	fmt.Printf("  Kind config content:\n%s\n", config.String())
 	return tmpFile.Name(), nil
 }
 
