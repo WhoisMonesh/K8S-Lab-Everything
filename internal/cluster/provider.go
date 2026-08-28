@@ -29,6 +29,7 @@ type Config struct {
 	Provider          string
 	Name              string
 	KubernetesVersion string
+	Workers           int
 }
 
 // NewProvider creates a new cluster provider based on the config
@@ -46,7 +47,7 @@ func NewProvider(cfg Config) (Provider, error) {
 
 	switch providerName {
 	case "kind":
-		return NewKindProvider(cfg.Name, cfg.KubernetesVersion), nil
+		return NewKindProvider(cfg.Name, cfg.KubernetesVersion, cfg.Workers), nil
 	case "k3d":
 		return NewK3dProvider(cfg.Name, cfg.KubernetesVersion), nil
 	case "minikube":

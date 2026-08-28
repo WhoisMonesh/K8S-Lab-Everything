@@ -7,19 +7,22 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 // KindProvider implements the Provider interface for kind clusters
 type KindProvider struct {
 	name       string
 	k8sVersion string
+	workers    int
 }
 
 // NewKindProvider creates a new kind cluster provider
-func NewKindProvider(name, k8sVersion string) *KindProvider {
+func NewKindProvider(name, k8sVersion string, workers int) *KindProvider {
 	return &KindProvider{
 		name:       name,
 		k8sVersion: k8sVersion,
+		workers:    workers,
 	}
 }
 
@@ -27,6 +30,16 @@ func NewKindProvider(name, k8sVersion string) *KindProvider {
 func (k *KindProvider) Name() string {
 	return k.name
 }
+
+// kindConfig is the template for kind cluster configuration
+const kindConfigTemplate = `kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+{{- range .Workers }}
+- role: worker
+{{- end }}
+`
 
 // Up creates the kind cluster
 func (k *KindProvider) Up(ctx context.Context) error {
@@ -45,9 +58,18 @@ func (k *KindProvider) Up(ctx context.Context) error {
 	}
 
 	if k.k8sVersion != "" {
-		// Convert version to kind node image
 		nodeImage := k.versionToNodeImage(k.k8sVersion)
 		args = append(args, "--image", nodeImage)
+	}
+
+	// Generate kind config for multi-node clusters
+	if k.workers > 0 {
+		configPath, err := k.generateConfig()
+		if err != nil {
+			return fmt.Errorf("generating kind config: %w", err)
+		}
+		defer os.Remove(configPath)
+		args = append(args, "--config", configPath)
 	}
 
 	cmd := exec.CommandContext(ctx, "kind", args...)
@@ -59,6 +81,36 @@ func (k *KindProvider) Up(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// generateConfig creates a temporary kind config file for multi-node clusters
+func (k *KindProvider) generateConfig() (string, error) {
+	type configData struct {
+		Workers []int
+	}
+
+	data := configData{
+		Workers: make([]int, k.workers),
+	}
+
+	tmpl, err := template.New("kind").Parse(kindConfigTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	tmpFile, err := os.CreateTemp("", "kind-config-*.yaml")
+	if err != nil {
+		return "", err
+	}
+
+	if err := tmpl.Execute(tmpFile, data); err != nil {
+		tmpFile.Close()
+		os.Remove(tmpFile.Name())
+		return "", err
+	}
+
+	tmpFile.Close()
+	return tmpFile.Name(), nil
 }
 
 // Down deletes the kind cluster
@@ -88,8 +140,6 @@ func (k *KindProvider) Exists(ctx context.Context) (bool, error) {
 	cmd := exec.CommandContext(ctx, "kind", "get", "clusters")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		// kind get clusters can fail if Docker is not running.
-		// Check if Docker is the problem and give a clear message.
 		dockerCmd := exec.CommandContext(ctx, "docker", "info")
 		if dErr := dockerCmd.Run(); dErr != nil {
 			return false, fmt.Errorf("Docker is not running. Please start Docker Desktop and try again")
@@ -115,7 +165,6 @@ func (k *KindProvider) KubeconfigPath(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("getting kubeconfig: %w", err)
 	}
 
-	// Write kubeconfig to a temp file
 	tmpDir := os.TempDir()
 	kubeconfigPath := filepath.Join(tmpDir, fmt.Sprintf("kind-%s-kubeconfig", k.name))
 
@@ -128,7 +177,6 @@ func (k *KindProvider) KubeconfigPath(ctx context.Context) (string, error) {
 
 // versionToNodeImage converts a Kubernetes version to a kind node image
 func (k *KindProvider) versionToNodeImage(version string) string {
-	// Remove 'v' prefix if present
 	version = strings.TrimPrefix(version, "v")
 	return fmt.Sprintf("kindest/node:v%s", version)
 }

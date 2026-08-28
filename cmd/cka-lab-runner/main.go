@@ -131,6 +131,7 @@ var upCmd = &cobra.Command{
 		recreate, _ := cmd.Flags().GetBool("recreate")
 		random, _ := cmd.Flags().GetBool("random")
 		versionFlag, _ := cmd.Flags().GetString("version")
+		workers, _ := cmd.Flags().GetInt("workers")
 
 		if err := loadConfig(); err != nil {
 			return err
@@ -139,6 +140,11 @@ var upCmd = &cobra.Command{
 		// Override config version if flag is set
 		if versionFlag != "" {
 			cfg.Cluster.KubernetesVersion = versionFlag
+		}
+
+		// Override config workers if flag is set
+		if workers > 0 {
+			cfg.Cluster.Workers = workers
 		}
 
 		// Show version suggestion if no version specified
@@ -194,12 +200,20 @@ var upCmd = &cobra.Command{
 			}
 		}
 
-		cli.Info(fmt.Sprintf("Creating cluster: %s with %s", provider.Name(), cfg.Cluster.KubernetesVersion))
+		clusterInfo := fmt.Sprintf("Creating cluster: %s with %s", provider.Name(), cfg.Cluster.KubernetesVersion)
+		if cfg.Cluster.Workers > 0 {
+			clusterInfo += fmt.Sprintf(" (%d worker nodes)", cfg.Cluster.Workers)
+		}
+		cli.Info(clusterInfo)
 		if err := provider.Up(ctx); err != nil {
 			return fmt.Errorf("creating cluster: %w", err)
 		}
 
-		cli.Success(fmt.Sprintf("Cluster created: %s (%s)", provider.Name(), cfg.Cluster.KubernetesVersion))
+		createdInfo := fmt.Sprintf("Cluster created: %s (%s)", provider.Name(), cfg.Cluster.KubernetesVersion)
+		if cfg.Cluster.Workers > 0 {
+			createdInfo += fmt.Sprintf(" [%d control-plane + %d workers]", 1, cfg.Cluster.Workers)
+		}
+		cli.Success(createdInfo)
 
 		if random {
 			return runRandomLab(nil)
@@ -891,6 +905,7 @@ func init() {
 	upCmd.Flags().Bool("recreate", false, "Recreate the cluster if it already exists")
 	upCmd.Flags().Bool("random", false, "Run a random lab after creating the cluster")
 	upCmd.Flags().String("version", "", "KinD node image version (e.g., v1.35.0, v1.34.0, v1.33.0)")
+	upCmd.Flags().Int("workers", 0, "Number of worker nodes (0 = single-node, default)")
 
 	labListCmd.Flags().String("category", "", "Filter by category")
 	labListCmd.Flags().String("difficulty", "", "Filter by difficulty")

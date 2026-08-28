@@ -119,7 +119,7 @@ func TestProviderName(t *testing.T) {
 	}{
 		{
 			name:     "kind",
-			provider: NewKindProvider("test", "v1.30.0"),
+			provider: NewKindProvider("test", "v1.30.0", 0),
 		},
 		{
 			name:     "k3d",
