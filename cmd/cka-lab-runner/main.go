@@ -979,5 +979,6 @@ func createProvider() (cluster.Provider, error) {
 		Provider:          cfg.Cluster.Provider,
 		Name:              cfg.Cluster.Name,
 		KubernetesVersion: cfg.Cluster.KubernetesVersion,
+		Workers:           cfg.Cluster.Workers,
 	})
 }
