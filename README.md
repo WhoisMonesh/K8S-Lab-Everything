@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
-[![Labs](https://img.shields.io/badge/Labs-348-orange)](#-available-labs)
+[![Labs](https://img.shields.io/badge/Labs-356-orange)](#-available-labs)
 
 <br>
 
@@ -32,7 +32,7 @@ Just like the CKA/CKAD/CKS exam: real `kubectl`, real problems, real solutions.
 | **Author** | [Monesh Ram](https://github.com/WhoisMonesh) |
 | **GitHub** | [github.com/WhoisMonesh/K8S-Lab-Everything](https://github.com/WhoisMonesh/K8S-Lab-Everything) |
 | **Certifications** | CKA, CKAD, CKS |
-| **Labs** | 348 hands-on scenarios |
+| **Labs** | 356 hands-on scenarios |
 | **Platforms** | macOS, Linux, Windows |
 | **License** | MIT |
 
@@ -125,7 +125,7 @@ Timed exam mode with random labs matching real CKA/CKAD/CKS structure.
 ### Cross-Platform
 Works on macOS (Intel & Apple Silicon), Linux (x86_64 & ARM64), and Windows.
 
-### 348 Realistic Labs
+### 356 Realistic Labs
 Covers all CKA, CKAD, and CKS exam domains with increasing difficulty.
 
 ### Progress Tracking
@@ -462,7 +462,7 @@ make clean         # Remove build artifacts
 │   │   └── completion.go    Shell completion generation
 │   ├── cluster/             Cluster providers (kind/k3d/minikube)
 │   ├── config/              Configuration management
-│   ├── labs/                All 348 lab implementations
+│   ├── labs/                All 356 lab implementations
 │   └── update/              OTA auto-update system
 ├── scripts/
 │   ├── setup.sh             macOS/Linux setup
@@ -499,7 +499,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and lab ideas.
 Originally based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner).
 
 **K8S-Lab-Everything** extends it with:
-- 348+ hands-on labs covering CKA, CKAD, and CKS
+- 356+ hands-on labs covering CKA, CKAD, and CKS
 - Cross-platform support (macOS, Linux, Windows)
 - Interactive TUI lab picker with search and filtering
 - OTA auto-update system
