@@ -24,6 +24,8 @@ type ClusterConfig struct {
 	Name string `yaml:"name"`
 	// KubernetesVersion specifies the Kubernetes version to use
 	KubernetesVersion string `yaml:"k8sVersion"`
+	// Workers is the number of worker nodes (0 = single-node, default)
+	Workers int `yaml:"workers,omitempty"`
 }
 
 // LabsConfig holds lab-related settings
