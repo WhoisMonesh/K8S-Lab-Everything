@@ -53,12 +53,7 @@ func (k *KindProvider) Up(ctx context.Context) error {
 		"--name", k.name,
 	}
 
-	if k.k8sVersion != "" {
-		nodeImage := k.versionToNodeImage(k.k8sVersion)
-		args = append(args, "--image", nodeImage)
-	}
-
-	// Generate kind config for multi-node clusters
+	// Generate kind config for multi-node clusters (includes image)
 	if k.workers > 0 {
 		configPath, err := k.generateConfig()
 		if err != nil {
@@ -66,6 +61,10 @@ func (k *KindProvider) Up(ctx context.Context) error {
 		}
 		defer os.Remove(configPath)
 		args = append(args, "--config", configPath)
+	} else if k.k8sVersion != "" {
+		// Single-node: use --image flag
+		nodeImage := k.versionToNodeImage(k.k8sVersion)
+		args = append(args, "--image", nodeImage)
 	}
 
 	cmd := exec.CommandContext(ctx, "kind", args...)
@@ -84,10 +83,20 @@ func (k *KindProvider) generateConfig() (string, error) {
 	var config strings.Builder
 	config.WriteString("kind: Cluster\n")
 	config.WriteString("apiVersion: kind.x-k8s.io/v1alpha4\n")
-	config.WriteString("nodes:\n")
-	config.WriteString("- role: control-plane\n")
-	for i := 0; i < k.workers; i++ {
-		config.WriteString("- role: worker\n")
+
+	if k.k8sVersion != "" {
+		nodeImage := k.versionToNodeImage(k.k8sVersion)
+		config.WriteString(fmt.Sprintf("nodes:\n"))
+		config.WriteString(fmt.Sprintf("- role: control-plane\n  image: %s\n", nodeImage))
+		for i := 0; i < k.workers; i++ {
+			config.WriteString(fmt.Sprintf("- role: worker\n  image: %s\n", nodeImage))
+		}
+	} else {
+		config.WriteString("nodes:\n")
+		config.WriteString("- role: control-plane\n")
+		for i := 0; i < k.workers; i++ {
+			config.WriteString("- role: worker\n")
+		}
 	}
 
 	tmpFile, err := os.CreateTemp("", "kind-config-*.yaml")
