@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"text/template"
 )
 
 // KindProvider implements the Provider interface for kind clusters
@@ -31,14 +30,11 @@ func (k *KindProvider) Name() string {
 	return k.name
 }
 
-// kindConfig is the template for kind cluster configuration
+// kindConfigTemplate is the template for single-node kind cluster configuration
 const kindConfigTemplate = `kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
-{{- range .Workers }}
-- role: worker
-{{- end }}
 `
 
 // Up creates the kind cluster
@@ -85,17 +81,13 @@ func (k *KindProvider) Up(ctx context.Context) error {
 
 // generateConfig creates a temporary kind config file for multi-node clusters
 func (k *KindProvider) generateConfig() (string, error) {
-	type configData struct {
-		Workers []int
-	}
-
-	data := configData{
-		Workers: make([]int, k.workers),
-	}
-
-	tmpl, err := template.New("kind").Parse(kindConfigTemplate)
-	if err != nil {
-		return "", err
+	var config strings.Builder
+	config.WriteString("kind: Cluster\n")
+	config.WriteString("apiVersion: kind.x-k8s.io/v1alpha4\n")
+	config.WriteString("nodes:\n")
+	config.WriteString("- role: control-plane\n")
+	for i := 0; i < k.workers; i++ {
+		config.WriteString("- role: worker\n")
 	}
 
 	tmpFile, err := os.CreateTemp("", "kind-config-*.yaml")
@@ -103,7 +95,7 @@ func (k *KindProvider) generateConfig() (string, error) {
 		return "", err
 	}
 
-	if err := tmpl.Execute(tmpFile, data); err != nil {
+	if _, err := tmpFile.WriteString(config.String()); err != nil {
 		tmpFile.Close()
 		os.Remove(tmpFile.Name())
 		return "", err
