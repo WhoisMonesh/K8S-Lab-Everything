@@ -62,8 +62,12 @@ spec:
 	}
 	time.Sleep(3 * time.Second)
 	// Scale old RS to 2, update new RS to 1 to simulate mid-rollout
-	kubectl(ctx, kp, "scale", "rs", "-l", "app=frontend,app.kubernetes.io/version!=1.27", "--replicas=2", "-n", "default")
-	kubectl(ctx, kp, "scale", "rs", "-l", "app=frontend,app.kubernetes.io/version=1.27", "--replicas=1", "-n", "default")
+	if _, err := kubectl(ctx, kp, "scale", "rs", "-l", "app=frontend,app.kubernetes.io/version!=1.27", "--replicas=2", "-n", "default"); err != nil {
+		return fmt.Errorf("scaling old RS: %w", err)
+	}
+	if _, err := kubectl(ctx, kp, "scale", "rs", "-l", "app=frontend,app.kubernetes.io/version=1.27", "--replicas=1", "-n", "default"); err != nil {
+		return fmt.Errorf("scaling new RS: %w", err)
+	}
 	return nil
 }
 

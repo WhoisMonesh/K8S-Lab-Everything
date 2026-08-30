@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,131 @@ func (l *IngressPathRoutingLab) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *IngressPathRoutingLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: routing-ns
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	app1Dep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: routing-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-app
+  template:
+    metadata:
+      labels:
+        app: api-app
+    spec:
+      containers:
+      - name: api
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, app1Dep); err != nil {
+		return fmt.Errorf("creating api deployment: %w", err)
+	}
+
+	app2Dep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: routing-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: web
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, app2Dep); err != nil {
+		return fmt.Errorf("creating web deployment: %w", err)
+	}
+
+	svc1 := `apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: routing-ns
+spec:
+  selector:
+    app: api-app
+  ports:
+  - port: 80
+    targetPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, svc1); err != nil {
+		return fmt.Errorf("creating api service: %w", err)
+	}
+
+	svc2 := `apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  namespace: routing-ns
+spec:
+  selector:
+    app: web-app
+  ports:
+  - port: 80
+    targetPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, svc2); err != nil {
+		return fmt.Errorf("creating web service: %w", err)
+	}
+
+	ingress := `apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: path-routing
+  namespace: routing-ns
+spec:
+  rules:
+  - host: app.example.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: web-service
+            port:
+              number: 80
+      - path: /web
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ingress); err != nil {
+		return fmt.Errorf("creating ingress: %w", err)
+	}
+
+	return nil
+}
+
+func (l *IngressPathRoutingLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

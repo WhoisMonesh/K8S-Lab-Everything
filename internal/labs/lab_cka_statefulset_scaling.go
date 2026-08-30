@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,41 @@ func (l *StatefulSetScalingLab) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *StatefulSetScalingLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: statefulset-ns
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+  namespace: statefulset-ns
+spec:
+  serviceName: nginx
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.27-alpine
+        ports:
+        - containerPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating statefulset: %w", err)
+	}
+	return nil
+}
+
+func (l *StatefulSetScalingLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

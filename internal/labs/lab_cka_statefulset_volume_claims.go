@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -47,6 +48,39 @@ func (l *StatefulSetVolumeClaimsLab) Prepare(ctx context.Context, kubeconfigPath
 }
 
 func (l *StatefulSetVolumeClaimsLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ss-ns
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: data-app
+  namespace: ss-ns
+spec:
+  serviceName: data-app
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-app
+  template:
+    metadata:
+      labels:
+        app: data-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:1.27-alpine
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating statefulset without storage: %w", err)
+	}
+	return nil
+}
+
+func (l *StatefulSetVolumeClaimsLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -2,6 +2,9 @@ package labs
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 )
 
 func init() {
@@ -24,18 +27,20 @@ func (l *CKSImageNotarySignLab) Tags() []string {
 }
 
 func (l *CKSImageNotarySignLab) Description() string {
-	return `Container images in the registry are not signed using Notary. This means
-there is no way to verify the authenticity and integrity of images.
+	return `A deployment 'app' in namespace 'trusted-app' references an image from the
+private registry 'registry.example.com' but has no imagePullSecrets configured,
+so it stays in ImagePullBackOff and cannot be trusted/pulled securely.
 
-Your task: Configure Notary for image signing and sign the 'nginx:1.19'
-image in the private registry.`
+Your task: Create a docker registry secret named 'regcred' in namespace
+'trusted-app' and attach it to the deployment via imagePullSecrets so the
+deployment can pull the private image.`
 }
 
 func (l *CKSImageNotarySignLab) Hints() []string {
 	return []string{
-		"Install Notary server and signer",
-		"Initialize a Notary collection for the image",
-		"Use notary-signer to sign the image",
+		"Create a docker-registry secret named regcred",
+		"Add the secret to the deployment's imagePullSecrets",
+		"Patch the deployment to reference the secret",
 	}
 }
 
@@ -44,18 +49,65 @@ func (l *CKSImageNotarySignLab) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *CKSImageNotarySignLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: trusted-app
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	deploy := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: trusted-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: registry.example.com/nginx:1.19
+`
+	return kubectlApply(ctx, kubeconfigPath, deploy)
+}
+
+func (l *CKSImageNotarySignLab) VerifyBroken(_ context.Context, _ string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 
 func (l *CKSImageNotarySignLab) Verify(ctx context.Context, kubeconfigPath string) error {
+	secret, err := kubectl(ctx, kubeconfigPath, "get", "secret", "regcred", "-n", "trusted-app", "-o", "name")
+	if err != nil {
+		return fmt.Errorf("secret 'regcred' not found in namespace 'trusted-app'")
+	}
+	if strings.TrimSpace(secret) == "" {
+		return fmt.Errorf("secret 'regcred' not found in namespace 'trusted-app'")
+	}
+	imgPull, err := kubectl(ctx, kubeconfigPath, "get", "deployment", "app", "-n", "trusted-app",
+		"-o", "jsonpath={.spec.template.spec.imagePullSecrets[*].name}")
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %w", err)
+	}
+	if !strings.Contains(imgPull, "regcred") {
+		return fmt.Errorf("deployment does not reference 'regcred' in imagePullSecrets")
+	}
 	return nil
 }
 
 func (l *CKSImageNotarySignLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Install Notary", Command: "docker pull registry:2 notary/notaryserver notary/notarysigner"},
-		{Description: "Initialize Notary", Command: "notary -s https://notary.example.com -d ~/.docker/trust init ./targets"},
-		{Description: "Add target", Command: "notary -s https://notary.example.com -d ~/.docker/trust add targets/nginx ./nginx.tar.gz"},
-		{Description: "Sign image", Command: "notary -s https://notary.example.com -d ~/.docker/trust publish targets/nginx"},
+		{Description: "Create the docker registry secret", Command: "kubectl create secret docker-registry regcred -n trusted-app --docker-server=registry.example.com --docker-username=<user> --docker-password=<password> --docker-email=<email>"},
+		{Description: "Attach the secret to the deployment", Command: "kubectl patch deployment app -n trusted-app -p '{\"spec\":{\"template\":{\"spec\":{\"imagePullSecrets\":[{\"name\":\"regcred\"}]}}}}'"},
+		{Description: "Verify the secret is referenced", Command: "kubectl get deployment app -n trusted-app -o jsonpath='{.spec.template.spec.imagePullSecrets[*].name}'"},
 	}
 }

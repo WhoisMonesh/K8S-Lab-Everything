@@ -2,6 +2,9 @@ package labs
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 )
 
 func init() {
@@ -24,20 +27,20 @@ func (l *CKSKernelHardeningLab) Tags() []string {
 }
 
 func (l *CKSKernelHardeningLab) Description() string {
-	return `The kernel parameters on worker nodes are not hardened. Several security-relevant
-sysctl settings are at their default (insecure) values.
+	return `A pod 'worker' in namespace 'kernel-hardening' is running with hostPID: true
+and a privileged securityContext. This exposes host namespaces and allows the
+container to access host/node resources.
 
-Your task: Configure the following kernel parameters:
-- net.ipv4.ip_forward = 1 (required for kube-proxy)
-- net.bridge.bridge-nf-call-iptables = 1 (required for CNI)
-- net.ipv4.conf.all.forwarding = 1 (for IPv4 forwarding)`
+Your task: Harden the pod so that it no longer shares the host PID namespace
+(hostPID removed/disabled) and is not privileged. For extra hardening, also
+make the root filesystem read-only.`
 }
 
 func (l *CKSKernelHardeningLab) Hints() []string {
 	return []string{
-		"Use sysctl to set kernel parameters",
-		"Create /etc/sysctl.d/ files for persistent configuration",
-		"Apply with sysctl --system",
+		"Remove hostPID: true from the pod spec",
+		"Set securityContext.privileged to false",
+		"Set readOnlyRootFilesystem to true for extra hardening",
 	}
 }
 
@@ -46,18 +49,60 @@ func (l *CKSKernelHardeningLab) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *CKSKernelHardeningLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: kernel-hardening
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	pod := `apiVersion: v1
+kind: Pod
+metadata:
+  name: worker
+  namespace: kernel-hardening
+spec:
+  hostPID: true
+  containers:
+  - name: worker
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    securityContext:
+      privileged: true
+`
+	return kubectlApply(ctx, kubeconfigPath, pod)
+}
+
+func (l *CKSKernelHardeningLab) VerifyBroken(_ context.Context, _ string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 
 func (l *CKSKernelHardeningLab) Verify(ctx context.Context, kubeconfigPath string) error {
+	hostPID, err := kubectl(ctx, kubeconfigPath, "get", "pod", "worker", "-n", "kernel-hardening",
+		"-o", "jsonpath={.spec.hostPID}")
+	if err != nil {
+		return fmt.Errorf("failed to get pod: %w", err)
+	}
+	if strings.TrimSpace(hostPID) == "true" {
+		return fmt.Errorf("hostPID is still enabled on the pod")
+	}
+	priv, err := kubectl(ctx, kubeconfigPath, "get", "pod", "worker", "-n", "kernel-hardening",
+		"-o", "jsonpath={.spec.securityContext.privileged}")
+	if err != nil {
+		return fmt.Errorf("failed to get pod: %w", err)
+	}
+	if strings.TrimSpace(priv) == "true" {
+		return fmt.Errorf("pod is still privileged")
+	}
 	return nil
 }
 
 func (l *CKSKernelHardeningLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Check current sysctl settings", Command: "sysctl net.ipv4.ip_forward net.bridge.bridge-nf-call-iptables"},
-		{Description: "Create sysctl config", Command: "sudo tee /etc/sysctl.d/99-kubelet.conf <<EOF\nnet.ipv4.ip_forward=1\nnet.bridge.bridge-nf-call-iptables=1\nnet.ipv4.conf.all.forwarding=1\nEOF"},
-		{Description: "Apply sysctl settings", Command: "sudo sysctl --system"},
-		{Description: "Verify settings", Command: "sysctl net.ipv4.ip_forward"},
+		{Description: "Delete and recreate pod without hostPID/privileged", Command: `kubectl delete pod worker -n kernel-hardening && kubectl run worker -n kernel-hardening --image=busybox:1.36 --restart=Never --overrides='{"spec":{"containers":[{"name":"worker","image":"busybox:1.36","command":["sh","-c","while true; do sleep 3600; done"],"securityContext":{"privileged":false,"readOnlyRootFilesystem":true}}]}}'`},
+		{Description: "Verify hostPID and privileged are gone", Command: "kubectl get pod worker -n kernel-hardening -o jsonpath='{.spec.hostPID} {.spec.securityContext.privileged}'"},
 	}
 }

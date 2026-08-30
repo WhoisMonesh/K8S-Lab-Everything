@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -46,6 +47,91 @@ func (l *NetworkPolicyBlockLab) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *NetworkPolicyBlockLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: blocked-ns
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	appDep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: blocked-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, appDep); err != nil {
+		return fmt.Errorf("creating app deployment: %w", err)
+	}
+
+	dbDep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: blocked-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - name: db
+        image: nginx:alpine
+        ports:
+        - containerPort: 5432
+`
+	if err := kubectlApply(ctx, kubeconfigPath, dbDep); err != nil {
+		return fmt.Errorf("creating db deployment: %w", err)
+	}
+
+	policy := `apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-db
+  namespace: blocked-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: never-match
+`
+	if err := kubectlApply(ctx, kubeconfigPath, policy); err != nil {
+		return fmt.Errorf("creating networkpolicy: %w", err)
+	}
+
+	return nil
+}
+
+func (l *NetworkPolicyBlockLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -249,6 +250,118 @@ var downCmd = &cobra.Command{
 	},
 }
 
+var statusCmd = &cobra.Command{
+	Use:   "status",
+	Short: "Show cluster and lab progress",
+	Long:  `Displays cluster health (nodes, pods) and lab completion progress.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := loadConfig(); err != nil {
+			return err
+		}
+
+		provider, err := createProvider()
+		if err != nil {
+			return fmt.Errorf("creating provider: %w", err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		exists, err := provider.Exists(ctx)
+		if err != nil {
+			return fmt.Errorf("checking if cluster: %w", err)
+		}
+
+		fmt.Println()
+		fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+		fmt.Printf("  %s║%s  %s📊 CLUSTER STATUS%s                                        %s║%s\n", bold, reset, bold+brCyan, reset, bold, reset)
+		fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+
+		if !exists {
+			fmt.Printf("  %s║%s  %sCluster:%s %-47s %s║%s\n", bold, reset, brWhite, reset, "NOT RUNNING", bold, reset)
+			fmt.Printf("  %s║%s  %sRun:%s cka-lab-runner up                                   %s║%s\n", bold, reset, brYellow, reset, bold, reset)
+		} else {
+			fmt.Printf("  %s║%s  %sCluster:%s %-47s %s║%s\n", bold, reset, brWhite, reset, fmt.Sprintf("%s (%s)", provider.Name(), cfg.Cluster.KubernetesVersion), bold, reset)
+
+			kubeconfigPath, err := provider.KubeconfigPath(ctx)
+			if err == nil {
+				// Node status
+				nodeOut, err := exec.CommandContext(ctx, "kubectl", "--kubeconfig", kubeconfigPath,
+					"get", "nodes", "-o", "wide", "--no-headers").CombinedOutput()
+				if err == nil {
+					nodes := strings.Split(strings.TrimSpace(string(nodeOut)), "\n")
+					readyCount := 0
+					for _, n := range nodes {
+						if strings.Contains(n, " Ready") {
+							readyCount++
+						}
+					}
+					fmt.Printf("  %s║%s  %sNodes:%s %-47s %s║%s\n", bold, reset, brWhite, reset, fmt.Sprintf("%d total, %d Ready", len(nodes), readyCount), bold, reset)
+
+					for _, n := range nodes {
+						fields := strings.Fields(n)
+						if len(fields) >= 5 {
+							name := fields[0]
+							status := "NotReady"
+							for _, f := range fields {
+								if f == "Ready" || strings.HasPrefix(f, "Ready,") {
+									status = "Ready"
+								}
+							}
+							role := "worker"
+							if strings.Contains(n, "control-plane") || strings.Contains(n, "master") {
+								role = "control-plane"
+							}
+							color := brGreen
+							if status != "Ready" {
+								color = brRed
+							}
+							fmt.Printf("  %s║%s    %s%-30s %s%-10s %s%-12s%s  %s║%s\n",
+								bold, reset, brWhite, name, color, status, dimW, role, reset, bold, reset)
+						}
+					}
+				}
+
+				// System pods
+				podOut, err := exec.CommandContext(ctx, "kubectl", "--kubeconfig", kubeconfigPath,
+					"get", "pods", "-n", "kube-system", "--no-headers").CombinedOutput()
+				if err == nil {
+					pods := strings.Split(strings.TrimSpace(string(podOut)), "\n")
+					runningCount := 0
+					for _, p := range pods {
+						if strings.Contains(p, " Running ") || strings.Contains(p, "Completed") {
+							runningCount++
+						}
+					}
+					fmt.Printf("  %s║%s  %sSystem Pods:%s %-40s %s║%s\n", bold, reset, brWhite, reset, fmt.Sprintf("%d total, %d running", len(pods), runningCount), bold, reset)
+				}
+			}
+		}
+
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+
+		// Lab progress
+		completed := progress.CompletedCount()
+		total := len(labs.List())
+		activeLab := progress.ActiveLab()
+		streak := progress.CurrentStreak()
+
+		fmt.Printf("  %s║%s  %s📊 LAB PROGRESS%s                                          %s║%s\n", bold, reset, bold+brGreen, reset, bold, reset)
+		fmt.Printf("  %s║%s  %sCompleted:%s %-43s %s║%s\n", bold, reset, brWhite, reset, fmt.Sprintf("%d/%d (%d%%)", completed, total, completed*100/max(total, 1)), bold, reset)
+
+		if activeLab != "" {
+			fmt.Printf("  %s║%s  %sActive:%s %-45s %s║%s\n", bold, reset, brYellow, reset, activeLab, bold, reset)
+		}
+		if streak > 0 {
+			fmt.Printf("  %s║%s  %sStreak:%s %-45s %s║%s\n", bold, reset, brGreen, reset, fmt.Sprintf("%d day(s)", streak), bold, reset)
+		}
+
+		fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+		fmt.Println()
+		return nil
+	},
+}
+
 var labCmd = &cobra.Command{
 	Use:   "lab",
 	Short: "Manage practice labs",
@@ -271,6 +384,7 @@ var labListCmd = &cobra.Command{
 		certFilter, _ := cmd.Flags().GetString("cert")
 		domainFilter, _ := cmd.Flags().GetString("domain")
 		jsonOutput, _ := cmd.Flags().GetBool("json")
+		csvOutput, _ := cmd.Flags().GetBool("csv")
 		showProgress, _ := cmd.Flags().GetBool("progress")
 		tagFilter, _ := cmd.Flags().GetString("tag")
 		searchFilter, _ := cmd.Flags().GetString("search")
@@ -298,6 +412,9 @@ var labListCmd = &cobra.Command{
 			}
 			if domainFilter != "" {
 				d := labs.GetDomain(lab)
+				if d == "" {
+					d = string(lab.Category())
+				}
 				if d != domainFilter {
 					matches = false
 				}
@@ -387,6 +504,26 @@ var labListCmd = &cobra.Command{
 			return nil
 		}
 
+		if csvOutput {
+			fmt.Println("ID,Title,Category,Cert,Difficulty,Estimated,Completed")
+			for _, lab := range filteredLabs {
+				completed := "false"
+				if progress.IsCompleted(lab.ID()) {
+					completed = "true"
+				}
+				fmt.Printf("%s,%s,%s,%s,%s,%d,%s\n",
+					lab.ID(),
+					strings.ReplaceAll(lab.Title(), ",", ";"),
+					lab.Category(),
+					labs.GetCert(lab),
+					lab.Difficulty(),
+					lab.EstimatedTime(),
+					completed,
+				)
+			}
+			return nil
+		}
+
 		cli.PrintLabListWithProgress(filteredLabs, showProgress)
 		return nil
 	},
@@ -421,12 +558,28 @@ var labRunCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
-		exists, err := provider.Exists(ctx)
-		if err != nil {
-			return fmt.Errorf("checking if cluster exists: %w", err)
+		// Provision a cluster matching the lab's declared topology (if any),
+		// creating/recreating it when the running version or worker count
+		// differs from what the lab scenario requires.
+		if spec, ok := labs.GetClusterSpec(lab); ok {
+			if err := provisionClusterForSpec(cmd, spec); err != nil {
+				return err
+			}
+		} else {
+			exists, err := provider.Exists(ctx)
+			if err != nil {
+				return fmt.Errorf("checking if cluster exists: %w", err)
+			}
+			if !exists {
+				return fmt.Errorf("cluster does not exist. Run 'cka-lab-runner up' first")
+			}
 		}
-		if !exists {
-			return fmt.Errorf("cluster does not exist. Run 'cka-lab-runner up' first")
+
+		// Provision any pending (unjoined) node containers the lab requires.
+		for _, pn := range labs.GetRequiredNodes(lab) {
+			if err := provisionPendingNode(ctx, provider.Name(), pn); err != nil {
+				return fmt.Errorf("provisioning pending node for lab: %w", err)
+			}
 		}
 
 		// Check prerequisites
@@ -453,6 +606,19 @@ var labRunCmd = &cobra.Command{
 		}
 
 		cli.Info("Preparing lab environment...")
+		if ns != "" {
+			nsYaml := fmt.Sprintf(`apiVersion: v1
+kind: Namespace
+metadata:
+  name: %s
+`, ns)
+			nsCmd := exec.CommandContext(ctx, "kubectl", "--kubeconfig", kubeconfigPath, "apply", "-f", "-")
+			nsCmd.Stdin = strings.NewReader(nsYaml)
+			if out, err := nsCmd.CombinedOutput(); err != nil {
+				cli.Warning(fmt.Sprintf("Creating namespace %s: %v (%s)", ns, err, string(out)))
+			}
+			cli.Info(fmt.Sprintf("Using namespace: %s", ns))
+		}
 		if err := lab.Prepare(ctx, kubeconfigPath); err != nil {
 			cli.Warning(fmt.Sprintf("Prepare step failed (may be optional): %v", err))
 		}
@@ -469,8 +635,11 @@ var labRunCmd = &cobra.Command{
 		cli.PrintLabDetails(lab)
 		cli.Success("Lab scenario applied successfully!")
 
+		progress.SetActiveLab(labID)
+
 		// Exam simulation mode (2 hours)
 		if timer {
+			os.Setenv("CKA_LAB_EXAM_MODE", "1")
 			timeLimit = 120 // 2 hours like real CKA/CKAD/CKS exam
 			fmt.Println()
 			fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
@@ -512,6 +681,9 @@ var labSolutionCmd = &cobra.Command{
 	Long:  `Displays step-by-step instructions for solving a lab.`,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if os.Getenv("CKA_LAB_EXAM_MODE") == "1" {
+			return fmt.Errorf("solutions are blocked during exam simulation mode")
+		}
 		labID := args[0]
 
 		lab, err := labs.Get(labID)
@@ -602,25 +774,31 @@ var labVerifyCmd = &cobra.Command{
 		}
 
 		cli.Info(fmt.Sprintf("Verifying lab: %s", lab.Title()))
+		startTime := time.Now()
 		if err := lab.Verify(ctx, kubeconfigPath); err != nil {
+			duration := time.Since(startTime)
+			progress.RecordAttempt(labID, false, duration)
 			cli.Error(fmt.Sprintf("Lab not fixed yet: %v", err))
 			cli.Info(fmt.Sprintf("Keep trying! Use 'cka-lab-runner lab hint %s' for help", labID))
 			return nil
 		}
+		duration := time.Since(startTime)
+		progress.RecordAttempt(labID, true, duration)
 
 		cli.Success(fmt.Sprintf("Congratulations! You successfully fixed: %s", lab.Title()))
 
 		if !progress.IsCompleted(labID) {
+			ns, _ := cmd.Flags().GetString("namespace")
 			progress.RecordCompletion(
 				labID,
 				lab.Title(),
 				string(lab.Category()),
 				string(lab.Difficulty()),
-				0,
+				duration,
 				lab.EstimatedTime(),
-				false, false, "",
+				false, false, ns,
 			)
-			cli.Info("Progress saved! Run 'cka-lab-runner lab status' to see your progress.")
+			cli.Info(fmt.Sprintf("Progress saved! (took %s) Run 'cka-lab-runner lab status' to see your progress.", duration.Round(time.Second)))
 		} else {
 			cli.Info("Already recorded in progress. Nice work!")
 		}
@@ -635,6 +813,9 @@ var labHintCmd = &cobra.Command{
 	Long:  `Shows a progressive hint. Use --level 1-3 for increasingly specific help.`,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if os.Getenv("CKA_LAB_EXAM_MODE") == "1" {
+			return fmt.Errorf("hints are blocked during exam simulation mode")
+		}
 		labID := args[0]
 		level, _ := cmd.Flags().GetInt("level")
 
@@ -829,8 +1010,131 @@ var labExamCmd = &cobra.Command{
 
 		cli.PrintExamBanner(cert, plan, totalMinutes)
 
-		fmt.Printf("  %s▸%s Starting first lab...\n\n", brCyan, reset)
-		return labRunCmd.RunE(cmd, []string{plan[0].Lab.ID()})
+		os.Setenv("CKA_LAB_EXAM_MODE", "1")
+		defer os.Unsetenv("CKA_LAB_EXAM_MODE")
+
+		if err := loadConfig(); err != nil {
+			return err
+		}
+
+		provider, err := createProvider()
+		if err != nil {
+			return fmt.Errorf("creating provider: %w", err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		exists, err := provider.Exists(ctx)
+		if err != nil {
+			return fmt.Errorf("checking if cluster exists: %w", err)
+		}
+		if !exists {
+			return fmt.Errorf("cluster does not exist. Run 'cka-lab-runner up' first")
+		}
+
+		kubeconfigPath, err := provider.KubeconfigPath(ctx)
+		if err != nil {
+			return fmt.Errorf("getting kubeconfig: %w", err)
+		}
+
+		passed := 0
+		failed := 0
+		totalTime := time.Duration(0)
+		examStart := time.Now()
+
+		for i, examLab := range plan {
+			fmt.Printf("\n  %s━━━ Lab %d/%d: %s (%d min) ━━━%s\n\n",
+				bold, i+1, len(plan), examLab.Lab.Title(), examLab.Minutes, reset)
+
+			labStart := time.Now()
+
+			prepareCtx, prepareCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			if err := examLab.Lab.Prepare(prepareCtx, kubeconfigPath); err != nil {
+				cli.Warning(fmt.Sprintf("Prepare failed: %v", err))
+			}
+			prepareCancel()
+
+			if err := examLab.Lab.Break(ctx, kubeconfigPath); err != nil {
+				cli.Warning(fmt.Sprintf("Break failed: %v", err))
+				failed++
+				continue
+			}
+
+			examLab.Lab.VerifyBroken(ctx, kubeconfigPath)
+
+			fmt.Printf("  %s▸%s Lab scenario applied. You have %d minutes.\n", brCyan, reset, examLab.Minutes)
+			fmt.Printf("  %s▸%s Fix the issue, then run: %scka-lab-runner lab verify %s%s\n\n",
+				brCyan, reset, brCyan, examLab.Lab.ID(), reset)
+
+			go runCountdown(examLab.Minutes, examLab.Lab.ID())
+
+			fmt.Printf("  %sPress Enter when done (or type 'skip' to skip this lab)...%s ", dimW, reset)
+			var input string
+			fmt.Scanln(&input)
+
+			labDuration := time.Since(labStart)
+			totalTime += labDuration
+
+			if strings.ToLower(strings.TrimSpace(input)) == "skip" {
+				fmt.Printf("  %s⏭ Skipped lab %s%s\n", brYellow, examLab.Lab.ID(), reset)
+				failed++
+				continue
+			}
+
+			verifyCtx, verifyCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			if err := examLab.Lab.Verify(verifyCtx, kubeconfigPath); err != nil {
+				fmt.Printf("  %s✗ FAILED:%s %v\n", brRed, reset, err)
+				failed++
+			} else {
+				fmt.Printf("  %s✓ PASSED%s (took %s)\n", brGreen, reset, labDuration.Round(time.Second))
+				passed++
+				progress.RecordCompletion(
+					examLab.Lab.ID(),
+					examLab.Lab.Title(),
+					string(examLab.Lab.Category()),
+					string(examLab.Lab.Difficulty()),
+					labDuration,
+					examLab.Minutes,
+					true, false, "",
+				)
+			}
+			verifyCancel()
+		}
+
+		totalExamTime := time.Since(examStart)
+
+		fmt.Println()
+		fmt.Printf("  %s╔══════════════════════════════════════════════════════════════╗%s\n", bold, reset)
+		fmt.Printf("  %s║%s  %s📊 EXAM RESULTS%s                                          %s║%s\n", bold, reset, bold+brCyan, reset, bold, reset)
+		fmt.Printf("  %s╠══════════════════════════════════════════════════════════════╣%s\n", bold, reset)
+		fmt.Printf("  %s║%s  %sCertification:%s %-40s %s║%s\n", bold, reset, brWhite, reset, cert, bold, reset)
+		fmt.Printf("  %s║%s  %sTotal Labs:%s   %-40d %s║%s\n", bold, reset, brWhite, reset, len(plan), bold, reset)
+		fmt.Printf("  %s║%s  %sPassed:%s      %s%-40d%s %s║%s\n", bold, reset, brWhite, reset, brGreen, passed, reset, bold, reset)
+		fmt.Printf("  %s║%s  %sFailed:%s      %s%-40d%s %s║%s\n", bold, reset, brWhite, reset, brRed, failed, reset, bold, reset)
+		score := 0
+		if len(plan) > 0 {
+			score = passed * 100 / len(plan)
+		}
+		scoreColor := brRed
+		if score >= 67 {
+			scoreColor = brGreen
+		} else if score >= 50 {
+			scoreColor = brYellow
+		}
+		fmt.Printf("  %s║%s  %sScore:%s       %s%d%%%s%-36s %s║%s\n", bold, reset, brWhite, reset, scoreColor, score, reset, "", bold, reset)
+		fmt.Printf("  %s║%s  %sTime Taken:%s  %-40s %s║%s\n", bold, reset, brWhite, reset, totalExamTime.Round(time.Second), bold, reset)
+		fmt.Printf("  %s║%s                                                           %s║%s\n", bold, reset, bold, reset)
+		fmt.Printf("  %s╚══════════════════════════════════════════════════════════════╝%s\n", bold, reset)
+		fmt.Println()
+
+		if score >= 67 {
+			cli.Success(fmt.Sprintf("Great job! You scored %d%% on the %s exam simulation!", score, cert))
+		} else {
+			cli.Warning(fmt.Sprintf("Score: %d%%. Keep practicing! You need 67%% to pass.", score))
+		}
+
+		return nil
 	},
 }
 
@@ -871,6 +1175,88 @@ func runRandomLab(cmd *cobra.Command) error {
 	return labRunCmd.RunE(rootCmd, args)
 }
 
+var labCleanCmd = &cobra.Command{
+	Use:   "clean <lab-id>",
+	Short: "Clean up lab resources",
+	Long:  `Deletes resources created by a specific lab (namespaces, deployments, etc.).`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		labID := args[0]
+		lab, err := labs.Get(labID)
+		if err != nil {
+			return err
+		}
+
+		if err := loadConfig(); err != nil {
+			return err
+		}
+
+		provider, err := createProvider()
+		if err != nil {
+			return fmt.Errorf("creating provider: %w", err)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		exists, err := provider.Exists(ctx)
+		if err != nil {
+			return fmt.Errorf("checking if cluster exists: %w", err)
+		}
+		if !exists {
+			return fmt.Errorf("cluster does not exist")
+		}
+
+		kubeconfigPath, err := provider.KubeconfigPath(ctx)
+		if err != nil {
+			return fmt.Errorf("getting kubeconfig: %w", err)
+		}
+
+		cli.Info(fmt.Sprintf("Cleaning resources for lab: %s", lab.Title()))
+
+		kubectlExec := func(args ...string) {
+			cmdArgs := append([]string{"--kubeconfig", kubeconfigPath}, args...)
+			c := exec.CommandContext(ctx, "kubectl", cmdArgs...)
+			c.Run()
+		}
+
+		kubectlExec("delete", "namespace", "lab", "--ignore-not-found")
+		kubectlExec("delete", "namespace", "monitoring", "--ignore-not-found")
+		kubectlExec("delete", "namespace", "logging", "--ignore-not-found")
+		kubectlExec("delete", "namespace", "microservices", "--ignore-not-found")
+		kubectlExec("delete", "namespace", "production", "--ignore-not-found")
+		kubectlExec("delete", "namespace", "staging", "--ignore-not-found")
+		kubectlExec("delete", "namespace", "secure-ns", "--ignore-not-found")
+
+		cli.Success(fmt.Sprintf("Cleaned up resources for lab: %s", lab.ID()))
+		return nil
+	},
+}
+
+var labResetCmd = &cobra.Command{
+	Use:   "reset [lab-id]",
+	Short: "Reset lab progress",
+	Long:  `Clears progress for a specific lab, or all labs if no ID is given.`,
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		all, _ := cmd.Flags().GetBool("all")
+
+		if len(args) == 0 && !all {
+			return fmt.Errorf("provide a lab ID or use --all to reset everything")
+		}
+
+		p := progress.Load()
+		p.ResetProgress(args, all)
+
+		if all {
+			cli.Success("All progress has been reset.")
+		} else {
+			cli.Success(fmt.Sprintf("Progress for lab '%s' has been reset.", args[0]))
+		}
+		return nil
+	},
+}
+
 var labPickCmd = &cobra.Command{
 	Use:   "pick",
 	Short: "Pick a lab interactively",
@@ -888,6 +1274,20 @@ var labPickCmd = &cobra.Command{
 		}
 
 		return labRunCmd.RunE(cmd, []string{selectedLab.ID()})
+	},
+}
+
+var labResumeCmd = &cobra.Command{
+	Use:   "resume",
+	Short: "Resume the last active lab",
+	Long:  `Re-applies the broken scenario for the last lab you were working on.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		labID := progress.ActiveLab()
+		if labID == "" {
+			return fmt.Errorf("no active lab to resume. Run 'cka-lab-runner lab run <id>' first")
+		}
+		cli.Info(fmt.Sprintf("Resuming lab: %s", labID))
+		return labRunCmd.RunE(cmd, []string{labID})
 	},
 }
 
@@ -914,6 +1314,7 @@ func init() {
 	labListCmd.Flags().String("tag", "", "Filter by tag")
 	labListCmd.Flags().String("search", "", "Search labs by ID, title, description, or tags")
 	labListCmd.Flags().Bool("json", false, "Output as JSON")
+	labListCmd.Flags().Bool("csv", false, "Output as CSV")
 	labListCmd.Flags().Bool("progress", false, "Show completion status next to each lab")
 
 	labRunCmd.Flags().Bool("timed", false, "Enable timed challenge mode")
@@ -936,6 +1337,8 @@ func init() {
 	labExamCmd.Flags().String("cert", "CKA", "Certification to simulate (CKA, CKAD, CKS)")
 	labExamCmd.Flags().Int("num-labs", 15, "Number of labs in the exam")
 
+	labResetCmd.Flags().Bool("all", false, "Reset all lab progress")
+
 	labListCmd.Flags().String("resource", "", "Filter by Kubernetes resource type (pod, service, pv, etc.)")
 
 	rootCmd.PersistentFlags().String("theme", "", "Color theme: dark, light (auto-detect if empty)")
@@ -946,23 +1349,24 @@ func init() {
 	rootCmd.AddCommand(labCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(updateCmd)
-
-	completionCmd = cli.NewCompletionCmd(rootCmd)
-	rootCmd.AddCommand(completionCmd)
+	rootCmd.AddCommand(statusCmd)
+	rootCmd.AddCommand(cli.NewCompletionCmd(rootCmd))
 
 	labCmd.AddCommand(labListCmd)
 	labCmd.AddCommand(labRunCmd)
+	labCmd.AddCommand(labVerifyCmd)
 	labCmd.AddCommand(labSolutionCmd)
 	labCmd.AddCommand(labRandomCmd)
-	labCmd.AddCommand(labVerifyCmd)
 	labCmd.AddCommand(labHintCmd)
 	labCmd.AddCommand(labStatusCmd)
-	labCmd.AddCommand(labStatsCmd)
 	labCmd.AddCommand(labExportCmd)
-	labCmd.AddCommand(labPickCmd)
 	labCmd.AddCommand(labStreakCmd)
 	labCmd.AddCommand(labRateCmd)
 	labCmd.AddCommand(labExamCmd)
+	labCmd.AddCommand(labPickCmd)
+	labCmd.AddCommand(labCleanCmd)
+	labCmd.AddCommand(labResetCmd)
+	labCmd.AddCommand(labResumeCmd)
 }
 
 func loadConfig() error {
@@ -981,4 +1385,150 @@ func createProvider() (cluster.Provider, error) {
 		KubernetesVersion: cfg.Cluster.KubernetesVersion,
 		Workers:           cfg.Cluster.Workers,
 	})
+}
+
+// provisionClusterForSpec ensures a running cluster that satisfies the lab's
+// ClusterSpec. If the cluster is absent or its running version/node count does
+// not match the spec, it is (re)created with the spec's settings.
+func provisionClusterForSpec(cmd *cobra.Command, spec labs.ClusterSpec) error {
+	// Apply the spec to the in-memory config so the provider is built with it.
+	applySpec := func() {
+		if spec.Provider != "" {
+			cfg.Cluster.Provider = spec.Provider
+		}
+		if spec.KubernetesVersion != "" {
+			cfg.Cluster.KubernetesVersion = spec.KubernetesVersion
+		}
+		if spec.Workers >= 0 {
+			cfg.Cluster.Workers = spec.Workers
+		}
+	}
+	applySpec()
+
+	provider, err := createProvider()
+	if err != nil {
+		return fmt.Errorf("creating provider: %w", err)
+	}
+	labs.SetClusterName(provider.Name())
+
+	pctx, pcancel := context.WithTimeout(context.Background(), 12*time.Minute)
+	defer pcancel()
+
+	exists, err := provider.Exists(pctx)
+	if err != nil {
+		return err
+	}
+
+	needsRecreate := false
+	if exists && spec.KubernetesVersion != "" {
+		// The cluster exists but may be running the wrong version — check it.
+		version, vErr := runningClusterVersion(pctx, provider)
+		if vErr != nil {
+			cli.Warning(fmt.Sprintf("Could not read running cluster version: %v", vErr))
+		}
+		if strings.TrimPrefix(version, "v") != "" &&
+			spec.KubernetesVersion != "" &&
+			normalizeK8sVersion(version) != normalizeK8sVersion(spec.KubernetesVersion) {
+			cli.Info(fmt.Sprintf("Lab requires cluster %s but it is running %s — recreating.",
+				spec.KubernetesVersion, version))
+			needsRecreate = true
+		}
+	}
+
+	if exists && needsRecreate {
+		cli.Info(fmt.Sprintf("Deleting cluster %s to match lab requirements...", provider.Name()))
+		if err := provider.Down(pctx); err != nil {
+			return fmt.Errorf("deleting cluster for lab spec: %w", err)
+		}
+		exists = false
+	}
+
+	if !exists {
+		cli.Info(fmt.Sprintf("Provisioning cluster for this lab: %s (version %s, %d worker(s))",
+			provider.Name(), cfg.Cluster.KubernetesVersion, cfg.Cluster.Workers))
+		if err := provider.Up(pctx); err != nil {
+			return fmt.Errorf("provisioning cluster for lab spec: %w", err)
+		}
+		cli.Success("Cluster ready for this lab.")
+	}
+
+	return nil
+}
+
+// runningClusterVersion reads the Kubernetes version of the control-plane node
+// of an existing cluster via kubectl.
+func runningClusterVersion(ctx context.Context, provider cluster.Provider) (string, error) {
+	kc, err := provider.KubeconfigPath(ctx)
+	if err != nil {
+		return "", err
+	}
+	out, err := outputOf(exec.CommandContext(ctx, "kubectl",
+		"--kubeconfig", kc, "version", "-o", "json"))
+	if err != nil {
+		return "", err
+	}
+	out = extractJSONObject(out)
+	var v struct {
+		ServerVersion struct {
+			GitVersion string `json:"gitVersion"`
+		} `json:"serverVersion"`
+	}
+	if err := json.Unmarshal([]byte(out), &v); err != nil {
+		return "", err
+	}
+	return v.ServerVersion.GitVersion, nil
+}
+
+// extractJSONObject returns the substring between the first '{' and the last
+// '}', so kubectl JSON output can be parsed even when WARNING lines are merged
+// in before or after the JSON on the same captured stream.
+func extractJSONObject(s string) string {
+	if i := strings.Index(s, "{"); i >= 0 {
+		s = s[i:]
+	}
+	if j := strings.LastIndex(s, "}"); j >= 0 {
+		s = s[:j+1]
+	}
+	return strings.TrimSpace(s)
+}
+
+// runKubectl executes kubectl against the given kubeconfig and returns stdout.
+func runKubectl(ctx context.Context, kubeconfig string, args ...string) (string, error) {
+	cmdArgs := []string{"--kubeconfig", kubeconfig}
+	cmdArgs = append(cmdArgs, args...)
+	cmd := exec.CommandContext(ctx, "kubectl", cmdArgs...)
+	return outputOf(cmd)
+}
+
+// outputOf runs a command and returns trimmed combined output (best effort on error).
+func outputOf(cmd *exec.Cmd) (string, error) {
+	out, err := cmd.CombinedOutput()
+	return strings.TrimSpace(string(out)), err
+}
+
+// normalizeK8sVersion trims a leading "v" for comparison.
+func normalizeK8sVersion(v string) string {
+	return strings.TrimPrefix(strings.TrimSpace(v), "v")
+}
+
+// provisionPendingNode ensures an extra unjoined node container exists for the
+// cluster, provisioning it from a matching node image if needed.
+func provisionPendingNode(ctx context.Context, clusterName string, pn labs.PendingNode) error {
+	containerName := clusterName + "-" + pn.Name
+	version := normalizeK8sVersion(pn.Version)
+	if version == "" {
+		version = normalizeK8sVersion(cfg.Cluster.KubernetesVersion)
+	}
+	image := "kindest/node:v" + version
+
+	created, err := cluster.EnsureNodeContainer(ctx, containerName, image)
+	if err != nil {
+		return err
+	}
+	if created {
+		cli.Info(fmt.Sprintf("Provisioned pending node container: %s", containerName))
+	} else {
+		cli.Info(fmt.Sprintf("Using existing pending node container: %s", containerName))
+	}
+	return nil
 }

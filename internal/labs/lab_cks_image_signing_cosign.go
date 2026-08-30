@@ -2,6 +2,9 @@ package labs
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 )
 
 func init() {
@@ -24,18 +27,18 @@ func (l *CKSImageSigningCosignLab) Tags() []string {
 }
 
 func (l *CKSImageSigningCosignLab) Description() string {
-	return `Container images are deployed without cryptographic signing. This allows
-unsigned or tampered images to be deployed in the cluster.
+	return `A deployment 'app' in namespace 'pinned-app' references the mutable image tag
+'nginx:latest'. Mutable tags can be silently retagged to a malicious image.
 
-Your task: Generate a cosign key pair and sign the 'nginx:1.19' image
-with cosign to establish image integrity.`
+Your task: Pin the deployment to an immutable image digest (containing '@sha256:')
+and ensure the imagePullPolicy allows the pinned digest to be used.`
 }
 
 func (l *CKSImageSigningCosignLab) Hints() []string {
 	return []string{
-		"Install cosign from sigstore",
-		"Generate a key pair with cosign generate-key-pair",
-		"Sign the image with cosign sign",
+		"Resolve nginx:latest to its digest",
+		"Set the deployment image to the full digest reference",
+		"Ensure imagePullPolicy is not Always",
 	}
 }
 
@@ -44,18 +47,71 @@ func (l *CKSImageSigningCosignLab) Prepare(ctx context.Context, kubeconfigPath s
 }
 
 func (l *CKSImageSigningCosignLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: pinned-app
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	deploy := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: pinned-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: nginx:latest
+        imagePullPolicy: Always
+`
+	return kubectlApply(ctx, kubeconfigPath, deploy)
+}
+
+func (l *CKSImageSigningCosignLab) VerifyBroken(_ context.Context, _ string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 
 func (l *CKSImageSigningCosignLab) Verify(ctx context.Context, kubeconfigPath string) error {
+	image, err := kubectl(ctx, kubeconfigPath, "get", "deployment", "app", "-n", "pinned-app",
+		"-o", "jsonpath={.spec.template.spec.containers[0].image}")
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %w", err)
+	}
+	if !strings.Contains(strings.TrimSpace(image), "@sha256:") {
+		return fmt.Errorf("image is not pinned to an immutable digest (got: %s)", image)
+	}
+	pullPolicy, err := kubectl(ctx, kubeconfigPath, "get", "deployment", "app", "-n", "pinned-app",
+		"-o", "jsonpath={.spec.template.spec.containers[0].imagePullPolicy}")
+	if err != nil {
+		return fmt.Errorf("failed to get deployment: %w", err)
+	}
+	pp := strings.TrimSpace(pullPolicy)
+	if pp == "IfNotPresent" || pp == "Never" {
+		return nil
+	}
+	if pp == "Always" {
+		return fmt.Errorf("imagePullPolicy must not be Always for a pinned digest")
+	}
 	return nil
 }
 
 func (l *CKSImageSigningCosignLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Install cosign", Command: "go install github.com/sigstore/cosign/v2/cmd/cosign@latest"},
-		{Description: "Generate key pair", Command: "cosign generate-key-pair"},
-		{Description: "Sign the image", Command: "cosign sign --key cosign.key registry.example.com/nginx:1.19"},
-		{Description: "Verify signature", Command: "cosign verify --key cosign.pub registry.example.com/nginx:1.19"},
+		{Description: "Resolve nginx:latest to its digest", Command: "docker pull nginx:latest && docker inspect nginx:latest --format='{{index .RepoDigests 0}}'"},
+		{Description: "Pin the deployment to the digest", Command: "kubectl set image deployment/app app=nginx@sha256:<digest> -n pinned-app"},
+		{Description: "Verify the pin and pull policy", Command: "kubectl get deployment app -n pinned-app -o jsonpath='{.spec.template.spec.containers[0].image} {.spec.template.spec.containers[0].imagePullPolicy}'"},
 	}
 }

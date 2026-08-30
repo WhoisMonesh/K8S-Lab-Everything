@@ -85,7 +85,10 @@ func (l *StrayStaticPodLab) VerifyBroken(_ context.Context, _ string) error {
 
 func (l *StrayStaticPodLab) Verify(ctx context.Context, kp string) error {
 	// Check the static pod no longer exists
-	node, _ := getControlPlaneNode(ctx, kp)
+	node, err := getControlPlaneNode(ctx, kp)
+	if err != nil {
+		return fmt.Errorf("getting control plane node: %w", err)
+	}
 	node = strings.TrimSpace(node)
 	podName := "orphan-nginx-" + node
 

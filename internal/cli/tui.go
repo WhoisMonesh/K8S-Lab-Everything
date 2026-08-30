@@ -411,3 +411,113 @@ func RunInteractiveLabSelector(labList []labs.Lab) (labs.Lab, error) {
 
 	return result.filtered[result.selected].lab, nil
 }
+
+// helpViewerModel renders a lab's details, hints, and solution as pages that
+// the user can flip through with ←/→ (or numbers) and quit with q.
+type helpViewerModel struct {
+	lab      labs.Lab
+	page     int
+	width    int
+	height   int
+	quitting bool
+}
+
+// RunInteractiveLabHelp opens an interactive paged viewer for a lab's
+// description, hints, and step-by-step solution.
+func RunInteractiveLabHelp(lab labs.Lab) error {
+	model := helpViewerModel{lab: lab}
+	p := tea.NewProgram(model, tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		return fmt.Errorf("interactive help failed: %w", err)
+	}
+	return nil
+}
+
+var helpTabStyle = lipgloss.NewStyle().Padding(0, 1)
+var helpActiveTabStyle = lipgloss.NewStyle().Padding(0, 1).Bold(true).Foreground(lipgloss.Color("15")).Background(lipgloss.Color("99"))
+var helpContentStyle = lipgloss.NewStyle().Padding(0, 1).MarginTop(1).Width(70)
+
+func (m helpViewerModel) Init() tea.Cmd { return nil }
+
+func (m helpViewerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "ctrl+c", "esc":
+			m.quitting = true
+			return m, tea.Quit
+		case "left", "h", "j":
+			if m.page > 0 {
+				m.page--
+			}
+		case "right", "l", "k":
+			if m.page < 2 {
+				m.page++
+			}
+		case "1":
+			m.page = 0
+		case "2":
+			m.page = 1
+		case "3":
+			m.page = 2
+		}
+	}
+	return m, nil
+}
+
+func (m helpViewerModel) View() string {
+	tabs := []string{"Description", "Hints", "Solution"}
+	var tabBar strings.Builder
+	for i, t := range tabs {
+		if i == m.page {
+			tabBar.WriteString(helpActiveTabStyle.Render(t))
+		} else {
+			tabBar.WriteString(helpTabStyle.Render(t))
+		}
+	}
+
+	title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99")).MarginBottom(1).Render(m.lab.Title())
+
+	body := ""
+	switch m.page {
+	case 0:
+		body = m.lab.Description()
+	case 1:
+		hints := m.lab.Hints()
+		if len(hints) == 0 {
+			body = "No hints available for this lab."
+		} else {
+			pages := make([]string, 0, len(hints))
+			for i, h := range hints {
+				pages = append(pages, fmt.Sprintf("%d. %s", i+1, h))
+			}
+			body = strings.Join(pages, "\n\n")
+		}
+	case 2:
+		steps := m.lab.SolutionSteps()
+		if len(steps) == 0 {
+			body = "No solution steps available."
+		} else {
+			parts := make([]string, 0, len(steps))
+			for i, s := range steps {
+				part := fmt.Sprintf("Step %d: %s", i+1, s.Description)
+				if s.Command != "" {
+					part += fmt.Sprintf("\n\n  $ %s", s.Command)
+				}
+				if s.Notes != "" {
+					part += fmt.Sprintf("\n\n  %s", s.Notes)
+				}
+				parts = append(parts, part)
+			}
+			body = strings.Join(parts, "\n\n")
+		}
+	}
+
+	helpLine := lipgloss.NewStyle().Foreground(lipgloss.Color("241")).MarginTop(1).
+		Render("  ←/→ or 1/2/3 switch page   q quit")
+
+	return "\n" + title + "\n" + tabBar.String() + "\n" + helpContentStyle.Render(body) + "\n" + helpLine + "\n"
+}

@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"os/exec"
 )
 
 // Difficulty represents the difficulty level of a lab
@@ -189,6 +190,39 @@ func (b *BaseLab) Prepare(_ context.Context, _ string) error      { return nil }
 func (b *BaseLab) VerifyBroken(_ context.Context, _ string) error { return nil }
 func (b *BaseLab) Verify(_ context.Context, _ string) error {
 	return fmt.Errorf("verify not implemented for this lab")
+}
+
+// clusterName is the running cluster's name, injected by the runner so labs
+// that interact with node containers (docker exec) can build node names.
+var clusterName string
+
+// SetClusterName records the active cluster name (set by the runner).
+func SetClusterName(name string) {
+	clusterName = name
+}
+
+// ControlPlaneNodeName returns the control-plane node container name for the
+// active cluster (e.g. "<cluster>-control-plane" for kind).
+func ControlPlaneNodeName() string {
+	return clusterName + "-control-plane"
+}
+
+// NodeName returns the container name for a named node of the active cluster.
+func NodeName(name string) string {
+	return clusterName + "-" + name
+}
+
+// dockerCommand runs a command inside a node container via `docker exec` and
+// returns its combined output and error. It is used for node-level operations
+// that have no SSH equivalent in kind.
+func dockerCommand(container, shellCommand string) (string, error) {
+	cmd := exec.CommandContext(context.Background(), "docker", "exec",
+		container, "sh", "-c", shellCommand)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return string(out), err
+	}
+	return string(out), nil
 }
 
 // GetInfo returns the metadata for a lab

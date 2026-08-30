@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,67 @@ func (l *IngressTLSTerminationLab) Prepare(ctx context.Context, kubeconfigPath s
 }
 
 func (l *IngressTLSTerminationLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-app
+  namespace: ingress-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: secure-app
+  template:
+    metadata:
+      labels:
+        app: secure-app
+    spec:
+      containers:
+      - name: app
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-app
+  namespace: ingress-ns
+spec:
+  selector:
+    app: secure-app
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: secure-app
+  namespace: ingress-ns
+spec:
+  rules:
+  - host: app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: secure-app
+            port:
+              number: 80
+`
+	return kubectlApply(ctx, kubeconfigPath, manifest)
+}
+
+func (l *IngressTLSTerminationLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

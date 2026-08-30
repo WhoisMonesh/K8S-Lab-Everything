@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 func init() {
@@ -38,6 +39,12 @@ func (l *NodeRegistrationError) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *NodeRegistrationError) Break(ctx context.Context, kubeconfigPath string) error {
+	nodeName, err := getControlPlaneNode(ctx, kubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("getting control plane node: %w", err)
+	}
+
+	dockerCommand(nodeName, "mv /etc/kubernetes/kubelet.conf /etc/kubernetes/kubelet.conf.bak 2>/dev/null; true")
 	return nil
 }
 
@@ -47,7 +54,7 @@ func (l *NodeRegistrationError) Verify(ctx context.Context, kubeconfigPath strin
 	if err != nil {
 		return err
 	}
-	if containsAny(output, "False") {
+	if strings.Contains(output, "False") {
 		return fmt.Errorf("node still NotReady")
 	}
 	return nil
@@ -58,6 +65,7 @@ func (l *NodeRegistrationError) SolutionSteps() []SolutionStep {
 		{Description: "Check node status", Command: "kubectl get nodes"},
 		{Description: "Describe node", Command: "kubectl describe node <node-name>"},
 		{Description: "Check kubelet logs", Command: "journalctl -u kubelet -f"},
+		{Description: "Restore kubelet config", Command: "cp /etc/kubernetes/kubelet.conf.bak /etc/kubernetes/kubelet.conf"},
 		{Description: "Restart kubelet", Command: "sudo systemctl restart kubelet"},
 	}
 }

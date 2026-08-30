@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,37 @@ func (l *PodLifecycleIssuesLab) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *PodLifecycleIssuesLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: lifecycle-ns
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: probe-app
+  namespace: lifecycle-ns
+spec:
+  containers:
+  - name: app
+    image: nginx:1.27-alpine
+    ports:
+    - containerPort: 80
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 5
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating broken pod: %w", err)
+	}
+	return nil
+}
+
+func (l *PodLifecycleIssuesLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

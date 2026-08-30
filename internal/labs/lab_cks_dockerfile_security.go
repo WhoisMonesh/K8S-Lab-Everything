@@ -2,6 +2,9 @@ package labs
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 )
 
 func init() {
@@ -24,21 +27,22 @@ func (l *CKSDockerfileSecurityLab) Tags() []string {
 }
 
 func (l *CKSDockerfileSecurityLab) Description() string {
-	return `The Dockerfile for the application does not follow security best practices.
-It runs as root, uses a full OS base image, and has unnecessary packages.
+	return `A pod 'app' in namespace 'secure-app' is running with an insecure security
+context. It runs as root, allows privilege escalation, and has a writable
+root filesystem.
 
-Your task: Create a secure Dockerfile that:
-1. Uses a minimal base image (alpine or distroless)
-2. Creates and uses a non-root user
-3. Uses multi-stage build to reduce attack surface
-4. Sets proper file permissions`
+Your task: Harden the pod so that it:
+1. Runs as a non-root user (runAsNonRoot)
+2. Disallows privilege escalation (allowPrivilegeEscalation: false)
+3. Uses a read-only root filesystem
+4. Applies the RuntimeDefault seccomp profile and drops all capabilities`
 }
 
 func (l *CKSDockerfileSecurityLab) Hints() []string {
 	return []string{
-		"Use FROM node:18-alpine as builder for build stage",
-		"Create user with USER directive",
-		"COPY --from=builder for final stage",
+		"Set securityContext.runAsNonRoot to true",
+		"Set securityContext.allowPrivilegeEscalation to false",
+		"Set securityContext.readOnlyRootFilesystem to true",
 	}
 }
 
@@ -47,30 +51,67 @@ func (l *CKSDockerfileSecurityLab) Prepare(ctx context.Context, kubeconfigPath s
 }
 
 func (l *CKSDockerfileSecurityLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: secure-app
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	pod := `apiVersion: v1
+kind: Pod
+metadata:
+  name: app
+  namespace: secure-app
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    securityContext:
+      allowPrivilegeEscalation: true
+`
+	return kubectlApply(ctx, kubeconfigPath, pod)
+}
+
+func (l *CKSDockerfileSecurityLab) VerifyBroken(_ context.Context, _ string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 
 func (l *CKSDockerfileSecurityLab) Verify(ctx context.Context, kubeconfigPath string) error {
+	allowEsc, err := kubectl(ctx, kubeconfigPath, "get", "pod", "app", "-n", "secure-app",
+		"-o", "jsonpath={.spec.securityContext.allowPrivilegeEscalation}")
+	if err != nil {
+		return fmt.Errorf("failed to get pod: %w", err)
+	}
+	if strings.TrimSpace(allowEsc) != "false" {
+		return fmt.Errorf("allowPrivilegeEscalation not disabled (got: %s)", allowEsc)
+	}
+	runAsNonRoot, err := kubectl(ctx, kubeconfigPath, "get", "pod", "app", "-n", "secure-app",
+		"-o", "jsonpath={.spec.securityContext.runAsNonRoot}")
+	if err != nil {
+		return fmt.Errorf("failed to get pod: %w", err)
+	}
+	if strings.TrimSpace(runAsNonRoot) != "true" {
+		return fmt.Errorf("runAsNonRoot not enabled (got: %s)", runAsNonRoot)
+	}
+	readOnly, err := kubectl(ctx, kubeconfigPath, "get", "pod", "app", "-n", "secure-app",
+		"-o", "jsonpath={.spec.containers[0].securityContext.readOnlyRootFilesystem}")
+	if err != nil {
+		return fmt.Errorf("failed to get pod: %w", err)
+	}
+	if strings.TrimSpace(readOnly) != "true" {
+		return fmt.Errorf("readOnlyRootFilesystem not enabled (got: %s)", readOnly)
+	}
 	return nil
 }
 
 func (l *CKSDockerfileSecurityLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Create secure Dockerfile", Command: `cat <<'EOF' > Dockerfile
-FROM node:18-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-
-FROM gcr.io/distroless/nodejs18-debian12
-WORKDIR /app
-COPY --from=builder /app .
-USER nonroot:nonroot
-EXPOSE 3000
-CMD ["server.js"]
-EOF`},
-		{Description: "Build image", Command: "docker build -t secure-app:latest ."},
-		{Description: "Verify user", Command: "docker run --rm secure-app:latest whoami"},
+		{Description: "Delete and recreate pod with hardened securityContext", Command: `kubectl delete pod app -n secure-app && kubectl run app -n secure-app --image=busybox:1.36 --restart=Never --overrides='{"spec":{"securityContext":{"runAsNonRoot":true,"seccompProfile":{"type":"RuntimeDefault"}},"containers":[{"name":"app","image":"busybox:1.36","command":["sh","-c","while true; do sleep 3600; done"],"securityContext":{"allowPrivilegeEscalation":false,"readOnlyRootFilesystem":true,"capabilities":{"drop":["ALL"]}}}]}}'`},
+		{Description: "Verify hardening", Command: "kubectl get pod app -n secure-app -o jsonpath='{.spec.securityContext.allowPrivilegeEscalation} {.spec.securityContext.runAsNonRoot}'"},
 	}
 }

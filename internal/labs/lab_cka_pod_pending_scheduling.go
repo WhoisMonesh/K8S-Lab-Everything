@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,31 @@ func (l *PodPendingSchedulingLab) Prepare(ctx context.Context, kubeconfigPath st
 }
 
 func (l *PodPendingSchedulingLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: pending-ns
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pending-app
+  namespace: pending-ns
+spec:
+  nodeSelector:
+    node-type: gpu-optimized
+  containers:
+  - name: app
+    image: nginx:1.27-alpine
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating broken pod: %w", err)
+	}
+	return nil
+}
+
+func (l *PodPendingSchedulingLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

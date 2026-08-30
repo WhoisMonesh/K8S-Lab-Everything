@@ -2,6 +2,8 @@ package labs
 
 import (
 	"context"
+	"fmt"
+	"time"
 )
 
 func init() {
@@ -24,18 +26,21 @@ func (l *CKSVerifyPlatformBinariesLab) Tags() []string {
 }
 
 func (l *CKSVerifyPlatformBinariesLab) Description() string {
-	return `The Kubernetes platform binaries (kubeadm, kubelet, kubectl) on worker nodes
-have not been verified against official checksums.
+	return `The Kubernetes platform binaries on worker nodes have not been verified against
+official checksums. Without this verification, tampered binaries could go
+undetected.
 
-Your task: Verify the checksum of the kubelet binary on the first worker node
-against the official release checksum. Document the verification result.`
+Your task: On a worker node, compute the SHA-256 checksum of the kubelet binary,
+compare it against the official release checksum, and document verification by
+creating the marker file /var/lib/cka-platform/checksum.verified containing the
+kubelet reference.`
 }
 
 func (l *CKSVerifyPlatformBinariesLab) Hints() []string {
 	return []string{
-		"Download the official checksum file for the Kubernetes version",
-		"Use sha256sum to compute the local binary checksum",
-		"Compare the two checksums",
+		"Enter the worker node shell with docker exec",
+		"Compute sha256 of the kubelet binary",
+		"Compare with the official checksum and write the marker file",
 	}
 }
 
@@ -47,16 +52,25 @@ func (l *CKSVerifyPlatformBinariesLab) Break(ctx context.Context, kubeconfigPath
 	return nil
 }
 
+func (l *CKSVerifyPlatformBinariesLab) VerifyBroken(_ context.Context, _ string) error {
+	time.Sleep(10 * time.Second)
+	return nil
+}
+
 func (l *CKSVerifyPlatformBinariesLab) Verify(ctx context.Context, kubeconfigPath string) error {
+	worker, err := getWorkerNode(ctx, kubeconfigPath)
+	if err != nil {
+		return err
+	}
+	if _, err := dockerCommand(worker, "test -f /var/lib/cka-platform/checksum.verified && grep -q kubelet /var/lib/cka-platform/checksum.verified"); err != nil {
+		return fmt.Errorf("platform binaries not verified")
+	}
 	return nil
 }
 
 func (l *CKSVerifyPlatformBinariesLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Get Kubernetes version", Command: "kubectl version --short | grep Server"},
-		{Description: "Check kubelet binary path", Command: "which kubelet"},
-		{Description: "Compute local checksum", Command: "sha256sum $(which kubelet)"},
-		{Description: "Download official checksum", Command: "curl -LO https://dl.k8s.io/release/stable.txt && curl -LO https://dl.k8s.io/release/$(cat stable.txt)/bin/linux/amd64/kubelet.sha256"},
-		{Description: "Compare checksums", Command: "cat kubelet.sha256 && echo 'Compare with local sha256sum output'"},
+		{Description: "Enter the worker node shell (kind has no SSH)", Command: "docker exec -it <worker> bash"},
+		{Description: "Compute and compare the kubelet checksum, then create the marker file", Command: "mkdir -p /var/lib/cka-platform && sha256sum $(which kubelet) > /var/lib/cka-platform/checksum.verified && cat /var/lib/cka-platform/checksum.verified"},
 	}
 }

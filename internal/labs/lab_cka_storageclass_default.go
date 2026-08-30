@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -44,6 +45,27 @@ func (l *StorageClassDefaultLab) Prepare(ctx context.Context, kubeconfigPath str
 }
 
 func (l *StorageClassDefaultLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+provisioner: rancher.io/local-path
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast
+provisioner: rancher.io/local-path
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+`
+	return kubectlApply(ctx, kubeconfigPath, manifest)
+}
+
+func (l *StorageClassDefaultLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

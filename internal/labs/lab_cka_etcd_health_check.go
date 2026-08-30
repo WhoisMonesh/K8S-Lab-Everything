@@ -50,8 +50,14 @@ func (l *EtcdHealthCheckLab) Break(ctx context.Context, kubeconfigPath string) e
 }
 
 func (l *EtcdHealthCheckLab) Verify(ctx context.Context, kubeconfigPath string) error {
+	// Locate the etcd pod (static pod named etcd-<cluster>-control-plane).
+	podOut, err := kubectl(ctx, kubeconfigPath, "get", "pods", "-n", "kube-system",
+		"-l", "component=etcd", "-o", "jsonpath={.items[0].metadata.name}")
+	if err != nil || podOut == "" {
+		return fmt.Errorf("could not find etcd pod in kube-system: %w", err)
+	}
 	output, err := kubectl(ctx, kubeconfigPath, "exec", "-n", "kube-system",
-		"etcd-master", "--", "etcdctl", "endpoint", "health",
+		podOut, "--", "etcdctl", "endpoint", "health",
 		"--endpoints=https://127.0.0.1:2379",
 		"--cacert=/etc/kubernetes/pki/etcd/ca.crt",
 		"--cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt",
@@ -66,9 +72,11 @@ func (l *EtcdHealthCheckLab) Verify(ctx context.Context, kubeconfigPath string) 
 }
 
 func (l *EtcdHealthCheckLab) SolutionSteps() []SolutionStep {
+	cp := "docker exec -it <cluster>-control-plane bash"
 	return []SolutionStep{
-		{Description: "Check etcd health", Command: "ETCDCTL_API=3 etcdctl endpoint health --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key"},
-		{Description: "Check member list", Command: "ETCDCTL_API=3 etcdctl member list --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key"},
+		{Description: "Enter the control-plane node shell (kind has no SSH)", Command: cp},
+		{Description: "Check etcd health", Command: `ETCDCTL_API=3 etcdctl endpoint health --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key`},
+		{Description: "Check member list", Command: `ETCDCTL_API=3 etcdctl member list --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt --key=/etc/kubernetes/pki/etcd/healthcheck-client.key`},
 		{Description: "Fix certificates", Command: "Renew etcd certificates if expired"},
 	}
 }

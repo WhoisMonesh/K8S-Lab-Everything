@@ -49,23 +49,31 @@ func (l *CKSCISBenchmarkKubeletLab) Prepare(ctx context.Context, kubeconfigPath 
 }
 
 func (l *CKSCISBenchmarkKubeletLab) Break(ctx context.Context, kubeconfigPath string) error {
-	return nil
+	nodeName, err := getControlPlaneNode(ctx, kubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("getting control plane node: %w", err)
+	}
+	_, err = dockerCommand(nodeName, "sed -i 's/anonymous-auth: false/anonymous-auth: true/' /var/lib/kubelet/config.yaml 2>/dev/null; "+
+		"sed -i 's/mode: Webhook/mode: AlwaysAllow/' /var/lib/kubelet/config.yaml 2>/dev/null; true")
+	return err
 }
 
 func (l *CKSCISBenchmarkKubeletLab) Verify(ctx context.Context, kubeconfigPath string) error {
-	node, err := getControlPlaneNode(ctx, kubeconfigPath)
+	nodeName, err := getControlPlaneNode(ctx, kubeconfigPath)
 	if err != nil {
 		return err
 	}
-	output, err := kubectl(ctx, kubeconfigPath, "get", "node", node, "-o",
-		"jsonpath={.metadata.labels}")
+	output, err := dockerCommand(nodeName, "cat /var/lib/kubelet/config.yaml")
 	if err != nil {
-		return err
+		return fmt.Errorf("could not read kubelet config: %w", err)
 	}
-	if strings.Contains(output, "node-role.kubernetes.io/control-plane") {
-		return nil
+	if strings.Contains(output, "anonymous-auth: true") {
+		return fmt.Errorf("anonymous-auth is still enabled")
 	}
-	return fmt.Errorf("kubelet hardening not verified")
+	if strings.Contains(output, "mode: AlwaysAllow") {
+		return fmt.Errorf("authorization mode is still AlwaysAllow")
+	}
+	return nil
 }
 
 func (l *CKSCISBenchmarkKubeletLab) SolutionSteps() []SolutionStep {

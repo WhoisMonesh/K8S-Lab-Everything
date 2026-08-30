@@ -28,6 +28,83 @@ type HintLeveler interface {
 	HintLevel(level int) string
 }
 
+// Namespacer is implemented by labs that can have their working namespace
+// overridden (e.g. for namespace-isolated practice). Labs opt in by
+// implementing SetNamespace; the runner calls it with the requested
+// namespace before invoking Break/Prepare/Verify.
+type Namespacer interface {
+	SetNamespace(ns string)
+}
+
+// ClusterSpec describes the cluster a lab needs in order to be practiced
+// meaningfully (e.g. a specific Kubernetes version or node count). When a lab
+// implements ClusterSpecer, the runner auto-provisions a matching cluster
+// (recreating it if the current one differs).
+type ClusterSpec struct {
+	// Provider is the cluster provider to use (kind, k3d, minikube). Empty = auto.
+	Provider string
+	// KubernetesVersion is the image/version the cluster must be running. Empty = any.
+	KubernetesVersion string
+	// Workers is the required number of worker nodes. -1 = no requirement.
+	Workers int
+}
+
+// ClusterSpecer is implemented by labs that declare the cluster topology and
+// version they need.
+type ClusterSpecer interface {
+	ClusterSpec() ClusterSpec
+}
+
+// GetClusterSpec returns the cluster spec for a lab, or a zero spec (no
+// requirements) if it does not implement ClusterSpecer.
+func GetClusterSpec(lab Lab) (ClusterSpec, bool) {
+	if cs, ok := lab.(ClusterSpecer); ok {
+		return cs.ClusterSpec(), true
+	}
+	return ClusterSpec{}, false
+}
+
+// PendingNode describes an extra, not-yet-joined node container that a lab
+// needs provisioned (e.g. to practice kubeadm join). Name is the node label
+// ("worker", "worker2") and Version is the node image version.
+type PendingNode struct {
+	Name    string
+	Version string
+}
+
+// NodeRequirementer is implemented by labs that need the runner to provision
+// extra unjoined node containers before the broken scenario is applied.
+type NodeRequirementer interface {
+	RequiredNodes() []PendingNode
+}
+
+// GetRequiredNodes returns the pending-node requirements for a lab, if any.
+func GetRequiredNodes(lab Lab) []PendingNode {
+	if nr, ok := lab.(NodeRequirementer); ok {
+		return nr.RequiredNodes()
+	}
+	return nil
+}
+
+// NamespaceForLab returns the effective namespace for a lab, honoring an
+// explicit override and the isolate setting.
+func NamespaceForLab(lab Lab, override string, isolate bool) string {
+	if override != "" {
+		return override
+	}
+	if isolate {
+		return lab.ID()
+	}
+	return "default"
+}
+
+// SetLabNamespace applies a namespace override to a lab if it supports it.
+func SetLabNamespace(lab Lab, ns string) {
+	if n, ok := lab.(Namespacer); ok {
+		n.SetNamespace(ns)
+	}
+}
+
 // Domain constants for CKA exam domains
 const (
 	DomainWorkloadsScheduling = "workloads-scheduling"

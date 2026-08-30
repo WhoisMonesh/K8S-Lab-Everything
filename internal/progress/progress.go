@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -48,12 +49,21 @@ type LabResult struct {
 	TimedOut    bool          `json:"timed_out,omitempty"`
 	Namespace   string        `json:"namespace,omitempty"`
 	Rating      int           `json:"rating,omitempty"`
+	Attempts    []Attempt     `json:"attempts,omitempty"`
+}
+
+// Attempt records a single verify attempt for benchmark tracking.
+type Attempt struct {
+	At      time.Time     `json:"at"`
+	Passed  bool          `json:"passed"`
+	Elapsed time.Duration `json:"elapsed_seconds"`
 }
 
 type Progress struct {
-	Labs      map[string]*LabResult `json:"labs"`
-	StartedAt time.Time             `json:"started_at"`
-	mu        sync.RWMutex
+	Labs          map[string]*LabResult `json:"labs"`
+	StartedAt     time.Time             `json:"started_at"`
+	LastActiveLab string                `json:"last_active_lab,omitempty"`
+	mu            sync.RWMutex
 }
 
 var (
@@ -62,6 +72,11 @@ var (
 )
 
 func filePath() string {
+	if home, err := os.UserHomeDir(); err == nil {
+		configDir := filepath.Join(home, ".config", "cka-lab-runner")
+		os.MkdirAll(configDir, 0o755)
+		return filepath.Join(configDir, ProgressFile)
+	}
 	if dir, err := os.Getwd(); err == nil {
 		return filepath.Join(dir, ProgressFile)
 	}
@@ -162,6 +177,34 @@ func CompletedCount() int {
 	defer p.mu.RUnlock()
 
 	return len(p.Labs)
+}
+
+// CurrentStreak returns the number of consecutive days with at least one completed lab.
+func CurrentStreak() int {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if len(p.Labs) == 0 {
+		return 0
+	}
+
+	days := make(map[string]bool)
+	for _, r := range p.Labs {
+		days[r.CompletedAt.Format("2006-01-02")] = true
+	}
+
+	streak := 0
+	d := time.Now()
+	for {
+		key := d.Format("2006-01-02")
+		if !days[key] {
+			break
+		}
+		streak++
+		d = d.Add(-24 * time.Hour)
+	}
+	return streak
 }
 
 func progressBar(completed, total, width int) string {
@@ -320,6 +363,20 @@ func RateLab(labID string, rating int) error {
 	return Save()
 }
 
+func (p *Progress) ResetProgress(labIDs []string, all bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if all {
+		p.Labs = make(map[string]*LabResult)
+	} else {
+		for _, id := range labIDs {
+			delete(p.Labs, id)
+		}
+	}
+	Save()
+}
+
 func GetRating(labID string) int {
 	p := Load()
 	p.mu.RLock()
@@ -413,4 +470,311 @@ func StreakInfo() string {
 	}
 	b.WriteString(fmt.Sprintf("  %s🏆 Longest Streak:%s  %s%d day(s)%s\n", bold, reset, yellow, longest, reset))
 	return b.String()
+}
+
+// Results returns the sorted list of all lab results (newest completion first).
+func Results() []*LabResult {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	results := make([]*LabResult, 0, len(p.Labs))
+	for _, r := range p.Labs {
+		results = append(results, r)
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].CompletedAt.Before(results[j].CompletedAt)
+	})
+	return results
+}
+
+// ImportFromFile merges progress from a JSON file, keeping the later completion
+// per lab when both exist.
+func ImportFromFile(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading import file: %w", err)
+	}
+
+	var imported struct {
+		Labs []*LabResult `json:"labs"`
+	}
+	if err := json.Unmarshal(data, &imported); err != nil {
+		return fmt.Errorf("parsing import file: %w", err)
+	}
+
+	p := Load()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	for _, r := range imported.Labs {
+		if r == nil || r.LabID == "" {
+			continue
+		}
+		if existing, ok := p.Labs[r.LabID]; ok && existing.CompletedAt.After(r.CompletedAt) {
+			continue // keep the more recent one
+		}
+		if existing, ok := p.Labs[r.LabID]; ok && existing.CompletedAt.Equal(r.CompletedAt) {
+			continue
+		}
+		p.Labs[r.LabID] = r
+	}
+
+	return Save()
+}
+
+func ExportCSV() (string, error) {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	var b strings.Builder
+	b.WriteString("lab_id,title,category,difficulty,completed_at,duration_seconds,estimated_minutes,timed,timed_out,rating\n")
+
+	ids := make([]string, 0, len(p.Labs))
+	for id := range p.Labs {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+
+	for _, id := range ids {
+		r := p.Labs[id]
+		b.WriteString(fmt.Sprintf("%s,%s,%s,%s,%s,%d,%d,%t,%t,%d\n",
+			escapeCSV(r.LabID),
+			escapeCSV(r.Title),
+			escapeCSV(r.Category),
+			escapeCSV(r.Difficulty),
+			r.CompletedAt.Format(time.RFC3339),
+			int(r.Duration.Seconds()),
+			r.Estimated,
+			r.Timed,
+			r.TimedOut,
+			r.Rating,
+		))
+	}
+
+	return b.String(), nil
+}
+
+func ExportHTML() (string, error) {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	total := len(p.Labs)
+	var totalDuration time.Duration
+	for _, r := range p.Labs {
+		totalDuration += r.Duration
+	}
+
+	var rows strings.Builder
+	ids := make([]string, 0, total)
+	for id := range p.Labs {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+
+	for _, id := range ids {
+		r := p.Labs[id]
+		rows.WriteString(fmt.Sprintf(`<tr>
+  <td>%s</td>
+  <td>%s</td>
+  <td>%s</td>
+  <td>%s</td>
+  <td>%s</td>
+  <td>%s</td>
+  <td>%d min</td>
+  <td>%d</td>
+</tr>`+"\n",
+			htmlEscape(r.LabID),
+			htmlEscape(r.Title),
+			htmlEscape(r.Category),
+			htmlEscape(r.Difficulty),
+			r.CompletedAt.Format("2006-01-02 15:04"),
+			r.Duration.Round(time.Second),
+			r.Estimated,
+			r.Rating,
+		))
+	}
+
+	template := `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>K8S-Lab-Everything Progress Report</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", sans-serif; margin: 40px auto; max-width: 960px; color:#222; }
+  h1 { color:#1a73e8; }
+  .stats { display:flex; gap:24px; margin:20px 0; }
+  .stat { background:#f5f7fa; padding:16px 24px; border-radius:8px; }
+  .stat b { display:block; font-size:28px; color:#1a73e8; }
+  table { border-collapse:collapse; width:100%; margin-top:20px; }
+  th, td { border:1px solid #ddd; padding:8px 12px; text-align:left; font-size:14px; }
+  th { background:#1a73e8; color:#fff; }
+  tr:nth-child(even) { background:#f9f9f9; }
+</style>
+</head>
+<body>
+  <h1>K8S-Lab-Everything Progress Report</h1>
+  <div class="stats">
+    <div class="stat"><b>__LABS__</b>Labs Completed</div>
+    <div class="stat"><b>__TIME__</b>Total Practice Time</div>
+    <div class="stat"><b>__STARTED__</b>Started</div>
+  </div>
+  <table>
+    <thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Difficulty</th><th>Completed</th><th>Duration</th><th>Est.</th><th>Rating</th></tr></thead>
+    <tbody>
+__ROWS__  </tbody>
+  </table>
+</body>
+</html>
+`
+	replacer := strings.NewReplacer(
+		"__LABS__", fmt.Sprintf("%d", total),
+		"__TIME__", totalDuration.Round(time.Second).String(),
+		"__STARTED__", p.StartedAt.Format("2006-01-02"),
+		"__ROWS__", rows.String(),
+	)
+	return replacer.Replace(template), nil
+}
+
+func escapeCSV(s string) string {
+	s = strings.ReplaceAll(s, `"`, `""`)
+	if strings.ContainsAny(s, ",\"\n") {
+		return `"` + s + `"`
+	}
+	return s
+}
+
+func htmlEscape(s string) string {
+	replacer := strings.NewReplacer(
+		"&", "&amp;",
+		"<", "&lt;",
+		">", "&gt;",
+		`"`, "&quot;",
+	)
+	return replacer.Replace(s)
+}
+
+// SetActiveLab records the lab the user is currently working on (for `resume`).
+func SetActiveLab(labID string) {
+	p := Load()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.LastActiveLab == labID {
+		return
+	}
+	p.LastActiveLab = labID
+	Save()
+}
+
+// ActiveLab returns the last lab the user was working on, or "" if none.
+func ActiveLab() string {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.LastActiveLab
+}
+
+// RecordAttempt appends a verify attempt to a lab for benchmark tracking.
+func RecordAttempt(labID string, passed bool, elapsed time.Duration) {
+	p := Load()
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	r, ok := p.Labs[labID]
+	if !ok {
+		r = &LabResult{LabID: labID}
+		p.Labs[labID] = r
+	}
+	r.Attempts = append(r.Attempts, Attempt{
+		At:      time.Now(),
+		Passed:  passed,
+		Elapsed: elapsed,
+	})
+	_ = Save()
+}
+
+// BenchmarkSummary returns a human-readable summary of verify attempt times
+// for completed labs (average vs best).
+func BenchmarkSummary() string {
+	p := Load()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	var done, passCount int
+	var totalDur, worstDur time.Duration
+	var worstID string
+
+	for id, r := range p.Labs {
+		if len(r.Attempts) == 0 {
+			continue
+		}
+		var labTotal time.Duration
+		for _, a := range r.Attempts {
+			labTotal += a.Elapsed
+			if a.Passed {
+				passCount++
+			}
+			if a.Elapsed > worstDur {
+				worstDur = a.Elapsed
+				worstID = id
+			}
+		}
+		totalDur += labTotal
+		done++
+	}
+
+	if done == 0 {
+		return "  No verify attempts recorded yet.\n"
+	}
+
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("  %sBenchmarks%s (from %d lab(s) with attempt history)\n\n", bold, reset, done))
+	b.WriteString(fmt.Sprintf("  Labs passed on a verify:        %s%d%s\n", green, passCount, reset))
+	b.WriteString(fmt.Sprintf("  Total verify time tracked:       %s%s%s\n", dimWhite, totalDur.Round(time.Second), reset))
+	b.WriteString(fmt.Sprintf("  Average verify time:             %s%s%s\n", yellow, (totalDur / time.Duration(done)).Round(time.Second), reset))
+	b.WriteString(fmt.Sprintf("  Slowest single verify:           %s%s%s (%s)\n", red, worstDur.Round(time.Second), reset, worstID))
+	b.WriteString("\n")
+	return b.String()
+}
+
+// Notify sends a desktop notification (non-blocking). Falls back to console on
+func Notify(title, message string) {
+	switch {
+	case isCommandAvailable("notify-send"):
+		runSilent("notify-send", title, message)
+	case isCommandAvailable("osascript"):
+		script := fmt.Sprintf("display notification %q with title %q", message, title)
+		runSilent("osascript", "-e", script)
+	case isCommandAvailable("powershell"):
+		runPowerShellNotify(title, message)
+	default:
+		fmt.Printf("\n  [%s✓%s] %s — %s\n", green, reset, title, message)
+	}
+}
+
+func runPowerShellNotify(title, message string) {
+	script := fmt.Sprintf(
+		`Add-Type -AssemblyName System.Windows.Forms; `+
+			`$n = New-Object System.Windows.Forms.NotifyIcon; `+
+			`$n.Icon = [System.Drawing.SystemIcons]::Information; `+
+			`$n.Visible = $true; `+
+			`$n.ShowBalloonTip(3000, %q, %q, [System.Windows.Forms.ToolTipIcon]::Info); `+
+			`Start-Sleep -Milliseconds 3500; $n.Dispose()`,
+		title, message,
+	)
+	runSilent("powershell", "-NoProfile", "-Command", script)
+}
+
+func runSilent(name string, args ...string) {
+	cmd := exec.Command(name, args...)
+	_ = cmd.Start()
+}
+
+func isCommandAvailable(name string) bool {
+	_, err := exec.LookPath(name)
+	return err == nil
 }

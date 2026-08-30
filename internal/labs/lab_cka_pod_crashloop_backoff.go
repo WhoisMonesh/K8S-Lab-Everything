@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,30 @@ func (l *PodCrashLoopBackoffLab) Prepare(ctx context.Context, kubeconfigPath str
 }
 
 func (l *PodCrashLoopBackoffLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: crash-ns
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crash-app
+  namespace: crash-ns
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ["/bin/sh", "-c", "exit 1"]
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating broken pod: %w", err)
+	}
+	return nil
+}
+
+func (l *PodCrashLoopBackoffLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -49,6 +50,64 @@ func (l *NetworkPolicyDefaultDenyCKALab) Prepare(ctx context.Context, kubeconfig
 }
 
 func (l *NetworkPolicyDefaultDenyCKALab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: deny-ns-3
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	dep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: deny-ns-3
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, dep); err != nil {
+		return fmt.Errorf("creating deployment: %w", err)
+	}
+
+	policy := `apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: deny-ns-3
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: never-match
+`
+	if err := kubectlApply(ctx, kubeconfigPath, policy); err != nil {
+		return fmt.Errorf("creating networkpolicy: %w", err)
+	}
+
+	return nil
+}
+
+func (l *NetworkPolicyDefaultDenyCKALab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

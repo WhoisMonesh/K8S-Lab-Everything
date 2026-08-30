@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -46,6 +47,37 @@ func (l *PVDynamicProvisioningLab) Prepare(ctx context.Context, kubeconfigPath s
 }
 
 func (l *PVDynamicProvisioningLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: slow
+provisioner: kubernetes.io/aws-ebs
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: provisioning-ns
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-data
+  namespace: provisioning-ns
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: slow
+  resources:
+    requests:
+      storage: 1Gi
+`
+	return kubectlApply(ctx, kubeconfigPath, manifest)
+}
+
+func (l *PVDynamicProvisioningLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,62 @@ func (l *ServiceLoadBalancerLab) Prepare(ctx context.Context, kubeconfigPath str
 }
 
 func (l *ServiceLoadBalancerLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: lb-ns
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	deployment := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: lb-ns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+`
+	if err := kubectlApply(ctx, kubeconfigPath, deployment); err != nil {
+		return fmt.Errorf("creating deployment: %w", err)
+	}
+
+	svc := `apiVersion: v1
+kind: Service
+metadata:
+  name: web-lb
+  namespace: lb-ns
+spec:
+  type: LoadBalancer
+  selector:
+    app: web
+  ports:
+  - port: 80
+    targetPort: 9999
+`
+	if err := kubectlApply(ctx, kubeconfigPath, svc); err != nil {
+		return fmt.Errorf("creating service: %w", err)
+	}
+
+	return nil
+}
+
+func (l *ServiceLoadBalancerLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

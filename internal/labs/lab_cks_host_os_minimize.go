@@ -31,7 +31,7 @@ that increase the attack surface.
 
 Your task: Verify that the kubelet is configured with:
 - --fail-swap-on=false is NOT set (swap should cause failure)
--_rotate-certificates is set to true
+- _rotate-certificates is set to true
 - --protect-kernel-defaults is set to true`
 }
 
@@ -48,18 +48,32 @@ func (l *CKSHostOSMinimizeLab) Prepare(ctx context.Context, kubeconfigPath strin
 }
 
 func (l *CKSHostOSMinimizeLab) Break(ctx context.Context, kubeconfigPath string) error {
+	nodeName, err := getControlPlaneNode(ctx, kubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("getting control plane node: %w", err)
+	}
+
+	dockerCommand(nodeName, "sed -i 's/rotateCertificates: true/rotateCertificates: false/' /var/lib/kubelet/config.yaml 2>/dev/null; true")
+	dockerCommand(nodeName, "sed -i 's/protectKernelDefaults: true/protectKernelDefaults: false/' /var/lib/kubelet/config.yaml 2>/dev/null; true")
 	return nil
 }
 
 func (l *CKSHostOSMinimizeLab) Verify(ctx context.Context, kubeconfigPath string) error {
-	output, err := kubectl(ctx, kubeconfigPath, "get", "nodes", "-o", "jsonpath={.items[*].status.nodeInfo.kubeletVersion}")
+	nodeName, err := getControlPlaneNode(ctx, kubeconfigPath)
 	if err != nil {
-		return fmt.Errorf("failed to get nodes: %w", err)
+		return err
 	}
-	if strings.TrimSpace(output) != "" {
-		return nil
+	output, err := dockerCommand(nodeName, "cat /var/lib/kubelet/config.yaml")
+	if err != nil {
+		return fmt.Errorf("could not read kubelet config: %w", err)
 	}
-	return fmt.Errorf("could not verify node configuration")
+	if strings.Contains(output, "rotateCertificates: false") {
+		return fmt.Errorf("rotateCertificates is disabled")
+	}
+	if strings.Contains(output, "protectKernelDefaults: false") {
+		return fmt.Errorf("protectKernelDefaults is disabled")
+	}
+	return nil
 }
 
 func (l *CKSHostOSMinimizeLab) SolutionSteps() []SolutionStep {

@@ -144,6 +144,57 @@ func Random(seed int64, category Category, difficulty Difficulty, cert Cert) (La
 	return filtered[idx], nil
 }
 
+// RandomWeighted returns a random lab weighted by difficulty so harder labs are
+// selected more often (good for review of topics you may find difficult).
+func RandomWeighted(seed int64, category Category, difficulty Difficulty, cert Cert) (Lab, error) {
+	all := List()
+	filtered := make([]Lab, 0)
+
+	for _, lab := range all {
+		matches := true
+		if category != "" && lab.Category() != category {
+			matches = false
+		}
+		if difficulty != "" && lab.Difficulty() != difficulty {
+			matches = false
+		}
+		if cert != CertAll && cert != "" && GetCert(lab) != cert {
+			matches = false
+		}
+		if matches {
+			filtered = append(filtered, lab)
+		}
+	}
+
+	if len(filtered) == 0 {
+		return nil, fmt.Errorf("no labs found matching criteria")
+	}
+
+	// Difficulty weights: easy = 1, medium = 2, hard = 3
+	weight := func(d Difficulty) int {
+		switch d {
+		case DifficultyEasy:
+			return 1
+		case DifficultyHard:
+			return 3
+		default:
+			return 2
+		}
+	}
+
+	pool := make([]Lab, 0, len(filtered)*4)
+	for _, lab := range filtered {
+		w := weight(lab.Difficulty())
+		for i := 0; i < w; i++ {
+			pool = append(pool, lab)
+		}
+	}
+
+	rng := rand.New(rand.NewSource(seed))
+	idx := rng.Intn(len(pool))
+	return pool[idx], nil
+}
+
 // IDs returns a sorted list of all lab IDs
 func IDs() []string {
 	mu.RLock()

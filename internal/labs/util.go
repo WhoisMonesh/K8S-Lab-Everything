@@ -52,6 +52,35 @@ func dockerExec(ctx context.Context, containerName string, args ...string) (stri
 	return string(output), err
 }
 
+// getWorkerNode returns the name of a worker node. It prefers a node carrying
+// the worker role label; if none is labeled (e.g. some kind configs), it falls
+// back to any node that is not the control plane.
+func getWorkerNode(ctx context.Context, kubeconfigPath string) (string, error) {
+	output, err := kubectl(ctx, kubeconfigPath, "get", "nodes",
+		"-l", "node-role.kubernetes.io/worker",
+		"-o", "jsonpath={.items[0].metadata.name}")
+	if err == nil && strings.TrimSpace(output) != "" {
+		return strings.TrimSpace(output), nil
+	}
+
+	controlPlane, cpErr := getControlPlaneNode(ctx, kubeconfigPath)
+	output, err = kubectl(ctx, kubeconfigPath, "get", "nodes",
+		"-o", "jsonpath={.items[*].metadata.name}")
+	if err != nil {
+		return "", fmt.Errorf("getting worker node: %w", err)
+	}
+	for _, name := range strings.Fields(output) {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		if cpErr != nil || name != controlPlane {
+			return name, nil
+		}
+	}
+	return "", fmt.Errorf("no worker node found")
+}
+
 // dockerCp copies a file to/from a docker container
 func dockerCp(ctx context.Context, src, dst string) error {
 	cmd := exec.CommandContext(ctx, "docker", "cp", src, dst)

@@ -48,8 +48,8 @@ func GenerateExamPlan(cert string, numLabs int) ([]ExamLab, int) {
 		numLabs = len(filtered)
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	rand.Shuffle(len(filtered), func(i, j int) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	r.Shuffle(len(filtered), func(i, j int) {
 		filtered[i], filtered[j] = filtered[j], filtered[i]
 	})
 

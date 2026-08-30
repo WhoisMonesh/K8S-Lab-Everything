@@ -18,7 +18,7 @@ func (l *ContainerRuntimeMigrationLab) ID() string {
 	return "cka_container_runtime_migration"
 }
 func (l *ContainerRuntimeMigrationLab) Title() string {
-	return "Migrate from dockershim to containerd"
+	return "Verify and Configure Container Runtime"
 }
 func (l *ContainerRuntimeMigrationLab) Category() Category     { return CategoryClusterArchitecture }
 func (l *ContainerRuntimeMigrationLab) Difficulty() Difficulty { return DifficultyHard }
@@ -30,16 +30,17 @@ func (l *ContainerRuntimeMigrationLab) Cert() Cert        { return CertCKA }
 func (l *ContainerRuntimeMigrationLab) DomainWeight() int { return 25 }
 
 func (l *ContainerRuntimeMigrationLab) Description() string {
-	return `The cluster is using dockershim which is deprecated. Migrate a worker
-node from Docker to containerd runtime. Stop Docker, configure containerd,
-update kubelet, and verify pods are running.`
+	return `Verify that all nodes are using containerd as the container runtime
+(not Docker). Check the runtime configuration, ensure containerd is
+running, and verify the kubelet is configured with the correct
+container-runtime-endpoint.`
 }
 
 func (l *ContainerRuntimeMigrationLab) Hints() []string {
 	return []string{
-		"Install containerd on the worker node",
-		"Update kubelet to use --container-runtime-endpoint",
-		"Restart kubelet after changes",
+		"Check container runtime on each node",
+		"Ensure containerd service is running",
+		"Verify kubelet uses --container-runtime-endpoint",
 	}
 }
 
@@ -58,7 +59,10 @@ func (l *ContainerRuntimeMigrationLab) Verify(ctx context.Context, kubeconfigPat
 		return err
 	}
 	if strings.Contains(output, "docker") {
-		return fmt.Errorf("node still using docker runtime")
+		return fmt.Errorf("node still using docker runtime — must use containerd")
+	}
+	if !strings.Contains(output, "containerd") {
+		return fmt.Errorf("runtime is not containerd: %s", strings.TrimSpace(output))
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -46,6 +47,89 @@ func (l *NetworkPolicyEgressAllowLab) Prepare(ctx context.Context, kubeconfigPat
 }
 
 func (l *NetworkPolicyEgressAllowLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: egress-ns
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	frontDep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: egress-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: nginx:alpine
+`
+	if err := kubectlApply(ctx, kubeconfigPath, frontDep); err != nil {
+		return fmt.Errorf("creating frontend deployment: %w", err)
+	}
+
+	backDep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: egress-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+`
+	if err := kubectlApply(ctx, kubeconfigPath, backDep); err != nil {
+		return fmt.Errorf("creating backend deployment: %w", err)
+	}
+
+	policy := `apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-egress
+  namespace: egress-ns
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: never-match
+`
+	if err := kubectlApply(ctx, kubeconfigPath, policy); err != nil {
+		return fmt.Errorf("creating networkpolicy: %w", err)
+	}
+
+	return nil
+}
+
+func (l *NetworkPolicyEgressAllowLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

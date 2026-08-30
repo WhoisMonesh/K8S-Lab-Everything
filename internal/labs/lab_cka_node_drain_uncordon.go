@@ -28,16 +28,28 @@ func (l *NodeDrainUncordonLab) Cert() Cert        { return CertCKA }
 func (l *NodeDrainUncordonLab) DomainWeight() int { return 25 }
 
 func (l *NodeDrainUncordonLab) Description() string {
-	return `A node needs maintenance but has a pod with a local persistent volume
-attached. Drain the node safely by handling the local PV, perform maintenance,
-and then uncordon the node.`
+	return `A worker node has been cordoned (marked unschedulable) for maintenance,
+which prevents new pods from scheduling on it. Drain any workload from the
+node safely, verify the maintenance is done, and then uncordon the node so it
+resumes scheduling again.
+
+kind nodes are containers (no SSH); run node-level commands inside the node
+shell with:  docker exec -it <cluster>-worker bash`
 }
 
 func (l *NodeDrainUncordonLab) Hints() []string {
 	return []string{
-		"Check for pods with local persistent volumes",
-		"Use --force to override pod eviction failures",
-		"Remember to uncordon after maintenance",
+		"Check which node is unschedulable (SchedulingDisabled)",
+		"Use kubectl drain <node> --ignore-daemonsets --delete-emptydir-data --force",
+		"Remember to uncordon: kubectl uncordon <node>",
+	}
+}
+
+func (l *NodeDrainUncordonLab) ClusterSpec() ClusterSpec {
+	return ClusterSpec{
+		Provider:          "kind",
+		KubernetesVersion: "v1.28.0",
+		Workers:           1,
 	}
 }
 
@@ -46,26 +58,36 @@ func (l *NodeDrainUncordonLab) Prepare(ctx context.Context, kubeconfigPath strin
 }
 
 func (l *NodeDrainUncordonLab) Break(ctx context.Context, kubeconfigPath string) error {
+	// Real scenario: cordon a worker node so the learner must uncordon it.
+	node, err := getWorkerNode(ctx, kubeconfigPath)
+	if err != nil {
+		return err
+	}
+	if _, err := kubectl(ctx, kubeconfigPath, "cordon", node); err != nil {
+		return fmt.Errorf("cordoning node %s: %w", node, err)
+	}
 	return nil
 }
 
 func (l *NodeDrainUncordonLab) Verify(ctx context.Context, kubeconfigPath string) error {
+	// Pass once no node is unschedulable (the learner uncordoned the node).
 	output, err := kubectl(ctx, kubeconfigPath, "get", "nodes", "-o",
 		"jsonpath={.items[*].spec.unschedulable}")
 	if err != nil {
 		return err
 	}
-	if strings.Contains(output, "true") {
-		return fmt.Errorf("node is still cordoned")
+	if strings.Contains(strings.ToLower(output), "true") {
+		return fmt.Errorf("node is still cordoned (unschedulable)")
 	}
 	return nil
 }
 
 func (l *NodeDrainUncordonLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Check node status", Command: "kubectl get nodes"},
-		{Description: "Drain node", Command: "kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data --force"},
-		{Description: "Perform maintenance", Command: "sudo apt-get update && sudo apt-get upgrade"},
-		{Description: "Uncordon node", Command: "kubectl uncordon <node-name>"},
+		{Description: "Check node status (one is SchedulingDisabled)", Command: "kubectl get nodes"},
+		{Description: "Drain the cordoned node safely", Command: "kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data --force"},
+		{Description: "Perform the node maintenance", Command: "docker exec -it <cluster>-worker bash  (then run systemctl/apt inside)"},
+		{Description: "Uncordon the node to resume scheduling", Command: "kubectl uncordon <node-name>"},
+		{Description: "Verify the node is schedulable again", Command: "kubectl get nodes"},
 	}
 }

@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -44,6 +45,40 @@ func (l *ImagePullBackoffCKALab) Prepare(ctx context.Context, kubeconfigPath str
 }
 
 func (l *ImagePullBackoffCKALab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: image-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-app
+  namespace: image-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web
+        image: nginx:9.9.9
+        ports:
+        - containerPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating broken deployment: %w", err)
+	}
+	return nil
+}
+
+func (l *ImagePullBackoffCKALab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

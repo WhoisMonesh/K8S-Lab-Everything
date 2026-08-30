@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 func init() {
@@ -40,32 +41,39 @@ func (l *APIServerAuditLogDisabled) Prepare(ctx context.Context, kubeconfigPath 
 }
 
 func (l *APIServerAuditLogDisabled) Break(ctx context.Context, kubeconfigPath string) error {
-	policy := `apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: None
-  resources:
-  - group: ""
-    resources: ["events"]`
-	return kubectlApply(ctx, kubeconfigPath, policy)
+	// On a stock kind cluster audit logging is not enabled by default, which IS
+	// the broken state this lab asks the learner to fix. Nothing to mutate here.
+	return nil
 }
 
 func (l *APIServerAuditLogDisabled) Verify(ctx context.Context, kubeconfigPath string) error {
-	output, err := kubectl(ctx, kubeconfigPath, "get", "pods", "-n", "kube-system", "-l", "component=kube-apiserver",
-		"-o", "jsonpath={.items[0].spec.containers[0].args}")
+	node, err := getControlPlaneNode(ctx, kubeconfigPath)
 	if err != nil {
 		return err
 	}
-	if !containsAny(output, "audit-policy-file") {
-		return fmt.Errorf("audit-policy-file flag not found")
+	// The audit policy file must exist on the control-plane node.
+	policy, perr := dockerCommand(node, "cat /etc/kubernetes/audit-policy.yaml 2>/dev/null")
+	if perr != nil || strings.TrimSpace(policy) == "" {
+		return fmt.Errorf("audit policy file not found at /etc/kubernetes/audit-policy.yaml on %s", node)
+	}
+	if !strings.Contains(policy, "level:") {
+		return fmt.Errorf("audit policy on %s has no rules", node)
+	}
+	// The API server manifest must enable audit logging via the policy file.
+	manifest, merr := dockerCommand(node,
+		"grep -c '--audit-policy-file' /etc/kubernetes/manifests/kube-apiserver.yaml")
+	if merr != nil || strings.TrimSpace(manifest) == "0" {
+		return fmt.Errorf("API server is not configured with --audit-policy-file")
 	}
 	return nil
 }
 
 func (l *APIServerAuditLogDisabled) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Check API server args", Command: "kubectl describe pods -n kube-system -l component=kube-apiserver"},
-		{Description: "Create audit policy", Command: "sudo tee /etc/kubernetes/audit-policy.yaml <<EOF\napiVersion: audit.k8s.io/v1\nkind: Policy\nrules:\n- level: Metadata\nEOF"},
-		{Description: "Add audit flag to API server", Command: "Edit /etc/kubernetes/manifests/kube-apiserver.yaml and add --audit-policy-file=/etc/kubernetes/audit-policy.yaml"},
+		{Description: "Check the API server manifest for audit args", Command: "docker exec -it <cluster>-control-plane bash"},
+		{Description: "Confirm audit logging is absent", Command: "grep -c audit /etc/kubernetes/manifests/kube-apiserver.yaml"},
+		{Description: "Create the audit policy on the control-plane node", Command: "cat > /etc/kubernetes/audit-policy.yaml <<'EOF'\napiVersion: audit.k8s.io/v1\nkind: Policy\nrules:\n- level: Metadata\n  resources:\n  - group: \"\"\n    resources: [\"pods\", \"secrets\"]\nEOF"},
+		{Description: "Enable audit logging in the API server manifest", Command: "sed -i '/--audit-log-path/a    - --audit-policy-file=/etc/kubernetes/audit-policy.yaml' /etc/kubernetes/manifests/kube-apiserver.yaml"},
+		{Description: "Exit and let the static pod restart", Command: "exit && kubectl get pods -n kube-system -l component=kube-apiserver"},
 	}
 }

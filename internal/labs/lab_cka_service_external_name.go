@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -44,6 +45,33 @@ func (l *ServiceExternalNameLab) Prepare(ctx context.Context, kubeconfigPath str
 }
 
 func (l *ServiceExternalNameLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: external-ns
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	svc := `apiVersion: v1
+kind: Service
+metadata:
+  name: db-external
+  namespace: external-ns
+spec:
+  type: ExternalName
+  externalName: wrong.db.internal.example.com
+`
+	if err := kubectlApply(ctx, kubeconfigPath, svc); err != nil {
+		return fmt.Errorf("creating service: %w", err)
+	}
+
+	return nil
+}
+
+func (l *ServiceExternalNameLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -48,6 +49,89 @@ func (l *NetworkPolicyIngressAllowLab) Prepare(ctx context.Context, kubeconfigPa
 }
 
 func (l *NetworkPolicyIngressAllowLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitor-ns
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	appDep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: monitor-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: nginx:alpine
+        ports:
+        - containerPort: 9090
+`
+	if err := kubectlApply(ctx, kubeconfigPath, appDep); err != nil {
+		return fmt.Errorf("creating app deployment: %w", err)
+	}
+
+	monDep := `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: monitoring
+  namespace: monitor-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: monitoring
+      role: monitoring
+  template:
+    metadata:
+      labels:
+        app: monitoring
+        role: monitoring
+    spec:
+      containers:
+      - name: monitoring
+        image: nginx:alpine
+`
+	if err := kubectlApply(ctx, kubeconfigPath, monDep); err != nil {
+		return fmt.Errorf("creating monitoring deployment: %w", err)
+	}
+
+	policy := `apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-ingress
+  namespace: monitor-ns
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: never-match
+`
+	if err := kubectlApply(ctx, kubeconfigPath, policy); err != nil {
+		return fmt.Errorf("creating networkpolicy: %w", err)
+	}
+
+	return nil
+}
+
+func (l *NetworkPolicyIngressAllowLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -9,7 +9,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)]()
-[![Labs](https://img.shields.io/badge/Labs-348-orange)](#-available-labs)
+[![Labs](https://img.shields.io/badge/Labs-372-orange)](#-available-labs)
 
 <br>
 
@@ -32,7 +32,7 @@ Just like the CKA/CKAD/CKS exam: real `kubectl`, real problems, real solutions.
 | **Author** | [Monesh Ram](https://github.com/WhoisMonesh) |
 | **GitHub** | [github.com/WhoisMonesh/K8S-Lab-Everything](https://github.com/WhoisMonesh/K8S-Lab-Everything) |
 | **Certifications** | CKA, CKAD, CKS |
-| **Labs** | 348 hands-on scenarios |
+| **Labs** | 372 hands-on scenarios |
 | **Platforms** | macOS, Linux, Windows |
 | **License** | MIT |
 
@@ -125,11 +125,17 @@ Timed exam mode with random labs matching real CKA/CKAD/CKS structure.
 ### Cross-Platform
 Works on macOS (Intel & Apple Silicon), Linux (x86_64 & ARM64), and Windows.
 
-### 348 Realistic Labs
+### 372 Realistic Labs
 Covers all CKA, CKAD, and CKS exam domains with increasing difficulty.
 
 ### Progress Tracking
-Track completions, streaks, and ratings. Export as markdown or certificate.
+Track completions, streaks, and ratings. Export as markdown, certificate, CSV, or HTML report.
+
+### kubectl Plugin
+Install as a plugin (`cka-lab-runner install-plugin`) to use `kubectl lab run <id>` directly.
+
+### Desktop Notifications
+Get a desktop notification when a lab verify passes, so you can keep working in the background.
 
 ### Shell Completion
 Bash, Zsh, Fish, and PowerShell autocompletion for all commands.
@@ -233,11 +239,15 @@ $ sudo cka-lab-runner update
 | `cka-lab-runner lab list --resource pod` | Filter by K8s resource |
 | `cka-lab-runner lab list --search pod` | Search labs |
 | `cka-lab-runner lab random` | Random lab |
-| `cka-lab-runner lab run <lab-id>` | Run a lab |
+| `cka-lab-runner lab random --weighted` | Random lab, weighted toward harder ones |
+| `cka-lab-runner lab run <lab-id>` | Run a lab (auto-provisions a matching cluster version/topology, and provisions pending nodes, for labs that declare requirements) |
+| `cka-lab-runner lab run <lab-id> --namespace ns` | Scope the lab to a namespace |
 | `cka-lab-runner lab verify <lab-id>` | Verify your fix |
 | `cka-lab-runner lab solution <lab-id>` | Show solution |
 | `cka-lab-runner lab hint <lab-id>` | Get hint |
 | `cka-lab-runner lab hint <lab-id> --level 3` | Specific hint |
+| `cka-lab-runner lab help <lab-id>` | Interactive help viewer (description/hints/solution) |
+| `cka-lab-runner lab resume` | Re-apply the last lab after `up`/`down` |
 
 **Exam & Progress**
 
@@ -248,9 +258,13 @@ $ sudo cka-lab-runner update
 | `cka-lab-runner lab rate <id> <1-5>` | Rate a lab |
 | `cka-lab-runner lab status` | View progress |
 | `cka-lab-runner lab stats` | View statistics |
+| `cka-lab-runner lab benchmark` | View verify attempt timing stats |
 | `cka-lab-runner lab export` | Export as JSON |
 | `cka-lab-runner lab export --format markdown` | Export as markdown |
 | `cka-lab-runner lab export --format certificate` | Export certificate |
+| `cka-lab-runner lab export --format csv` | Export as CSV |
+| `cka-lab-runner lab export --format html --output report.html` | Export as HTML report |
+| `cka-lab-runner lab import file.json` | Import progress from an export |
 
 **System**
 
@@ -259,6 +273,11 @@ $ sudo cka-lab-runner update
 | `cka-lab-runner version` | Show current version |
 | `cka-lab-runner update` | Update to latest release |
 | `cka-lab-runner completion bash` | Generate shell completion |
+| `cka-lab-runner config list` | List config values |
+| `cka-lab-runner config get <key>` | Get a config value |
+| `cka-lab-runner config set <key> <value>` | Set a config value |
+| `cka-lab-runner install-plugin` | Install as a `kubectl` plugin |
+| `cka-lab-runner --offline` | Skip the auto-update check |
 
 ## Available Labs
 
@@ -363,9 +382,21 @@ cluster:
   provider: kind      # kind | k3d | minikube (auto-detected)
   name: cka-lab
   k8sVersion: v1.35.0
+  workers: 0          # number of worker nodes (0 = single-node)
 
 labs:
   defaultNamespace: lab
+  isolate: false      # run each lab in its own namespace (requires labs to opt in)
+  autoBreak: false    # re-apply the last active lab when `up` runs
+```
+
+You can also manage these values from the CLI without editing YAML:
+
+```bash
+cka-lab-runner config list
+cka-lab-runner config get cluster.workers
+cka-lab-runner config set cluster.workers 2
+cka-lab-runner config set labs.autoBreak true
 ```
 
 ## Uninstall
@@ -462,7 +493,7 @@ make clean         # Remove build artifacts
 │   │   └── completion.go    Shell completion generation
 │   ├── cluster/             Cluster providers (kind/k3d/minikube)
 │   ├── config/              Configuration management
-│   ├── labs/                All 348 lab implementations
+│   ├── labs/                All 372 lab implementations
 │   └── update/              OTA auto-update system
 ├── scripts/
 │   ├── setup.sh             macOS/Linux setup
@@ -499,7 +530,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and lab ideas.
 Originally based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-lab-runner) by [**CuriousLearner**](https://github.com/CuriousLearner).
 
 **K8S-Lab-Everything** extends it with:
-- 348+ hands-on labs covering CKA, CKAD, and CKS
+- 372+ hands-on labs covering CKA, CKAD, and CKS
 - Cross-platform support (macOS, Linux, Windows)
 - Interactive TUI lab picker with search and filtering
 - OTA auto-update system

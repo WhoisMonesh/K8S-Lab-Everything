@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -43,6 +44,48 @@ func (l *PodVolumeNFSLab) Prepare(ctx context.Context, kubeconfigPath string) er
 }
 
 func (l *PodVolumeNFSLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: nfs-ns
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-pvc
+  namespace: nfs-ns
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: nfs-storage
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nfs-pod
+  namespace: nfs-ns
+spec:
+  containers:
+  - name: app
+    image: busybox:1.36
+    command: ['sh', '-c', 'while true; do echo nfs; sleep 15; done']
+    volumeMounts:
+    - name: nfs-volume
+      mountPath: /data
+  volumes:
+  - name: nfs-volume
+    nfs:
+      server: wrong-nfs-server
+      path: /wrong
+`
+	return kubectlApply(ctx, kubeconfigPath, manifest)
+}
+
+func (l *PodVolumeNFSLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

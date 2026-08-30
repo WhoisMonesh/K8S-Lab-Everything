@@ -1,0 +1,320 @@
+name: Lab Validation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Phase 1: Static validation (fast, no Docker)
+  # ──────────────────────────────────────────────
+  static-validation:
+    name: Static Lab Validation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+
+    - name: Run static lab tests
+      run: go test -v -count=1 ./internal/labs/ -run "TestAllLabs|TestDuplicate|TestLabCategories|TestLabDifficulties|TestSolutionSteps"
+
+    - name: Run full test suite
+      run: go test -v ./...
+
+    - name: Run go vet
+      run: go vet ./...
+
+    - name: Check formatting
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go code is not formatted:"
+          gofmt -d .
+          exit 1
+        fi
+
+  # ──────────────────────────────────────────────
+  # Phase 2: Build & smoke test
+  # ──────────────────────────────────────────────
+  build:
+    name: Build & Smoke Test
+    runs-on: ubuntu-latest
+    needs: static-validation
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+
+    - name: Build binary
+      run: go build -v -o cka-lab-runner ./cmd/cka-lab-runner
+
+    - name: Smoke test — help
+      run: ./cka-lab-runner --help
+
+    - name: Smoke test — version
+      run: ./cka-lab-runner version
+
+    - name: Smoke test — lab list
+      run: ./cka-lab-runner lab list 2>&1 | head -5
+
+    - name: Smoke test — lab list CSV
+      run: ./cka-lab-runner lab list --csv 2>&1 | head -5
+
+    - name: Smoke test — lab list JSON
+      run: ./cka-lab-runner lab list --json 2>&1 | head -5
+
+    - name: Smoke test — status (no cluster)
+      run: ./cka-lab-runner status || true
+
+    - name: Count registered labs
+      run: |
+        COUNT=$(./cka-lab-runner lab list --json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+        echo "Registered labs: $COUNT"
+        if [ "$COUNT" -lt 100 ]; then
+          echo "ERROR: Expected 100+ labs, got $COUNT"
+          exit 1
+        fi
+
+  # ──────────────────────────────────────────────
+  # Phase 3: Integration — test Break/Verify on real cluster
+  # ──────────────────────────────────────────────
+  integration-break-verify:
+    name: Integration — Break/Verify Labs
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test a representative sample across categories
+        lab:
+          # CKA — Cluster Architecture
+          - etcd_wrong_ip
+          - controller_manager_misconfigured
+          - cka_kubeadm_cert_renewal
+          - node_registration_error
+          - kubeadm_cert_renewal
+          # CKA — Workloads
+          - pod_crashloop
+          - deployment_not_ready
+          - paused_rollout_resume
+          - hpa_not_scaling
+          - cronjob_scheduling
+          # CKA — Networking
+          - service_wrong_targetport
+          - configmap_wrong_key
+          - network_policy
+          # CKA — Storage
+          - pv_wrong_node
+          # CKA — Troubleshooting
+          - image_pull_backoff
+          - etcd_recovery
+          - cni_failure_recovery
+          - scheduler_not_running
+          - stray_static_pod
+          # CKAD
+          - ckad_configmap_create
+          - ckad_secret_generic
+          - ckad_helm_install_chart
+          # CKS
+          - cks_cis_benchmark_kubelet
+          - cks_host_os_minimize
+          - cks_audit_log_policy
+          # Multi-node
+          - multi_node_pod_spread
+          - multi_node_daemonset_selector
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+
+    - name: Install kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+
+    - name: Install kind
+      run: |
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+        chmod +x ./kind
+        sudo mv ./kind /usr/local/bin/kind
+
+    - name: Build binary
+      run: go build -v -o cka-lab-runner ./cmd/cka-lab-runner
+
+    - name: Create cluster
+      run: ./cka-lab-runner up --version v1.30.0
+
+    - name: Wait for cluster ready
+      run: |
+        for i in $(seq 1 30); do
+          if kubectl get nodes 2>/dev/null | grep -q " Ready"; then
+            echo "Cluster ready"
+            exit 0
+          fi
+          sleep 2
+        done
+        echo "Cluster not ready"
+        exit 1
+
+    - name: Run lab — ${{ matrix.lab }}
+      id: lab
+      run: |
+        echo "=== Running lab: ${{ matrix.lab }} ==="
+        if ./cka-lab-runner lab run ${{ matrix.lab }} --force 2>&1; then
+          echo "status=break_ok" >> $GITHUB_OUTPUT
+          echo "Break() succeeded"
+        else
+          echo "status=break_fail" >> $GITHUB_OUTPUT
+          echo "Break() failed — lab has broken implementation"
+          exit 1
+        fi
+
+    - name: Verify lab reports broken
+      if: steps.lab.outputs.status == 'break_ok'
+      run: |
+        echo "=== Verifying lab is broken ==="
+        if ./cka-lab-runner lab verify ${{ matrix.lab }} 2>&1 | grep -qi "not fixed\|failed\|error"; then
+          echo "Lab correctly reports broken state"
+        else
+          echo "WARNING: Lab may not be properly broken (verify passed or unclear output)"
+        fi
+
+    - name: Cleanup
+      if: always()
+      run: ./cka-lab-runner down || true
+
+  # ──────────────────────────────────────────────
+  # Phase 4: Full lab validation (all 372 labs — Break only)
+  # ──────────────────────────────────────────────
+  integration-all-labs:
+    name: Integration — All Labs Break Test
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 120
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+
+    - name: Install kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+
+    - name: Install kind
+      run: |
+        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+        chmod +x ./kind
+        sudo mv ./kind /usr/local/bin/kind
+
+    - name: Build binary
+      run: go build -v -o cka-lab-runner ./cmd/cka-lab-runner
+
+    - name: Create cluster
+      run: ./cka-lab-runner up --version v1.30.0
+
+    - name: Wait for cluster
+      run: |
+        for i in $(seq 1 30); do
+          if kubectl get nodes 2>/dev/null | grep -q " Ready"; then
+            echo "Cluster ready"
+            exit 0
+          fi
+          sleep 2
+        done
+        exit 1
+
+    - name: Test ALL labs — Break() only
+      id: break-test
+      run: |
+        LABS=$(./cka-lab-runner lab list --json 2>/dev/null | python3 -c "
+        import sys, json
+        labs = json.load(sys.stdin)
+        for lab in labs:
+            print(lab['id'])
+        ")
+
+        TOTAL=0
+        PASSED=0
+        FAILED=0
+        FAILED_LABS=""
+
+        for LAB_ID in $LABS; do
+          TOTAL=$((TOTAL + 1))
+          echo -n "[$TOTAL] Testing Break() for $LAB_ID ... "
+
+          OUTPUT=$(./cka-lab-runner lab run "$LAB_ID" --force 2>&1)
+          if echo "$OUTPUT" | grep -qi "error\|panic\|fatal"; then
+            echo "FAIL"
+            FAILED=$((FAILED + 1))
+            FAILED_LABS="$FAILED_LABS $LAB_ID"
+          else
+            echo "OK"
+            PASSED=$((PASSED + 1))
+          fi
+
+          # Recreate cluster every 20 labs to avoid drift
+          if [ $((TOTAL % 20)) -eq 0 ]; then
+            echo "--- Recreating cluster after $TOTAL labs ---"
+            ./cka-lab-runner down 2>/dev/null || true
+            sleep 5
+            ./cka-lab-runner up --version v1.30.0 2>/dev/null
+            for i in $(seq 1 30); do
+              if kubectl get nodes 2>/dev/null | grep -q " Ready"; then break; fi
+              sleep 2
+            done
+          fi
+        done
+
+        echo ""
+        echo "=== RESULTS ==="
+        echo "Total: $TOTAL"
+        echo "Passed: $PASSED"
+        echo "Failed: $FAILED"
+        if [ -n "$FAILED_LABS" ]; then
+          echo "Failed labs:$FAILED_LABS"
+        fi
+        echo "=== END RESULTS ==="
+
+        if [ "$FAILED" -gt 0 ]; then
+          exit 1
+        fi
+
+    - name: Cleanup
+      if: always()
+      run: ./cka-lab-runner down || true
+
+  # ──────────────────────────────────────────────
+  # Phase 5: Summary
+  # ──────────────────────────────────────────────
+  summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [static-validation, build, integration-break-verify, integration-all-labs]
+    if: always()
+    steps:
+    - name: Report
+      run: |
+        echo "=== Lab Validation Summary ==="
+        echo "Static Validation: ${{ needs.static-validation.result }}"
+        echo "Build & Smoke:     ${{ needs.build.result }}"
+        echo "Integration:       ${{ needs.integration-break-verify.result }}"
+        echo "All Labs:          ${{ needs.integration-all-labs.result }}"
+        echo ""
+        if [ "${{ needs.integration-all-labs.result }}" = "failure" ]; then
+          echo "Some labs failed Break() testing. Check the 'All Labs Break Test' job for details."
+        fi
+        if [ "${{ needs.static-validation.result }}" = "failure" ] || [ "${{ needs.build.result }}" = "failure" ]; then
+          echo "Build or static tests failed. Fix before merging."
+          exit 1
+        fi

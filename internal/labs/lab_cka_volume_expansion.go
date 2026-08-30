@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -42,6 +43,53 @@ func (l *VolumeExpansionLab) Prepare(ctx context.Context, kubeconfigPath string)
 }
 
 func (l *VolumeExpansionLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: expand-ns
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+provisioner: kubernetes.io/no-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: expand-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: standard
+  nfs:
+    server: nfs-server
+    path: /exports
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: expand-pvc
+  namespace: expand-ns
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 1Gi
+`
+	return kubectlApply(ctx, kubeconfigPath, manifest)
+}
+
+func (l *VolumeExpansionLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

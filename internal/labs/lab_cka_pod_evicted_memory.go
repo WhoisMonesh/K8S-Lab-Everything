@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -44,6 +45,33 @@ func (l *PodEvictedMemoryLab) Prepare(ctx context.Context, kubeconfigPath string
 }
 
 func (l *PodEvictedMemoryLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: oom-ns
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: memory-hog
+  namespace: oom-ns
+spec:
+  containers:
+  - name: stress
+    image: busybox:1.36
+    command: ["/bin/sh", "-c", "while true; do cat /dev/zero > /dev/null; done"]
+    resources:
+      limits:
+        memory: 32Mi
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating broken pod: %w", err)
+	}
+	return nil
+}
+
+func (l *PodEvictedMemoryLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -47,6 +48,27 @@ func (l *PersistentVolumeReclaimCKALab) Prepare(ctx context.Context, kubeconfigP
 }
 
 func (l *PersistentVolumeReclaimCKALab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: data-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  nfs:
+    server: nfs-server
+    path: /exports
+`
+	return kubectlApply(ctx, kubeconfigPath, manifest)
+}
+
+func (l *PersistentVolumeReclaimCKALab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -45,6 +46,58 @@ func (l *IngressHostRoutingLab) Prepare(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *IngressHostRoutingLab) Break(ctx context.Context, kubeconfigPath string) error {
+	ns := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: routing-ns
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ns); err != nil {
+		return fmt.Errorf("creating namespace: %w", err)
+	}
+
+	svc := `apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: routing-ns
+spec:
+  selector:
+    app: api
+  ports:
+  - port: 80
+    targetPort: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, svc); err != nil {
+		return fmt.Errorf("creating service: %w", err)
+	}
+
+	ingress := `apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: host-routing
+  namespace: routing-ns
+spec:
+  rules:
+  - host: wrong.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80
+`
+	if err := kubectlApply(ctx, kubeconfigPath, ingress); err != nil {
+		return fmt.Errorf("creating ingress: %w", err)
+	}
+
+	return nil
+}
+
+func (l *IngressHostRoutingLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

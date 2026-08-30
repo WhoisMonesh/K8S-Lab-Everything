@@ -48,21 +48,30 @@ func (l *APIServerAuditPolicyLab) Break(ctx context.Context, kubeconfigPath stri
 }
 
 func (l *APIServerAuditPolicyLab) Verify(ctx context.Context, kubeconfigPath string) error {
-	output, err := kubectl(ctx, kubeconfigPath, "exec", "-n", "kube-system",
-		" kube-apiserver-master", "--", "cat", "/etc/kubernetes/audit-policy.yaml")
+	node, err := getControlPlaneNode(ctx, kubeconfigPath)
 	if err != nil {
-		return fmt.Errorf("audit policy not found: %w", err)
+		return err
 	}
-	if !strings.Contains(output, "RequestResponse") {
-		return fmt.Errorf("audit policy missing RequestResponse level")
+	// The audit policy file lives on the control-plane node. Check it via
+	// docker exec (kind nodes have no SSH) and confirm the API server is
+	// actually configured with it.
+	output, derr := dockerCommand(node, "cat /etc/kubernetes/audit-policy.yaml 2>/dev/null")
+	if derr != nil || !strings.Contains(output, "RequestResponse") {
+		return fmt.Errorf("audit policy file on %s is missing or lacks RequestResponse", node)
+	}
+	// API server manifest must reference the policy file.
+	manifest, merr := dockerCommand(node, "grep -l 'audit-policy-file' /etc/kubernetes/manifests/kube-apiserver.yaml 2>/dev/null")
+	if merr != nil || strings.TrimSpace(manifest) == "" {
+		return fmt.Errorf("API server manifest does not enable --audit-policy-file")
 	}
 	return nil
 }
 
 func (l *APIServerAuditPolicyLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Create audit policy", Command: "cat <<EOF | sudo tee /etc/kubernetes/audit-policy.yaml\napiVersion: audit.k8s.io/v1\nkind: Policy\nrules:\n- level: RequestResponse\n  resources:\n  - group: \"\"\n    resources: [\"pods\", \"secrets\"]\n- level: Metadata\n  resources:\n- level: None\n  nonResourceURLs: [\"/healthz*\"]\nEOF"},
-		{Description: "Add audit policy to API server", Command: "sudo sed -i '/--audit-policy-file/a\\\\    - --audit-policy-file=/etc/kubernetes/audit-policy.yaml' /etc/kubernetes/manifests/kube-apiserver.yaml"},
-		{Description: "Verify API server restarted", Command: "kubectl get pods -n kube-system -l component=kube-apiserver"},
+		{Description: "Enter the control-plane node shell (kind has no SSH)", Command: "docker exec -it <cluster>-control-plane bash"},
+		{Description: "Create the audit policy on the node", Command: "cat > /etc/kubernetes/audit-policy.yaml <<'EOF'\napiVersion: audit.k8s.io/v1\nkind: Policy\nrules:\n- level: RequestResponse\n  resources:\n  - group: \"\"\n    resources: [\"pods\", \"secrets\"]\n- level: Metadata\n  resources: []\n- level: None\n  nonResourceURLs: [\"/healthz*\"]\nEOF"},
+		{Description: "Point the API server at the policy", Command: "sed -i '/--audit-log-path/a    - --audit-policy-file=/etc/kubernetes/audit-policy.yaml' /etc/kubernetes/manifests/kube-apiserver.yaml"},
+		{Description: "Let the static pod restart, then verify", Command: "exit && kubectl get pods -n kube-system -l component=kube-apiserver"},
 	}
 }

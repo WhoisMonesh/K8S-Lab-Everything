@@ -3,6 +3,7 @@ package labs
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 func init() {
@@ -44,6 +45,39 @@ func (l *SchedulerNotSchedulingLab) Prepare(ctx context.Context, kubeconfigPath 
 }
 
 func (l *SchedulerNotSchedulingLab) Break(ctx context.Context, kubeconfigPath string) error {
+	manifest := `apiVersion: v1
+kind: Namespace
+metadata:
+  name: sched-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sched-app
+  namespace: sched-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sched-app
+  template:
+    metadata:
+      labels:
+        app: sched-app
+    spec:
+      nodeName: non-existent-node
+      containers:
+      - name: app
+        image: nginx:1.27-alpine
+`
+	if err := kubectlApply(ctx, kubeconfigPath, manifest); err != nil {
+		return fmt.Errorf("creating broken deployment: %w", err)
+	}
+	return nil
+}
+
+func (l *SchedulerNotSchedulingLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 

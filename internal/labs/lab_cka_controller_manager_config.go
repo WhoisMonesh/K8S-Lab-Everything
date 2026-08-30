@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -30,7 +31,10 @@ func (l *ControllerManagerConfigLab) DomainWeight() int { return 25 }
 func (l *ControllerManagerConfigLab) Description() string {
 	return `The kube-controller-manager has an incorrect --service-cluster-ip-range
 causing services to get IPs from the wrong range. Fix the controller manager
-configuration to use the correct service CIDR.`
+configuration to use the correct service CIDR (10.96.0.0/12).
+
+kind nodes are containers (no SSH); access the control-plane node shell with:
+    docker exec -it <cluster>-control-plane bash`
 }
 
 func (l *ControllerManagerConfigLab) Hints() []string {
@@ -46,6 +50,32 @@ func (l *ControllerManagerConfigLab) Prepare(ctx context.Context, kubeconfigPath
 }
 
 func (l *ControllerManagerConfigLab) Break(ctx context.Context, kubeconfigPath string) error {
+	nodeName, err := getControlPlaneNode(ctx, kubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	output, err := dockerExec(ctx, nodeName, "cat", "/etc/kubernetes/manifests/kube-controller-manager.yaml")
+	if err != nil {
+		return fmt.Errorf("reading kube-controller-manager manifest: %w", err)
+	}
+
+	modifiedManifest := strings.Replace(output,
+		"- kube-controller-manager",
+		"- kube-controller-manager\n    - --service-cluster-ip-range=10.245.0.0/16",
+		1)
+
+	writeCmd := fmt.Sprintf("cat > /etc/kubernetes/manifests/kube-controller-manager.yaml << 'EOF'\n%s\nEOF", modifiedManifest)
+	_, err = dockerExec(ctx, nodeName, "sh", "-c", writeCmd)
+	if err != nil {
+		return fmt.Errorf("writing modified manifest: %w", err)
+	}
+
+	return nil
+}
+
+func (l *ControllerManagerConfigLab) VerifyBroken(ctx context.Context, kubeconfigPath string) error {
+	time.Sleep(10 * time.Second)
 	return nil
 }
 
@@ -64,9 +94,10 @@ func (l *ControllerManagerConfigLab) Verify(ctx context.Context, kubeconfigPath 
 
 func (l *ControllerManagerConfigLab) SolutionSteps() []SolutionStep {
 	return []SolutionStep{
-		{Description: "Check controller manager config", Command: "kubectl describe pods -n kube-system -l component=kube-controller-manager"},
-		{Description: "Verify correct service CIDR", Command: "kubectl get svc -A -o wide"},
-		{Description: "Edit controller manager manifest", Command: "sudo vi /etc/kubernetes/manifests/kube-controller-manager.yaml"},
-		{Description: "Fix --service-cluster-ip-range", Command: "Change to --service-cluster-ip-range=10.96.0.0/12"},
+		{Description: "Check controller manager pod status", Command: "kubectl get pods -n kube-system | grep controller-manager"},
+		{Description: "Access the control plane node", Command: "docker exec -it <cluster>-control-plane bash"},
+		{Description: "Examine the controller manager manifest", Command: "cat /etc/kubernetes/manifests/kube-controller-manager.yaml"},
+		{Description: "Remove or fix the wrong service CIDR flag", Command: "sed -i '/--service-cluster-ip-range=10.245.0.0\\/16/d' /etc/kubernetes/manifests/kube-controller-manager.yaml"},
+		{Description: "Verify controller manager is running with correct CIDR", Command: "kubectl get pods -n kube-system | grep controller-manager"},
 	}
 }
