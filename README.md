@@ -547,3 +547,4 @@ Originally based on [**cka-lab-runner**](https://github.com/CuriousLearner/cka-l
 ## License
 
 MIT License — see [LICENSE](LICENSE)
+CI trigger
