@@ -84,7 +84,7 @@ vet: ## Run go vet
 
 golangci-lint: ## Run golangci-lint
 	@echo "Running golangci-lint..."
-	golangci-lint run --out-format=short
+	golangci-lint run
 
 lint: fmt vet golangci-lint ## Run formatters and linters, including golangci-lint
 

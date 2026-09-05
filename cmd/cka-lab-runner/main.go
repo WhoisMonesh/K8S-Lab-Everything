@@ -222,6 +222,7 @@ func difficultyToConst(diff string) (string, error) {
     }
 }
 
+var rootCmd = &cobra.Command{
 	Use:   "cka-lab-runner",
 	Short: "A CKA/CKAD/CKS practice lab runner",
 	Long:  ``,
