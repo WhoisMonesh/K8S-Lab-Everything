@@ -82,7 +82,11 @@ vet: ## Run go vet
 	@echo "Running go vet..."
 	$(GOVET) ./...
 
-lint: fmt vet ## Run formatters and linters
+golangci-lint: ## Run golangci-lint
+	@echo "Running golangci-lint..."
+	golangci-lint run --out-format=short
+
+lint: fmt vet golangci-lint ## Run formatters and linters, including golangci-lint
 
 deps: ## Download dependencies
 	@echo "Downloading dependencies..."

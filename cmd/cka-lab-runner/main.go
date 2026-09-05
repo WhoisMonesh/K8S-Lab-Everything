@@ -46,7 +46,182 @@ func main() {
 	}
 }
 
-var rootCmd = &cobra.Command{
+
+var newCmd = &cobra.Command{
+    Use:   "new <lab-id>",
+    Short: "Scaffold a new lab file",
+    Args:  cobra.ExactArgs(1),
+    RunE: func(cmd *cobra.Command, args []string) error {
+        id := args[0]
+        // Flags for metadata
+        title, _ := cmd.Flags().GetString("title")
+        cat, _ := cmd.Flags().GetString("category")
+        diff, _ := cmd.Flags().GetString("difficulty")
+        est, _ := cmd.Flags().GetInt("time")
+        tagsStr, _ := cmd.Flags().GetString("tags")
+        // Basic validation
+        if title == "" {
+            return fmt.Errorf("--title is required")
+        }
+        if cat == "" {
+            return fmt.Errorf("--category is required")
+        }
+        if diff == "" {
+            return fmt.Errorf("--difficulty is required")
+        }
+        // Convert category and difficulty to constant names
+        catConst, err := categoryToConst(cat)
+        if err != nil { return err }
+        diffConst, err := difficultyToConst(diff)
+        if err != nil { return err }
+        // Prepare tags slice literal
+        tags := strings.Split(tagsStr, ",")
+        var tagsLit strings.Builder
+        for i, t := range tags {
+            t = strings.TrimSpace(t)
+            tagsLit.WriteString("\"")
+            tagsLit.WriteString(t)
+            tagsLit.WriteString("\"")
+            if i < len(tags)-1 {
+                tagsLit.WriteString(", ")
+            }
+        }
+        // Determine filename
+        filename := fmt.Sprintf("internal/labs/lab_%s.go", id)
+        if _, err := os.Stat(filename); err == nil {
+            return fmt.Errorf("lab file %s already exists", filename)
+        }
+        // Build file content
+        tmpl := `package labs
+
+import (
+    "context"
+    "fmt"
+)
+
+type Lab%s struct {
+    BaseLab
+}
+
+var _ Lab = (*Lab%s)(nil)
+
+func (l *Lab%s) ID() string { return "%s" }
+func (l *Lab%s) Title() string { return "%s" }
+func (l *Lab%s) Category() Category { return %s }
+func (l *Lab%s) Difficulty() Difficulty { return %s }
+func (l *Lab%s) Description() string { return "TODO: add description" }
+func (l *Lab%s) Hints() []string { return []string{} }
+func (l *Lab%s) EstimatedTime() int { return %d }
+func (l *Lab%s) Tags() []string { return []string{%s} }
+
+func (l *Lab%s) Break(ctx context.Context, kubeconfigPath string) error {
+    // TODO: implement break logic
+    return fmt.Errorf("break not implemented")
+}
+
+func (l *Lab%s) Verify(ctx context.Context, kubeconfigPath string) error {
+    // TODO: implement verify logic
+    return fmt.Errorf("verify not implemented")
+}
+
+func (l *Lab%s) SolutionSteps() []SolutionStep {
+    return []SolutionStep{{
+        Description: "TODO: write steps",
+        Command:     "",
+        Notes:       "",
+    }}
+}
+`
+        content := fmt.Sprintf(tmpl,
+            strings.Title(id), strings.Title(id), strings.Title(id), id,
+            strings.Title(id), title,
+            strings.Title(id), catConst,
+            strings.Title(id), diffConst,
+            strings.Title(id), // Description placeholder
+            strings.Title(id), // Hints placeholder
+            strings.Title(id), est,
+            strings.Title(id), tagsLit.String(),
+            strings.Title(id), // Break
+            strings.Title(id), // Verify
+            strings.Title(id), // SolutionSteps
+        )
+        // Write the file
+        if err := os.WriteFile(filename, []byte(content), 0644); err != nil {
+            return err
+        }
+        fmt.Printf("Created new lab scaffold at %s\n", filename)
+        return nil
+    },
+}
+
+func init() {
+    rootCmd.AddCommand(versionCmd)
+    rootCmd.AddCommand(updateCmd)
+    rootCmd.AddCommand(initCmd)
+    rootCmd.AddCommand(upCmd)
+    rootCmd.AddCommand(downCmd)
+    rootCmd.AddCommand(labCmd)
+    rootCmd.AddCommand(newCmd)
+    // Flags for the new command
+    newCmd.Flags().String("title", "", "Lab title (required)")
+    newCmd.Flags().String("category", "", "Lab category (required, e.g., cluster-architecture)")
+    newCmd.Flags().String("difficulty", "", "Difficulty (easy|medium|hard, required)")
+    newCmd.Flags().Int("time", 20, "Estimated time in minutes")
+    newCmd.Flags().String("tags", "", "Comma‑separated list of tags")
+}
+
+func categoryToConst(cat string) (string, error) {
+    switch strings.ToLower(cat) {
+    case "cluster-architecture", "cka_cluster_architecture", "clusterarchitecture":
+        return "CategoryClusterArchitecture", nil
+    case "workloads-scheduling", "cka_workloads_scheduling":
+        return "CategoryWorkloadsScheduling", nil
+    case "services-networking", "cka_services_networking":
+        return "CategoryServicesNetworking", nil
+    case "storage":
+        return "CategoryStorage", nil
+    case "troubleshooting":
+        return "CategoryTroubleshooting", nil
+    case "app-design-build":
+        return "CategoryAppDesignBuild", nil
+    case "app-deployment":
+        return "CategoryAppDeployment", nil
+    case "app-observability":
+        return "CategoryAppObservability", nil
+    case "app-config-security":
+        return "CategoryAppConfigSecurity", nil
+    case "services-networking-ckad":
+        return "CategoryServicesNetworkCKAD", nil
+    case "cluster-setup-cks":
+        return "CategoryClusterSetupCKS", nil
+    case "cluster-hardening":
+        return "CategoryClusterHardening", nil
+    case "system-hardening":
+        return "CategorySystemHardening", nil
+    case "microservice-vulns":
+        return "CategoryMicroserviceVulns", nil
+    case "supply-chain":
+        return "CategorySupplyChain", nil
+    case "monitoring-logging":
+        return "CategoryMonitoringLogging", nil
+    default:
+        return "", fmt.Errorf("unknown category %s", cat)
+    }
+}
+
+func difficultyToConst(diff string) (string, error) {
+    switch strings.ToLower(diff) {
+    case "easy":
+        return "DifficultyEasy", nil
+    case "medium":
+        return "DifficultyMedium", nil
+    case "hard":
+        return "DifficultyHard", nil
+    default:
+        return "", fmt.Errorf("unknown difficulty %s", diff)
+    }
+}
+
 	Use:   "cka-lab-runner",
 	Short: "A CKA/CKAD/CKS practice lab runner",
 	Long:  ``,

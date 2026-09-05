@@ -1,0 +1,23 @@
+# GolangCI-Lint configuration
+# By default, the linters run with recommended settings.
+# Adjust as needed for your project.
+run:
+  timeout: 5m
+  tests: true
+linters:
+  enable:
+    - errcheck
+    - staticcheck
+    - gofmt
+    - goimports
+    - misspell
+    - ineffassign
+    - govet
+    - revive
+    - unconvert
+    - dogsled
+    - deadcode
+    - structcheck
+    - varcheck
+    - unused
+    - typecheck
