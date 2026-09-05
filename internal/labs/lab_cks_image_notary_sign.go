@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 )
 
 func init() {
@@ -81,7 +80,6 @@ spec:
 }
 
 func (l *CKSImageNotarySignLab) VerifyBroken(_ context.Context, _ string) error {
-	time.Sleep(10 * time.Second)
 	return nil
 }
 
