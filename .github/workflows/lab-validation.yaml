@@ -25,6 +25,7 @@ jobs:
 
     - name: Run full test suite
       run: go test -v ./...
+      timeout-minutes: 15
 
     - name: Run go vet
       run: go vet ./...
