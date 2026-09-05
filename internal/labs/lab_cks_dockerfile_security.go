@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 )
 
 func init() {
@@ -77,7 +76,6 @@ spec:
 }
 
 func (l *CKSDockerfileSecurityLab) VerifyBroken(_ context.Context, _ string) error {
-	time.Sleep(10 * time.Second)
 	return nil
 }
 
