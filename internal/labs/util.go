@@ -10,11 +10,26 @@ import (
 
 // kubectl executes a kubectl command with the given kubeconfig
 func kubectl(ctx context.Context, kubeconfigPath string, args ...string) (string, error) {
-	fullArgs := append([]string{"--kubeconfig", kubeconfigPath}, args...)
-	cmd := exec.CommandContext(ctx, "kubectl", fullArgs...)
-	output, err := cmd.CombinedOutput()
-	return string(output), err
+    // If the context has no deadline, impose a default timeout to avoid hanging indefinitely.
+    if _, ok := ctx.Deadline(); !ok {
+        var cancel context.CancelFunc
+        ctx, cancel = context.WithTimeout(ctx, 15*time.Second)
+        defer cancel()
+    }
+    // Build arguments, include kubeconfig if provided.
+    fullArgs := []string{}
+    if kubeconfigPath != "" {
+        fullArgs = append(fullArgs, "--kubeconfig", kubeconfigPath)
+    }
+    // Add a request timeout to kubectl to ensure it fails quickly when unreachable.
+    fullArgs = append(fullArgs, "--request-timeout=15s")
+    fullArgs = append(fullArgs, args...)
+    cmd := exec.CommandContext(ctx, "kubectl", fullArgs...)
+    output, err := cmd.CombinedOutput()
+    return string(output), err
 }
+
+
 
 // kubectlApply applies a YAML manifest
 func kubectlApply(ctx context.Context, kubeconfigPath, yaml string) error {
